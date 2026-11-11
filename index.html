@@ -87,9 +87,13 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .tile b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .reels{font-size:40px;letter-spacing:8px;text-align:center;background:var(--deep);border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0}
-.ev{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;border-left:3px solid var(--line);padding-left:10px}
-.ev.ok{border-left-color:var(--ok)} .ev.bad{border-left-color:var(--bad)} .ev.info{border-left-color:var(--brass)}
-.ev time{display:block;color:var(--mute);font-size:12px}
+.evh{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px}
+.evh:first-child{margin-top:4px}
+.ev{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;margin-bottom:4px;background:var(--panel);border-radius:8px;font-size:14px;line-height:1.35}
+.ev i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700;color:var(--deep);background:var(--brass);margin-top:1px}
+.ev.ok i{background:var(--ok)} .ev.bad i{background:var(--bad)}
+.ev b{color:var(--ink)} .ev p{margin:0;color:var(--mute)}
+.ev em{font-style:normal;font-weight:600;color:var(--brass)} .ev.ok em{color:var(--ok)} .ev.bad em{color:var(--bad)}
 .dot{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:var(--deep);font-size:11px;font-weight:700;text-align:center;margin-left:4px}
 /* Bottom nav (mobile) */
 nav.bottom{position:fixed;left:0;right:0;bottom:0;background:var(--deep);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
@@ -287,7 +291,11 @@ function status(){let h='';
   return h}
 function stake(){return '<div class="btns">'+[100,1000,10000,100000].map(v=>b('bet',v,fmt(v),S.cash<v,bet===v?'on sm':'alt sm')).join('')+'</div>'}
 function rel(t){const s=(now()-t)/1000;return s<60?'ahora':s<3600?'hace '+Math.floor(s/60)+' min':s<86400?'hace '+Math.floor(s/3600)+' h':'hace '+Math.floor(s/86400)+' d'}
-const evs=L=>L.map(e=>'<div class="ev '+e.k+'"><time>'+rel(e.t)+'</time>'+e.m.replace(/</g,'&lt;')+'</div>').join('');
+const EVI={ok:'✓',bad:'✕',info:'!'};
+function evs(L){let g='';return L.map(e=>{const r=rel(e.t),h=r!==g?'<div class="evh">'+(g=r)+'</div>':'';
+  let m=e.m.replace(/</g,'&lt;').replace(/(\$\d[\d.,]*\d|\$\d|[+-]?\d+ (?:XP|de \w+|puntos? de habilidad|cristal(?:es)?|min))/g,'<em>$1</em>');
+  m=m.replace(/^([^:.!]{3,40}):\s*/,'<b>$1</b> · ');
+  return h+'<div class="ev '+e.k+'"><i>'+(EVI[e.k]||'•')+'</i><p>'+m+'</p></div>'}).join('')}
 
 const VIEWS={
  home(){let h=status()+'<h2>Bienvenido, '+rank().toLowerCase()+'</h2><p class="hint">Estás en '+city().n+'. '+(S.sp?'Tienes <b>'+S.sp+'</b> punto(s) de habilidad sin gastar en <button class="back" data-tab="me">Perfil</button>.':'')+'</p>';
