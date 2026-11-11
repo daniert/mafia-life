@@ -22,6 +22,8 @@
 
 Empiezas con $500 y un trabajo de poca monta. Haz trabajos, pelea, monta tu banda y convierte tu nombre en leyenda de Nueva York a Palermo.
 
+> 🕰️ **Un homenaje.** Mafia Life es un tributo a aquellos juegos de mafia para Android a los que jugaba allá por 2010-2012 con la gente de la oficina: energía que se recarga, trabajos repetidos hasta dominarlos y peleas entre compañeros a la hora del café.
+
 ## ✨ Qué incluye
 
 | | |
