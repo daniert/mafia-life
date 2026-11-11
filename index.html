@@ -177,25 +177,29 @@ const CRIMES=[
  {n:'Atraco a la Reserva',br:8,dm:36,a:11000,b:17000,xp:40,p:.40,l:15},
  {n:'Falsificar documentos',br:4,dm:8,a:900,b:1500,xp:10,p:.70,l:5,iq:20},
  {n:'Vaciar cajeros con un portátil',br:6,dm:14,a:2800,b:4200,xp:18,p:.60,l:8,iq:45}];
-const WEAPONS=[{n:'Navaja',p:300,v:3},{n:'Pistola',p:1500,v:8},{n:'Escopeta recortada',p:6000,v:18},{n:'Ametralladora Thompson',p:25000,v:40}];
-const ARMOR=[{n:'Chaleco de cuero',p:800,v:3},{n:'Abrigo reforzado',p:4000,v:10},{n:'Blindaje ligero',p:20000,v:30}];
+// at = city indices where it is sold (missing = everywhere). Indices are saved: only append, keep power order.
+const WEAPONS=[{n:'Navaja',p:300,v:3},{n:'Pistola',p:1500,v:8},{n:'Escopeta recortada',p:6000,v:18,at:[1,2,3,4]},
+ {n:'Ametralladora Thompson',p:25000,v:40,at:[1,4]},{n:'Lupara siciliana',p:60000,v:70,at:[4]}];
+const ARMOR=[{n:'Chaleco de cuero',p:800,v:3},{n:'Abrigo reforzado',p:4000,v:10,at:[0,1]},{n:'Blindaje ligero',p:20000,v:30,at:[2,4]},
+ {n:'Guayabera blindada',p:50000,v:55,at:[3]}];
 const BIZ=[{n:'Bar clandestino',p:3000,v:10},{n:'Casino ilegal',p:25000,v:90},{n:'Imprenta de billetes',p:100000,v:400}];
 // Rival strengths; names come from the current city (CITIES[].r).
 const RIVALS=[{s:3},{s:10},{s:25},{s:50},{s:100}];
+const avail=it=>!it.at||it.at.includes(S.city);
+const excl=it=>it.at&&it.at.length===1?' (exclusivo)':'';
 const rivalName=i=>CITIES[S.city].r[i];
 const JOBS=[{n:'Repartidor',lab:0,iq:0,pay:5},{n:'Camarero del club',lab:20,iq:0,pay:15},{n:'Chófer del jefe',lab:50,iq:10,pay:40},
  {n:'Contable de la familia',lab:100,iq:30,pay:100},{n:'Gerente del casino',lab:250,iq:70,pay:250}];
 const COURSES=[{n:'Clases nocturnas',min:5,c:500,iq:2},{n:'Contabilidad básica',min:15,c:2500,iq:5,lab:3},{n:'Derecho penal',min:30,c:8000,iq:10},
  {n:'Química',min:60,c:20000,iq:18},{n:'Economía internacional',min:120,c:60000,iq:35}];
 const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:500,k:'en',v:.5,d:'Recupera la mitad de la energía'},
- {n:'Petaca de whisky',p:500,k:'st',v:.5,d:'Recupera la mitad del valor'},{n:'Puro cubano',p:700,k:'wl',v:1,d:'Recupera toda la voluntad'},
- // Local items: c = city index where they are sold. Indices are saved in inventory: only append.
- {n:'Perrito de Coney Island',p:150,k:'en',v:.25,d:'Recupera un cuarto de la energía',c:0},
- {n:'Botella de bourbon de contrabando',p:900,k:'st',v:1,d:'Recupera todo el valor',c:1},
- {n:'Ficha de la suerte',p:1200,k:'wl',v:1,d:'Recupera toda la voluntad',c:2},
- {n:'Café cubano',p:600,k:'en',v:.75,d:'Recupera tres cuartos de la energía',c:3},
- {n:'Ron añejo',p:1500,k:'st',v:1,d:'Recupera todo el valor',c:3},
- {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',c:4}];
+ {n:'Petaca de whisky',p:500,k:'st',v:.5,d:'Recupera la mitad del valor'},{n:'Puro cubano',p:700,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2,3]},
+ {n:'Perrito de Coney Island',p:150,k:'en',v:.25,d:'Recupera un cuarto de la energía',at:[0]},
+ {n:'Botella de bourbon de contrabando',p:900,k:'st',v:1,d:'Recupera todo el valor',at:[1,2]},
+ {n:'Ficha de la suerte',p:1200,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2]},
+ {n:'Café cubano',p:600,k:'en',v:.75,d:'Recupera tres cuartos de la energía',at:[3]},
+ {n:'Ron añejo',p:1500,k:'st',v:1,d:'Recupera todo el valor',at:[3,4]},
+ {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]}];
 const TEMPLE=[{n:'Rellenar energía',c:5},{n:'Rellenar valor',c:5},{n:'Rellenar voluntad',c:3},{n:'+5 de inteligencia',c:25},{n:'Cambiar por dinero',c:10}];
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
 const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Soldado'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
@@ -269,8 +273,8 @@ const ACT={
   if(Math.random()<S.g/(S.g+r.s)){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 cristal.','ok');gain(Math.ceil(r.s/2)+5)}
   else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).','bad')}},
  travel(i){const c=CITIES[i];if(locked()||i==S.city||S.lvl<c.l||S.cash<c.c)return;S.cash-=c.c;S.city=+i;genFoes();msg('Llegas a '+c.n+'. Los pagos se multiplican por '+c.m+'.','info')},
- buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i)return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
- item(i){const p=itemPrice(i),c=ITEMS[i].c;if(S.cash<p||(c!=null&&c!==S.city))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
+ buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i||!avail(it))return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
+ item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p)return;S.cash-=p;S.biz[i]++;msg('Compras: '+BIZ[i].n+'. Ingresas '+fmt(income())+' por minuto.','ok')},
  skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp+=20;if(k==='wlB')S.wl+=10;msg('Habilidad mejorada.','ok',0)},
@@ -362,9 +366,9 @@ const VIEWS={
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2><p class="hint">En cada ciudad cambia lo que ganas en crímenes, peleas y guerras.</p>';
   CITIES.forEach((c,i)=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':''),lk?'Requiere nivel '+c.l:'Pagos ×'+c.m+' · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<c.c),lk)});return h},
  shop(){let h=back()+'<h2>Armas</h2>';
-  WEAPONS.forEach((w,i)=>{const own=S.w>=i;h+=row(w.n,'+'+w.v+' ataque · '+fmt(w.p),b('buy','w|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Protección</h2>';ARMOR.forEach((w,i)=>{const own=S.a>=i;h+=row(w.n,'+'+w.v+' defensa · '+fmt(w.p),b('buy','a|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(it.c!=null&&it.c!==S.city)return;h+=row(it.n+(it.c!=null?' (local)':''),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
+  WEAPONS.forEach((w,i)=>{const own=S.w>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' ataque · '+fmt(w.p),b('buy','w|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Protección</h2>';ARMOR.forEach((w,i)=>{const own=S.a>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' defensa · '+fmt(w.p),b('buy','a|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
  inv(){let h=back()+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3><div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n:'Ninguna')+'</b></div><div class="stat"><span>Protección</span><b>'+(S.a>=0?ARMOR[S.a].n:'Ninguna')+'</b></div></div><h2>Objetos</h2>';
   const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
   return h+(own.length?own.map(([it,i])=>row(it.n+' ×'+S.inv[i],it.d,b('use',i,'Usar',inHosp()))).join(''):'<p class="hint">No tienes objetos. Cómpralos en <button class="back" data-tab="shop">Tiendas</button>.</p>')},
