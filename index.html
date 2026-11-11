@@ -17,6 +17,13 @@
   box-sizing:border-box;
 }
 *,*::before,*::after{box-sizing:inherit}
+/* Per-city palettes, set via <html data-city> */
+:root[data-city="1"]{--bg:#121a22;--deep:#0b1016;--panel:#1b2631;--panel2:#22303d;--line:#34485a;--ink:#e6ecf0;--mute:#93a6b5;--brass:#c9b37a}
+:root[data-city="2"]{--bg:#1d0d2b;--deep:#12071c;--panel:#2a1340;--panel2:#341850;--line:#55306f;--ink:#f6e9ff;--mute:#b79cc9;--brass:#ff5fb4}
+:root[data-city="3"]{--bg:#0c2626;--deep:#071a1a;--panel:#123636;--panel2:#174242;--line:#2b6060;--ink:#f4ecd8;--mute:#9fbfb5;--brass:#f08a5d}
+:root[data-city="4"]{--bg:#26210f;--deep:#1a1609;--panel:#352e16;--panel2:#40381b;--line:#5d522c;--ink:#f3ead0;--mute:#bcae86;--brass:#e0b341}
+body{transition:background-color .4s}
+
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Barlow",system-ui,sans-serif;min-height:100vh;
   padding-top:env(safe-area-inset-top,0px)}
 button{font:inherit;color:inherit}
@@ -398,7 +405,7 @@ const topTab=t=>NAV.some(n=>n[0]===t)?t:'explore';
 
 function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl,maxWl(),'--wl','✊'],['Valor',S.st,maxSt(),'--st','🔥'],['Salud',S.hp,maxHp(),'--hp','❤️'],['XP',S.xp,need(),'--xp','⭐']];
   $('#bars').innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span><span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'">'+Math.floor(x[1])+(innerWidth<860?'':'/'+x[2])+'</b></div><div class="track"><div class="fill" style="width:'+Math.max(0,Math.min(100,x[1]/x[2]*100))+'%;background:var('+x[3]+')"></div></div></div>').join('')}
-function head(){$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
+function head(){document.documentElement.dataset.city=S.city;const tc=getComputedStyle(document.documentElement).getPropertyValue('--deep').trim();document.querySelector('meta[name=theme-color]').content=tc;$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
 const dot=()=>S.unr?'<span class="dot">'+Math.min(S.unr,99)+'</span>':'';
