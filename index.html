@@ -79,12 +79,13 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .sgrid b{font-size:18px}
 .sgrid .tot{background:var(--panel2)}
 .stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;text-align:left;cursor:pointer;min-height:76px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;min-width:0}
 .tile:hover{border-color:var(--brass)}
-.tile .i{font-size:22px;display:block}
-.tile b{display:block;font-size:15px}
-.tile small{color:var(--mute);font-size:12px}
+.tile .i{font-size:18px;flex:none;opacity:.85}
+.tile span:last-child{min-width:0}
+.tile b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .reels{font-size:40px;letter-spacing:8px;text-align:center;background:var(--deep);border:1px solid var(--line);border-radius:8px;padding:8px;margin:8px 0}
 .ev{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;border-left:3px solid var(--line);padding-left:10px}
 .ev.ok{border-left-color:var(--ok)} .ev.bad{border-left-color:var(--bad)} .ev.info{border-left-color:var(--brass)}
@@ -314,7 +315,7 @@ const VIEWS={
    ['Mercado',[['shop','🛒','Tiendas','Armas y objetos'],['inv','🎒','Inventario',Object.values(S.inv).reduce((t,n)=>t+n,0)+' objetos']]],
    ['Lado oscuro',[['casino','🎰','Casino','Tragaperras, ruleta, cajas'],['temple','💎','Templo de cristal',S.cry+' cristales']]],
    ['Tú',[['me','📈','Perfil',S.sp?S.sp+' puntos':'Habilidades y partida'],['events','📜','Eventos',S.unr?S.unr+' nuevos':'Historial']]]];
-  return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'"><span class="i">'+t[1]+'</span><b>'+t[2]+'</b><small>'+t[3]+'</small></button>').join('')+'</div>').join('')},
+  return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'"><span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
  job(){let h=back()+'<h2>Tu trabajo</h2><p class="hint">El sueldo entra cada minuto, también sin jugar. Trabajar sube poco a poco tu estadística de Trabajo. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>';
   JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i;h+=row(j.n+(cur?' (actual)':''),fmt(j.pay)+'/min · requiere Trabajo '+j.lab+(j.iq?' e Inteligencia '+j.iq:''),b('job',i,cur?'Actual':'Aceptar',lk||cur),lk)});
   return h+(S.job>=0?'<div class="btns">'+b('quit',undefined,'Dejar el trabajo',false,'alt')+'</div>':'')},
