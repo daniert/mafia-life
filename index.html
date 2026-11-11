@@ -232,6 +232,8 @@ const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
 const city=()=>CITIES[S.city];
 const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
 const atkT=()=>Math.floor(S.atk)+(S.w>=0?WEAPONS[S.w].v:0)+Math.floor(S.g*.5);
+// Gym fee per energy point grows with the stat level.
+const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
 const defT=()=>Math.floor(S.def)+(S.a>=0?ARMOR[S.a].v:0)+Math.floor(S.g*.5);
 // Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
 const fightP=f=>{const a=atkT()+Math.floor(S.agi)*.5,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.92,Math.max(.05,r*.8**d))};
@@ -265,9 +267,11 @@ const ACT={
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': éxito. Ganas '+fmt(g)+(cr?', 1 cristal':'')+' y '+c.xp+' XP.','ok');gain(c.xp)}
   else if(Math.random()<.4){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
   else{const d=c.dm+rnd(0,5);S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- train(k,all){if(inHosp()||S.en<1)return;const u=all?Math.floor(S.en):1,nm=STATS.find(s=>s[0]===k)[1];let g=0;
-  for(let n=0;n<u;n++){g+=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4);S.wl=Math.max(0,S.wl-maxWl()*.03)}
-  S.en-=u;S[k]+=g;msg('Entrenas '+nm.toLowerCase()+' ('+u+' de energía): +'+f1(g)+'.','ok',0)},
+ train(k,all){if(inHosp()||S.en<1)return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k),u=Math.min(all?Math.floor(S.en):1,Math.floor(S.cash/fee));
+  if(u<1){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}let g=0;
+  // Diminishing returns: the higher the stat, the less each session gives.
+  for(let n=0;n<u;n++){g+=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k]);S.wl=Math.max(0,S.wl-maxWl()*.06)}
+  S.en-=u;S.cash-=u*fee;S[k]+=g;msg('Entrenas '+nm.toLowerCase()+' ('+u+' de energía, '+fmt(u*fee)+'): +'+f1(g)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||S.en<2||S.hp<=10||!f)return;S.en-=2;
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m);S.cash+=g;S.wins++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.','ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
@@ -339,8 +343,8 @@ const VIEWS={
  crime(){let h=status()+'<h2>Crímenes</h2><p class="hint">Gastan valor. Si sale mal puedes acabar herido o en la cárcel. La práctica y la inteligencia mejoran el éxito.</p>';
   CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=S.lvl<c.l||S.iq<(c.iq||0);
    h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:''):'Valor '+c.br+' · '+fmt(c.a*city().m)+' a '+fmt(c.b*city().m)+' · éxito '+Math.round(crimeP(c,i)*100)+'%',b('crime',i,'Hacer',lk||locked()||S.st<c.br),lk)});return h},
- gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Entrenar gasta energía. Con más voluntad (ahora '+Math.round(S.wl/maxWl()*100)+'%) ganas más; cada entrenamiento la gasta. Se puede entrenar en la cárcel, pero no en el hospital.</p>';
-  STATS.slice(0,4).forEach(s=>{const d=inHosp()||S.en<1;h+=row(s[1],'Actual: '+f1(S[s[0]]),b('train',s[0],'×1',d,'sm')+b('train',s[0]+'|all','Todo',d,'alt sm'))});
+ gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Entrenar gasta energía y cuesta una cuota que sube con tu nivel en esa estadística. Cuanto más alta, menos mejoras. Con más voluntad (ahora '+Math.round(S.wl/maxWl()*100)+'%) ganas más; cada entrenamiento la gasta. Se puede entrenar en la cárcel, pero no en el hospital.</p>';
+  STATS.slice(0,4).forEach(s=>{const d=inHosp()||S.en<1;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · cuota '+fmt(gymFee(s[0]))+'/energía',b('train',s[0],'×1',d||S.cash<gymFee(s[0]),'sm')+b('train',s[0]+'|all','Todo',d,'alt sm'))});
   return h+'<p class="hint">Fuerza da ataque, Agilidad ayuda a acertar, Guardia reduce el daño y Trabajo te da mejores empleos. La inteligencia se gana en la escuela.</p>'},
  fight(){let h=status()+'<h2>Pelear</h2><p class="hint">Cada pelea cuesta 2 de energía. Con 10 de salud o menos no puedes pelear. Ataque '+atkT()+' · Agilidad '+Math.floor(S.agi)+'.</p>';
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · fuerza '+f.a+' · probabilidad de ganar '+Math.round(fightP(f)*100)+'%',b('fight',i,'Atacar',locked()||S.en<2||S.hp<=10))});
@@ -424,7 +428,7 @@ impf.addEventListener('change',async()=>{const f=impf.files[0];impf.value='';if(
   save();view()});
 
 function tick(dt){
-  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/12);S.wl=Math.min(maxWl(),S.wl+dt/3);
+  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/12);S.wl=Math.min(maxWl(),S.wl+dt/9);
   S.cash+=income()*dt/60;if(S.job>=0)S.lab+=dt/60*.05*(S.job+1);
   const n=now();
   if(S.hosp&&n>=S.hosp){S.hosp=0;S.hp=Math.max(S.hp,maxHp()*.5);msg('Te dan el alta en el hospital.','info')}
