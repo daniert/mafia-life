@@ -233,7 +233,8 @@ const city=()=>CITIES[S.city];
 const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
 const atkT=()=>Math.floor(S.atk)+(S.w>=0?WEAPONS[S.w].v:0)+Math.floor(S.g*.5);
 const defT=()=>Math.floor(S.def)+(S.a>=0?ARMOR[S.a].v:0)+Math.floor(S.g*.5);
-const fightP=f=>{const a=atkT()+Math.floor(S.agi)*.5;return a/(a+f.a)};
+// Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
+const fightP=f=>{const a=atkT()+Math.floor(S.agi)*.5,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.92,Math.max(.05,r*.8**d))};
 const crimeP=(c,i)=>Math.min(.97,c.p+Math.min(.15,(S.mast[i]||0)*.003)+Math.min(.05,S.iq*.001));
 const pay=()=>S.job>=0?JOBS[S.job].pay:0;
 const income=()=>S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0)+pay();
@@ -252,7 +253,11 @@ function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.cry+
   msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 cristales.','ok')}}
 function hospital(){if(S.hp>0)return '';const l=Math.floor(S.cash*.1),m=Math.min(30,2+Math.floor(S.lvl/3));
   S.cash-=l;S.hp=1;S.hosp=now()+m*60000;return ' Acabas '+m+' min en el hospital y pierdes '+fmt(l)+'.'}
-function genFoes(){S.foes=[];for(let i=0;i<4;i++){const l=Math.max(1,S.lvl+rnd(-2,2));const C=city();S.foes.push({n:C.fn[rnd(0,C.fn.length-1)]+' '+C.sn[rnd(0,C.sn.length-1)],l,a:l*2+3+rnd(0,4)})}}
+// Foe archetypes: power multiplier and loot multiplier.
+const FOE_T=[['Novato',.75,.7],['Matón',1,1],['Veterano',1.3,1.4],['Sicario',1.7,2]];
+function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){const l=Math.max(1,S.lvl+rnd(-2,3)),t=FOE_T[Math.min(3,Math.floor(Math.random()**1.6*4))];
+ // Power grows faster than linearly so higher levels stay dangerous.
+ const a=Math.round((l*4+l*l*.8+rnd(0,l*3))*t[1]);S.foes.push({n:C.fn[rnd(0,C.fn.length-1)]+' '+C.sn[rnd(0,C.sn.length-1)],l,a,t:t[0],m:t[2]})}}
 
 const ACT={
  crime(i){i=+i;const c=CRIMES[i];if(locked()||S.lvl<c.l||S.iq<(c.iq||0)||S.st<c.br)return;S.st-=c.br;
@@ -264,10 +269,11 @@ const ACT={
   for(let n=0;n<u;n++){g+=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4);S.wl=Math.max(0,S.wl-maxWl()*.03)}
   S.en-=u;S[k]+=g;msg('Entrenas '+nm.toLowerCase()+' ('+u+' de energía): +'+f1(g)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||S.en<2||S.hp<=10||!f)return;S.en-=2;
-  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*city().m);S.cash+=g;S.wins++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.','ok');gain(f.l+2)}
+  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m);S.cash+=g;S.wins++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.','ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
- refoes(){genFoes();msg('Nuevos rivales a la vista.','info',0)},
+ refoes(){if(locked()||S.st<1)return;S.st-=1;const w=Math.ceil(maxWl()*.08);S.wl=Math.max(0,S.wl-w);
+  if(S.en>0&&Math.random()<.3)S.en--;genFoes();msg('Recorres las calles buscando rivales. Cansancio: −1 valor, −'+w+' voluntad.','info',0)},
  recruit(){const c=recruitCost();if(S.cash<c||S.g>=500)return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
  war(i){const r={n:rivalName(i),s:RIVALS[i].s};if(locked()||S.st<3)return;S.st-=3;
   if(Math.random()<S.g/(S.g+r.s)){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 cristal.','ok');gain(Math.ceil(r.s/2)+5)}
@@ -337,8 +343,8 @@ const VIEWS={
   STATS.slice(0,4).forEach(s=>{const d=inHosp()||S.en<1;h+=row(s[1],'Actual: '+f1(S[s[0]]),b('train',s[0],'×1',d,'sm')+b('train',s[0]+'|all','Todo',d,'alt sm'))});
   return h+'<p class="hint">Fuerza da ataque, Agilidad ayuda a acertar, Guardia reduce el daño y Trabajo te da mejores empleos. La inteligencia se gana en la escuela.</p>'},
  fight(){let h=status()+'<h2>Pelear</h2><p class="hint">Cada pelea cuesta 2 de energía. Con 10 de salud o menos no puedes pelear. Ataque '+atkT()+' · Agilidad '+Math.floor(S.agi)+'.</p>';
-  S.foes.forEach((f,i)=>{h+=row(f.n,'Nivel '+f.l+' · probabilidad de ganar '+Math.round(fightP(f)*100)+'%',b('fight',i,'Atacar',locked()||S.en<2||S.hp<=10))});
-  h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales',false,'alt')+'</div>';
+  S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · fuerza '+f.a+' · probabilidad de ganar '+Math.round(fightP(f)*100)+'%',b('fight',i,'Atacar',locked()||S.en<2||S.hp<=10))});
+  h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (−1 valor, −voluntad)',locked()||S.st<1,'alt')+'</div>';
   h+='<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>. Cada dos miembros suman 1 de ataque y 1 de defensa.</p>'+row('Reclutar un matón',fmt(recruitCost()),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=500));
   h+='<h2>Guerras de bandas</h2><p class="hint">Cada guerra cuesta 3 de valor. Si pierdes, pierdes miembros.</p>';
   RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros · probabilidad de ganar '+Math.round(S.g/(S.g+r.s)*100)+'%',b('war',i,'Guerra',locked()||S.st<3))});return h},
