@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mafia Life</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2b0d11">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#2b0d11; --panel:#3a141a; --line:#5b2a32; --ink:#f2e8d5; --mute:#b99f90;
+  --brass:#d6ad52; --ok:#93c46d; --bad:#ee6e5a; --en:#e0b040; --st:#6fb3c9; --hp:#d9574a; --xp:#a98bd1;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark}}
+:root[data-theme="dark"]{color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Barlow",system-ui,sans-serif;min-height:100vh}
+.app{max-width:560px;margin:0 auto;padding:12px 14px 92px}
+header h1{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:28px;margin:4px 0 0;letter-spacing:.5px;color:var(--brass)}
+.sub{color:var(--mute);font-size:14px;margin:0 0 10px}
+.money{display:flex;gap:18px;font-weight:700;font-size:18px;margin:6px 0 10px;flex-wrap:wrap}
+.money small{display:block;font-weight:400;font-size:12px;color:var(--mute)}
+.bars{display:grid;gap:6px;margin-bottom:10px}
+.bar{display:grid;grid-template-columns:64px 1fr 64px;align-items:center;gap:8px;font-size:13px;color:var(--mute)}
+.bar b{color:var(--ink);text-align:right;font-weight:600}
+.track{height:8px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.fill{height:100%;transition:width .3s}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+#msg{min-height:44px;padding:10px 12px;border-left:4px solid var(--line);background:var(--panel);margin:8px 0 6px;font-size:15px}
+#msg.ok{border-color:var(--ok)} #msg.bad{border-color:var(--bad)} #msg.info{border-color:var(--brass)}
+h2{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:20px;margin:16px 0 4px;color:var(--ink)}
+.hint{color:var(--mute);font-size:14px;margin:0 0 6px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row .t{font-weight:600;font-size:17px}
+.row .d{color:var(--mute);font-size:14px}
+.row.locked{opacity:.5}
+.btn{background:var(--brass);color:#2b0d11;border:0;border-radius:6px;padding:10px 14px;font:700 15px "Barlow",sans-serif;min-width:92px;cursor:pointer}
+.btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+.btn.alt{background:transparent;color:var(--brass);border:1px solid var(--brass)}
+.btn:focus-visible,nav button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav .in{display:flex;width:100%;max-width:560px}
+nav button{flex:1;background:none;border:0;color:var(--mute);padding:14px 2px;font:600 14px "Barlow",sans-serif;cursor:pointer;border-top:3px solid transparent}
+nav button[aria-current="true"]{color:var(--brass);border-top-color:var(--brass)}
+.stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.pos{color:var(--ok)} .neg{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Mafia Life</h1>
+    <p class="sub" id="where"></p>
+    <div class="money"><div><small>Efectivo</small><span id="cash"></span></div><div><small>Banco</small><span id="bank"></span></div><div><small>Nivel</small><span id="lvl"></span></div></div>
+    <div class="bars" id="bars"></div>
+  </header>
+  <div id="msg" class="info" role="status" aria-live="polite">Bienvenido a la familia. Empieza con un trabajo pequeño.</div>
+  <main id="view"></main>
+</div>
+<nav><div class="in" id="nav"></div></nav>
+
+<script>
+const KEY='mafialife_save_v1';
+const CITIES=[
+ {n:'Nueva York',m:1,c:0,l:1},{n:'Chicago',m:1.4,c:400,l:3},{n:'Las Vegas',m:1.9,c:1800,l:6},
+ {n:'La Habana',m:2.6,c:7000,l:10},{n:'Palermo',m:3.6,c:25000,l:15}];
+const CRIMES=[
+ {n:'Robar un bolso',en:1,a:20,b:40,xp:1,p:.92,l:1},
+ {n:'Cobrar protección a un tendero',en:2,a:60,b:110,xp:2,p:.86,l:1},
+ {n:'Contrabando de tabaco',en:3,a:150,b:260,xp:4,p:.78,l:2},
+ {n:'Asalto a un furgón',en:5,a:400,b:650,xp:7,p:.68,l:4},
+ {n:'Robo a un casino',en:8,a:1100,b:1800,xp:12,p:.58,l:7},
+ {n:'Golpe a un banco',en:12,a:3500,b:5500,xp:22,p:.48,l:10},
+ {n:'Atraco a la Reserva',en:18,a:11000,b:17000,xp:40,p:.40,l:15}];
+const WEAPONS=[{n:'Navaja',p:300,v:3},{n:'Pistola',p:1500,v:8},{n:'Escopeta recortada',p:6000,v:18},{n:'Ametralladora Thompson',p:25000,v:40}];
+const ARMOR=[{n:'Chaleco de cuero',p:800,v:3},{n:'Abrigo reforzado',p:4000,v:10},{n:'Blindaje ligero',p:20000,v:30}];
+const BIZ=[{n:'Bar clandestino',p:3000,v:10},{n:'Casino ilegal',p:25000,v:90},{n:'Imprenta de billetes',p:100000,v:400}];
+const RIVALS=[{n:'Clan Bellavista',s:3},{n:'Hermanos Ferrante',s:10},{n:'La Cosca Nera',s:25},{n:'Sindicato Volkov',s:50},{n:'Los Caballeros de Palermo',s:100}];
+const NAMES=['Tony','Sal','Vinnie','Carlo','Rocco','Nico','Fredo','Luca','Dom','Paulie','Mickey','Bruno'];
+const SURN=['Ferrante','Moretti','Greco','Russo','Conti','Bianchi','Lombardi','Romano'];
+const TABS=[['crime','Crimen'],['fight','Pelea'],['gang','Banda'],['travel','Viaje'],['shop','Tienda'],['me','Perfil']];
+
+const def=()=>({cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:100,atk:5,def:5,enB:0,stB:0,hpB:0,city:0,g:1,w:-1,a:-1,biz:[0,0,0],mast:{},foes:[],t:Date.now()});
+let S=load(), tab='crime';
+function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(def(),JSON.parse(r))}catch(e){}return def()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>Math.floor(a+Math.random()*(b-a+1));
+const fmt=n=>'$'+Math.floor(n).toLocaleString('es-ES');
+const maxEn=()=>10+2*S.enB, maxSt=()=>5+S.stB, maxHp=()=>100+20*S.hpB, need=()=>40*S.lvl;
+const city=()=>CITIES[S.city];
+const atkT=()=>S.atk+(S.w>=0?WEAPONS[S.w].v:0)+Math.floor(S.g*.5);
+const defT=()=>S.def+(S.a>=0?ARMOR[S.a].v:0)+Math.floor(S.g*.5);
+const income=()=>S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0);
+const bizPrice=i=>Math.floor(BIZ[i].p*Math.pow(1.15,S.biz[i]));
+const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
+const healCost=()=>Math.ceil((maxHp()-S.hp)*(1+S.lvl*.5));
+
+function msg(t,k){const m=$('#msg');m.textContent=t;m.className=k||'info'}
+function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.en=maxEn();S.st=maxSt();S.hp=maxHp();msg('¡Subes al nivel '+S.lvl+'! Tienes 3 puntos de habilidad en Perfil.','ok')}}
+function hospital(){if(S.hp<=0){S.hp=Math.ceil(maxHp()*.2);const l=Math.floor(S.cash*.1);S.cash-=l;return ' Acabas en el hospital y pierdes '+fmt(l)+'.'}return ''}
+function genFoes(){S.foes=[];for(let i=0;i<4;i++){const l=Math.max(1,S.lvl+rnd(-2,2));S.foes.push({n:NAMES[rnd(0,NAMES.length-1)]+' '+SURN[rnd(0,SURN.length-1)],l,a:l*2+3+rnd(0,4)})}}
+
+const ACT={
+ crime(i){const c=CRIMES[i];if(S.lvl<c.l||S.en<c.en)return;S.en-=c.en;
+  const mm=S.mast[i]||0, p=Math.min(.97,c.p+Math.min(.15,mm*.003));
+  if(Math.random()<p){const g=Math.floor(rnd(c.a,c.b)*city().m);S.cash+=g;S.mast[i]=mm+1;gain(c.xp);
+    if(!$('#msg').className.includes('ok')||true)msg(c.n+': éxito. Ganas '+fmt(g)+' y '+c.xp+' XP.','ok')}
+  else{const d=c.en*2+rnd(0,5);S.hp-=d;msg(c.n+': te pillan. Pierdes '+d+' de salud.'+hospital(),'bad')}},
+ fight(i){const f=S.foes[i];if(S.st<1||S.hp<=10||!f)return;S.st--;
+  const p=atkT()/(atkT()+f.a);
+  if(Math.random()<p){const g=Math.floor(f.l*40*city().m);S.cash+=g;gain(f.l+2);S.wins=(S.wins||0)+1;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.','ok')}
+  else{const d=Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
+  genFoes()},
+ recruit(){const c=recruitCost();if(S.cash<c||S.g>=500)return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
+ war(i){const r=RIVALS[i];if(S.st<3)return;S.st-=3;
+  const p=S.g/(S.g+r.s);
+  if(Math.random()<p){const g=Math.floor(r.s*60*city().m);S.cash+=g;gain(Math.ceil(r.s/2)+5);msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+'.','ok')}
+  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).','bad')}},
+ travel(i){const c=CITIES[i];if(i===S.city||S.lvl<c.l||S.cash<c.c)return;S.cash-=c.c;S.city=i;msg('Llegas a '+c.n+'. Los pagos se multiplican por '+c.m+'.','info')},
+ buy(k,i){const L=k==='w'?WEAPONS:ARMOR;const it=L[i];if(S.cash<it.p||S[k]>=i)return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok')},
+ biz(i){const p=bizPrice(i);if(S.cash<p)return;S.cash-=p;S.biz[i]++;msg('Compras: '+BIZ[i].n+'. Ingresas '+fmt(income())+' por minuto.','ok')},
+ skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp+=20;msg('Habilidad mejorada.','ok')},
+ heal(){const c=healCost();if(S.hp>=maxHp()||S.cash<c)return;S.cash-=c;S.hp=maxHp();msg('El médico te deja como nuevo por '+fmt(c)+'.','ok')},
+ dep(){const a=Math.floor(S.cash);if(a<1)return;const fee=Math.ceil(a*.05);S.cash-=a;S.bank+=a-fee;msg('Depositas '+fmt(a-fee)+' (comisión '+fmt(fee)+').','info')},
+ wd(){S.cash+=S.bank;S.bank=0;msg('Retiras todo tu dinero del banco.','info')},
+ reset(){if(confirm('¿Borrar la partida y empezar de cero?')){S=def();genFoes();tab='crime';msg('Nueva partida. Bienvenido a la familia.','info')}}
+};
+
+function row(t,d,btn,locked){return '<div class="row'+(locked?' locked':'')+'"><div><div class="t">'+t+'</div><div class="d">'+d+'</div></div>'+btn+'</div>'}
+function b(act,arg,label,dis,alt){return '<button class="btn'+(alt?' alt':'')+'" data-a="'+act+'"'+(arg!==undefined?' data-i="'+arg+'"':'')+(dis?' disabled':'')+'>'+label+'</button>'}
+
+const VIEWS={
+ crime(){let h='<h2>Trabajos</h2><p class="hint">Gastan energía. Cuanto más repites un trabajo, más fácil sale.</p>';
+  CRIMES.forEach((c,i)=>{const lock=S.lvl<c.l,mm=S.mast[i]||0,p=Math.round(Math.min(.97,c.p+Math.min(.15,mm*.003))*100);
+   h+=row(c.n,lock?'Requiere nivel '+c.l:'Energía '+c.en+' · '+fmt(c.a*city().m)+' a '+fmt(c.b*city().m)+' · éxito '+p+'%',b('crime',i,'Hacer',lock||S.en<c.en),lock)});return h},
+ fight(){let h='<h2>Pelear</h2><p class="hint">Cada pelea cuesta 1 de aguante. Con 10 de salud o menos no puedes pelear. Tu ataque: '+atkT()+'.</p>';
+  S.foes.forEach((f,i)=>{const p=Math.round(atkT()/(atkT()+f.a)*100);h+=row(f.n,'Nivel '+f.l+' · probabilidad de ganar '+p+'%',b('fight',i,'Atacar',S.st<1||S.hp<=10))});
+  return h+'<div class="btns">'+b('refoes',undefined,'Buscar otros rivales',false,true)+'</div>'},
+ gang(){let h='<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>. Cada dos miembros suman 1 de ataque y 1 de defensa.</p>';
+  h+=row('Reclutar un matón',fmt(recruitCost()),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=500));
+  h+='<h2>Guerras de bandas</h2><p class="hint">Cada guerra cuesta 3 de aguante. Si pierdes, pierdes miembros.</p>';
+  RIVALS.forEach((r,i)=>{const p=Math.round(S.g/(S.g+r.s)*100);h+=row(r.n,r.s+' miembros · probabilidad de ganar '+p+'%',b('war',i,'Guerra',S.st<3))});return h},
+ travel(){let h='<h2>Viajar</h2><p class="hint">En cada ciudad cambia lo que ganas en trabajos y peleas.</p>';
+  CITIES.forEach((c,i)=>{const here=i===S.city,lock=S.lvl<c.l;
+   h+=row(c.n+(here?' (aquí)':''),lock?'Requiere nivel '+c.l:'Pagos ×'+c.m+' · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lock||S.cash<c.c),lock)});return h},
+ shop(){let h='<h2>Armas</h2>';
+  WEAPONS.forEach((w,i)=>{const own=S.w>=i;h+=row(w.n,'+'+w.v+' ataque · '+fmt(w.p),b('buy','w|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Protección</h2>';
+  ARMOR.forEach((w,i)=>{const own=S.a>=i;h+=row(w.n,'+'+w.v+' defensa · '+fmt(w.p),b('buy','a|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Negocios</h2><p class="hint">Ingresos por minuto, también cuando no estás. Ahora: '+fmt(income())+'/min.</p>';
+  BIZ.forEach((w,i)=>{h+=row(w.n+' ×'+S.biz[i],'+'+fmt(w.v)+'/min · '+fmt(bizPrice(i)),b('biz',i,'Comprar',S.cash<bizPrice(i)))});return h},
+ me(){let h='<h2>Habilidades</h2><p class="hint">Puntos disponibles: <b>'+S.sp+'</b>. Ganas 3 por nivel.</p>';
+  [['atk','Ataque',S.atk],['def','Defensa',S.def],['enB','Energía máxima',maxEn()],['stB','Aguante máximo',maxSt()],['hpB','Salud máxima',maxHp()]].forEach(s=>{h+=row(s[1],'Actual: '+s[2],b('skill',s[0],'+1',S.sp<1))});
+  h+='<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p><div class="btns">'+b('dep',undefined,'Depositar todo',S.cash<1)+b('wd',undefined,'Retirar todo',S.bank<1,true)+'</div>';
+  h+='<h2>Hospital</h2>'+row('Curarte del todo',S.hp>=maxHp()?'Ya estás al máximo':fmt(healCost()),b('heal',undefined,'Curar',S.hp>=maxHp()||S.cash<healCost()));
+  h+='<h2>Estadísticas</h2><div class="stat"><span>Ataque total</span><span>'+atkT()+'</span></div><div class="stat"><span>Defensa total</span><span>'+defT()+'</span></div><div class="stat"><span>Miembros de la banda</span><span>'+S.g+'</span></div><div class="stat"><span>Peleas ganadas</span><span>'+(S.wins||0)+'</span></div>';
+  return h+'<div class="btns">'+b('reset',undefined,'Borrar partida',false,true)+'</div>'}
+};
+
+function bars(){const L=[['Energía',S.en,maxEn(),'--en'],['Aguante',S.st,maxSt(),'--st'],['Salud',S.hp,maxHp(),'--hp'],['XP',S.xp,need(),'--xp']];
+  $('#bars').innerHTML=L.map(x=>'<div class="bar"><span>'+x[0]+'</span><div class="track"><div class="fill" style="width:'+Math.max(0,Math.min(100,x[1]/x[2]*100))+'%;background:var('+x[3]+')"></div></div><b>'+Math.floor(x[1])+'/'+x[2]+'</b></div>').join('')}
+function head(){$('#where').textContent=city().n+' · pagos ×'+city().m+(income()?' · +'+fmt(income())+'/min':'');$('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;bars()}
+function view(){if(!S.foes.length)genFoes();$('#view').innerHTML=VIEWS[tab]();
+  $('#nav').innerHTML=TABS.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'>'+t[1]+'</button>').join('');head()}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]');if(t){tab=t.dataset.tab;view();window.scrollTo(0,0);return}
+  const bt=e.target.closest('button[data-a]');if(!bt||bt.disabled)return;
+  const a=bt.dataset.a,i=bt.dataset.i;
+  if(a==='refoes'){genFoes();msg('Nuevos rivales a la vista.','info')}
+  else if(a==='buy'){const p=i.split('|');ACT.buy(p[0],+p[1])}
+  else if(a==='skill')ACT.skill(i);
+  else ACT[a](i===undefined?undefined:+i);
+  save();view()});
+
+function tick(dt){
+  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/12);
+  S.cash+=income()*dt/60}
+const now0=Date.now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
+let sig='',beat=0;
+setInterval(()=>{const n=Date.now();tick((n-S.t)/1000);S.t=n;head();beat++;
+  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),income()&&beat%10===0?beat:0].join('|');
+  if(s!==sig){sig=s;view()}},1000);
+setInterval(save,5000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+view();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
