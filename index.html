@@ -230,7 +230,14 @@ const BIZ=[{n:'Bar clandestino',p:3000,v:10,iq:0},{n:'Casino ilegal',p:25000,v:9
 const bizWl=i=>2+[...BIZ].sort((x,y)=>x.p-y.p).indexOf(BIZ[i]);
 // Hidden 'money calls money': richer players get a small, capped chance to reroll a losing gamble
 const mLuck=()=>Math.min(.03,Math.log10(1+Math.max(0,S.cash+S.bank)/1000)*.01);
-const RIVALS=[{s:3},{s:10},{s:25},{s:50},{s:100}];
+const RIVALS=[{s:3,l:1},{s:10,l:2},{s:25,l:3},{s:50,l:4},{s:100,l:5}];
+// Crew: named henchmen (S.g counts you + crew). They gain XP in gang wars and level up.
+const CREW_N=['Tony','Sal','Vito','Frankie','Nico','Lucky','Paulie','Benny','Carmine','Joey','Rocco','Enzo','Gino','Mickey','Fredo','Louie','Dino','Santo','Tommy','Vinnie'];
+const CREW_A=['«Dos Dedos»','«el Tostadas»','«Pocapena»','«Rodillas»','«el Mudo»','«Sinfreno»','«Calderilla»','«el Notario»','«Mandíbula»','«Siete Vidas»','«el Persianas»','«Gatillo Fácil»','«Bocachancla»','«el Fontanero»','«Lentejas»','«Tres Pisos»','«el Contable»','«Medio Kilo»','«Sordina»','«el Abuelo»','«Pestañas»','«Chatarra»','«el Párroco»','«Ojo de Vidrio»'];
+const crewName=()=>{const used=new Set(S.crew.map(m=>m.n));for(let k=0;k<50;k++){const n=CREW_N[rnd(0,CREW_N.length-1)]+' '+CREW_A[rnd(0,CREW_A.length-1)];if(!used.has(n))return n}return 'Recluta nº '+(S.crew.length+1)};
+const crewNeed=m=>m.l*3;
+function crewSync(){while(S.crew.length<S.g-1)S.crew.push({n:crewName(),l:1,x:0});if(S.crew.length>S.g-1)S.crew.length=Math.max(0,S.g-1)}
+const gangPow=()=>1+S.crew.reduce((t,m)=>t+m.l,0), rivalPow=r=>r.s*r.l;
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
 const lvOk=it=>!it.l||S.lvl>=it.l, nextLv=L=>Math.min(...L.filter(it=>!lvOk(it)).map(it=>it.l)), shown=(it,L)=>lvOk(it)||it.l===nextLv(L);
@@ -267,10 +274,11 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,veh:[],biz:[0,0,0,0,0,0,0,0],mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,done:[],
- hosp:0,jail:0,inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],term:null,fund:null,loan:null,terr:0,fear:0,log:[],t:Date.now()});
+ hosp:0,jail:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],term:null,fund:null,loan:null,terr:0,fear:0,log:[],t:Date.now()});
 function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
   if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
+  if(!Array.isArray(o.crew))o.crew=[];const s0=S;S=o;crewSync();S=s0;
   return o}
 let S=load(), tab='home', bet=100, reels='🎰 🎰 🎰';
 function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r))}catch(e){}return def()}
@@ -366,15 +374,19 @@ const crLk=c=>S.lvl<c.l||S.iq<(c.iq||0)||(c.bz!==undefined&&!S.biz[c.bz]);
 const jailP=()=>.4*Math.max(.4,1-agiT()*.005)*(jw(1)?.85:1);
 // Crime cooldown (ms): bigger jobs take longer to set up again
 // Crime cooldown in seconds, by CRIMES index: street-level jobs are plentiful, big targets are rare
+// Crime violence by CRIMES index: max health lost even when it goes well (0 = clean job)
+const CR_VIO=[0,1,0,2,2,3,3,0,0,0,0];
 const CR_CD=[10,20,60,480,900,1800,3600,180,600,300,360];
 const crCd=c=>CR_CD[CRIMES.indexOf(c)]*1000*(jw(4)?.9:1), crOn=i=>(S.crc[i]||0)>now();
 // Bank products. Term deposits and investments use the bank balance; loans pay out in cash.
 const TERMS=[{n:'Plazo corto',min:30,r:.03},{n:'Plazo medio',min:120,r:.1},{n:'Plazo largo',min:480,r:.3}];
 const FUNDS=[{n:'Bonos del puerto',min:60,lo:-.05,hi:.2},{n:'Acciones de la naviera',min:120,lo:-.25,hi:.6},{n:'Especular con el casino',min:180,lo:-.6,hi:1.5}];
+// Deposits/investments take a fixed share of cash; they can't overlap with a loan (no borrow-to-invest arbitrage)
+const STAKE=.5, stakeAmt=()=>Math.floor(S.cash*STAKE), noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape attempt costs most of your energy and valor
 const escEn=()=>Math.ceil(maxEn()*.8),escSt=()=>Math.ceil(maxSt()*.8);
-const crEn=c=>c.br+1, crHp=c=>hd(c.br*2), fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
+const crEn=c=>c.br+1, crHp=c=>CR_VIO[CRIMES.indexOf(c)], fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
 const inHosp=()=>S.hosp>now(), inJail=()=>S.jail>now(), locked=()=>inHosp()||inJail();
@@ -387,7 +399,7 @@ function msg(t,k,log){const m=$('#msg');m.textContent=t;m.className=(k||'info')+
 function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.cry+=2;S.en=maxEn();S.st=maxSt();S.hp=maxHp();S.wl=maxWl();
   msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 gemas.','ok')}}
 function hospital(){if(S.hp>0)return '';const l=Math.floor(S.cash*.1),m=Math.min(30,2+Math.floor(S.lvl/3));
-  S.cash-=l;S.hp=1;S.hosp=now()+m*60000;return ' Acabas '+m+' min en el hospital y pierdes '+fmt(l)+'.'}
+  S.cash-=l;S.hp=1;S.hosp=now()+m*60000;S.wl=Math.max(0,S.wl-3);return ' Acabas '+m+' min en el hospital y pierdes '+fmt(l)+'.'}
 // Foe archetypes: power multiplier and loot multiplier.
 const FOE_T=[['Novato',.75,.7],['Matón',1,1],['Veterano',1.3,1.4],['Sicario',1.7,2]];
 function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){const l=Math.max(1,S.lvl+rnd(-2,3)),t=FOE_T[Math.min(3,Math.floor(Math.random()**1.6*4))];
@@ -402,26 +414,26 @@ const ACT={
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(c.xp*S.lvl)}
   else{const d=hd(c.dm+rnd(0,8));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);const h0=crHp(c);S.hp-=h0;S.st-=c.br;S.crc[i]=now()+crCd(c);
+ crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);const v=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
-   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'. Pierdes '+h0+' de salud.','ok');gain(c.xp)}
-  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. Pierdes '+h0+' de salud y pasas '+m+' min en la cárcel.','bad')}
-  else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+(h0+d)+' de salud.'+hospital(),'bad')}},
+   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;const h1=v?rnd(0,v):0;S.hp-=h1;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.'+(h1?' Pierdes '+h1+' de salud.':''),'ok');gain(c.xp)}
+  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.wl=Math.max(0,S.wl-2);const h1=v?rnd(1,v):0;S.hp-=h1;msg(c.n+': te detiene la policía.'+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.','bad')}
+  else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
  train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
   const g=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k])*e*.7;S.wl-=gWl();
   S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
-  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),d=hd(rnd(2,8)+Math.floor(f.l/2)-Math.floor(defT()/6));S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn)S.g++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. Recibes '+d+' de daño.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
+  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),d=hd(rnd(2,8)+Math.floor(f.l/2)-Math.floor(defT()/6));S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. Recibes '+d+' de daño.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=hd(Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
  refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;
   genFoes();msg('Recorres las calles buscando rivales.','info',0)},
- recruit(){const c=recruitCost();if(S.cash<c||S.g>=gangCap())return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
- war(i){const r={n:rivalName(i),s:RIVALS[i].s};if(locked()||S.st<3||S.en<3||S.hp<=2)return;S.st-=3;S.en-=3;const won=Math.random()<Math.min(.95,S.g/(S.g+r.s)*wlF()+(jw(2)?.05:0)),d=hd(Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4))));S.hp-=d;const hs=' Recibes '+d+' de daño.';
-  if(won){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;S.fear=now()+600000;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 gema.'+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
-  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).'+hs+hospital(),'bad')}},
+ recruit(){const c=recruitCost();if(S.cash<c||S.g>=gangCap())return;S.cash-=c;S.g++;crewSync();msg(S.crew[S.crew.length-1].n+' se une a la banda.','ok')},
+ war(i){const r={n:rivalName(i),s:RIVALS[i].s};let ups=[];const train=()=>{S.crew.forEach(m=>{m.x+=won?2:1;if(m.x>=crewNeed(m)){m.x-=crewNeed(m);m.l++;ups.push(m.n)}})};if(locked()||S.st<3||S.en<3||S.hp<=2)return;S.st-=3;S.en-=3;const won=Math.random()<Math.min(.95,gangPow()/(gangPow()+rivalPow(RIVALS[i]))*wlF()+(jw(2)?.05:0)),d=hd(Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4))));S.hp-=d;const hs=' Recibes '+d+' de daño.';
+  if(won){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;S.fear=now()+600000;train();msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 gema.'+(ups.length?' Suben de nivel: '+ups.join(', ')+'.':'')+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
+  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));const gone=[];for(let k=0;k<l;k++)gone.push(S.crew.splice(rnd(0,S.crew.length-1),1)[0].n);S.g-=l;S.wl=Math.max(0,S.wl-2);train();msg(r.n+' os aplasta.'+(gone.length?' Caen '+gone.join(', ')+'.':'')+(ups.length?' Suben de nivel: '+ups.join(', ')+'.':'')+hs+hospital(),'bad')}},
  travel(i){const c=CITIES[i];if(locked()||i==S.city||S.lvl<c.l||S.cash<c.c||S.en<5)return;S.cash-=c.c;S.en-=5;S.city=+i;genFoes();msg('Llegas a '+c.n+'.','info')},
  veh(i){i=+i;const v=VEHICLES[i];if(!v||!lvOk(v)||S.cash<v.p||S.veh.includes(i)||i<Math.max(-1,...S.veh))return;S.cash-=v.p;S.veh.push(i);msg('Compras: '+v.n+'.','ok',0)},
  buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i||!avail(it)||!lvOk(it))return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
@@ -450,9 +462,9 @@ const ACT={
   else if(r<.85){const x=Math.ceil(need()*.1);msg('Caja de la suerte: '+x+' XP.','ok');gain(x)}
   else msg('Caja de la suerte: vacía. Mala suerte.','bad',0)},
  dep(){const a=Math.floor(S.cash);if(a<1)return;const fee=Math.ceil(a*.05);S.cash-=a;S.bank+=a-fee;msg('Depositas '+fmt(a-fee)+' (comisión '+fmt(fee)+').','info',0)},
- term(i){const t=TERMS[+i],a=Math.floor(S.cash);if(S.term||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
- fund(i){const f=FUNDS[+i],a=Math.floor(S.cash);if(S.fund||a<1)return;S.cash-=a;S.fund={i:+i,a,end:now()+f.min*60000};msg('Inviertes '+fmt(a)+' en '+f.n.toLowerCase()+'.','info',0)},
- loan(){if(S.loan||locked())return;const a=loanMax();S.cash+=a;S.loan={a:Math.ceil(a*(1+LOAN_R)),end:now()+LOAN_MIN*60000};msg('Te prestan '+fmt(a)+'. Debes devolver '+fmt(S.loan.a)+'.','info',0)},
+ term(i){const t=TERMS[+i],a=stakeAmt();if(S.term||noInvest()||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
+ fund(i){const f=FUNDS[+i],a=stakeAmt();if(S.fund||noInvest()||a<1)return;S.cash-=a;S.fund={i:+i,a,end:now()+f.min*60000};msg('Inviertes '+fmt(a)+' en '+f.n.toLowerCase()+'.','info',0)},
+ loan(){if(S.loan||noLoan()||locked())return;const a=loanMax();S.cash+=a;S.loan={a:Math.ceil(a*(1+LOAN_R)),end:now()+LOAN_MIN*60000};msg('Te prestan '+fmt(a)+'. Debes devolver '+fmt(S.loan.a)+'.','info',0)},
  repay(){if(!S.loan||S.cash<S.loan.a)return;S.cash-=S.loan.a;S.loan=null;msg('Devuelves el préstamo.','ok',0)},
  wd(){S.cash+=S.bank;S.bank=0;msg('Retiras todo tu dinero del banco.','info',0)},
  exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mafialife-nivel'+S.lvl+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);msg('Partida exportada.','info',0)},
@@ -497,9 +509,10 @@ const VIEWS={
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
   h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (⚡1 · 💪1)',locked()||S.st<1||S.en<1,'alt')+'</div>';
   return h},
- gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
+ gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
+  if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros.</p>';
-  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
+  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
  game(){let h=back()+'<h2>Partida</h2><p class="hint">Se guarda sola en este navegador. Exporta una copia para pasarla a otro dispositivo.</p>';
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
@@ -521,15 +534,15 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   if(inJail())return h+'<p class="hint">Mientras estés dentro solo puedes hacer <button class="back" data-tab="crime">crímenes de cárcel</button>. No puedes pelear, trabajar, viajar ni apostar. Puedes pagar la fianza para salir antes.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+b('out','jail|c','Fianza '+pl(outCry(S.jail),'gema'),S.cry<outCry(S.jail),'alt')+'</div>'+row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()));
   return h+'<p class="hint">Estás libre. Si un crimen sale mal, la policía puede encerrarte unos minutos.</p>'},
  bank(){let h=back()+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p><div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><div class="btns">'+b('dep',undefined,'Depositar todo',S.cash<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
-  h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza todo tu efectivo y recupéralo con intereses en el banco al vencer. Uno cada vez.</p>';
+  h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza la mitad de tu efectivo ('+fmt(stakeAmt())+') y recupéralo con intereses en el banco al vencer. Uno cada vez y nunca con un préstamo pendiente.</p>';
   if(S.term)h+='<div class="alert info">🏦 <span>'+TERMS[S.term.i].n+': '+fmt(S.term.a)+' · vence en '+cd(S.term.end)+'</span></div>';
-  TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||S.cash<1))});
-  h+='<h2>Inversiones</h2><p class="hint">Invierte todo tu efectivo; el resultado llega al banco. Puedes ganar mucho o perder parte. Una cada vez.</p>';
+  TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt()<1))});
+  h+='<h2>Inversiones</h2><p class="hint">Invierte la mitad de tu efectivo ('+fmt(stakeAmt())+'); el resultado llega al banco. Puedes ganar mucho o perder parte. Una cada vez y nunca con un préstamo pendiente.</p>';
   if(S.fund)h+='<div class="alert info">📈 <span>'+FUNDS[S.fund.i].n+': '+fmt(S.fund.a)+' · termina en '+cd(S.fund.end)+'</span></div>';
-  FUNDS.forEach((f,i)=>{h+=row(f.n,f.min+' min · de '+Math.round(f.lo*100)+'% a +'+Math.round(f.hi*100)+'%',b('fund',i,'Invertir',!!S.fund||S.cash<1))});
-  h+='<h2>Préstamo</h2><p class="hint">Dinero en mano al momento. Si no lo devuelves a tiempo, los cobradores de la familia vendrán a por él, y volverán mientras debas algo.</p>';
+  FUNDS.forEach((f,i)=>{h+=row(f.n,f.min+' min · de '+Math.round(f.lo*100)+'% a +'+Math.round(f.hi*100)+'%',b('fund',i,'Invertir',!!S.fund||noInvest()||stakeAmt()<1))});
+  h+='<h2>Préstamo</h2><p class="hint">Dinero en mano al momento. No se concede con depósitos o inversiones en curso. Si no lo devuelves a tiempo, los cobradores de la familia vendrán a por él, y volverán mientras debas algo.</p>';
   if(S.loan)return h+row(S.loan.v?'Deuda con los cobradores':'Préstamo pendiente','Debes '+fmt(S.loan.a)+' · '+(S.loan.v?'vuelven en ':'vence en ')+cd(S.loan.end),b('repay',undefined,'Devolver',S.cash<S.loan.a));
-  return h+row('Pedir '+fmt(loanMax()),'Devuelves '+fmt(Math.ceil(loanMax()*(1+LOAN_R)))+' en '+LOAN_MIN/60+' h',b('loan',undefined,'Pedir',locked()))},
+  return h+row('Pedir '+fmt(loanMax()),'Devuelves '+fmt(Math.ceil(loanMax()*(1+LOAN_R)))+' en '+LOAN_MIN/60+' h',b('loan',undefined,'Pedir',locked()||noLoan()))},
  biz(){let h=back()+'<h2>Negocios</h2><p class="hint">Dan dinero cada minuto, aunque no juegues. Ahora ingresas '+fmt(income())+'/min (sueldo incluido).</p>';
   BIZ.map((w,i)=>[w,i]).sort((x,y)=>x[0].p-y[0].p).forEach(([w,i])=>{const lk=S.iq<w.iq;h+=row(w.n+' ×'+S.biz[i],lk?'Requiere inteligencia '+w.iq:'+'+fmt(w.v*bizMul())+'/min · ✊'+bizWl(i)+' · '+fmt(bizPrice(i)),b('biz',i,'Comprar',lk||S.cash<bizPrice(i)||S.wl<bizWl(i)),lk)});return h},
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2>';
