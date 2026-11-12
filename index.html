@@ -329,7 +329,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>5+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>40*S.lvl;
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>30*S.lvl;
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5*(S.jw&&S.jw.includes(3)?.85:1)));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -465,9 +465,9 @@ const ACT={
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
   const g=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k])*e*.7;S.wl-=gWl();
-  S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
+  S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;gain(1);msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
-  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.'+(d?' Recibes '+d+' de daño.':'')+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
+  if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.'+(d?' Recibes '+d+' de daño.':'')+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=hd(Math.max(5,(rnd(10,18)+f.l)*fS(f).hit-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05*fS(f).steal);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
  refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;
@@ -686,7 +686,7 @@ function tick(dt){
     else{S.loan=null;msg('Los cobradores te visitan: se llevan '+fmt(fromCash+fromBank)+' y pierdes '+d+' de salud. Deuda saldada.','bad')}}
   if(S.jail&&n>=S.jail){S.jail=0;msg('Sales de la cárcel. Pórtate bien.','info')}
   if(S.edu&&n>=S.edu.end){const c=COURSES[S.edu.i];S.iq+=c.iq;if(c.lab)S.lab+=c.lab;S.done.push(S.edu.i);S.edu=null;S.cry++;msg('Terminas «'+c.n+'»: ganas 1 gema.','ok')}}
-const now0=now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
+const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),S.cool.gym>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
