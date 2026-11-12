@@ -386,11 +386,11 @@ const ACT={
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.','ok');gain(c.xp)}
   else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
   else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool[k]>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
+ train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
   const g=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k])*e*.7;S.wl-=gWl();
-  S.en-=e;S.cash-=fee;S[k]+=g;S.cool[k]=now()+30000;msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
+  S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),d=hd(rnd(2,8)+Math.floor(f.l/2)-Math.floor(defT()/6));S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn)S.g++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. Recibes '+d+' de daño.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=hd(Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
@@ -464,8 +464,8 @@ const VIEWS={
   let h=status()+'<h2>Crímenes</h2><p class="hint">Si salen mal, puedes acabar herido o en la cárcel.</p>';
   CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=crLk(c),on=crOn(i);
    h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):(on?'Disponible en '+cd(S.crc[i])+' · ':'')+'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
- gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, esa estadística descansa 30 s.</p>';
-  STATS.slice(0,3).forEach(s=>{const cl=S.cool[s[0]]>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+(cl?'descansando '+cd(S.cool[s[0]]):'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0]))),b('train',s[0],'Entrenar',d||S.cash<gymFee(s[0])))});
+ gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, descansas 30 s antes de volver a entrenar.</p>';
+  STATS.slice(0,3).forEach(s=>{const cl=S.cool.gym>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+(cl?'descansando '+cd(S.cool.gym):'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0]))),b('train',s[0],'Entrenar',d||S.cash<gymFee(s[0])))});
   return h},
  fight(){let h=status()+'<h2>Pelea</h2><p class="hint">Con 2 de salud o menos no puedes pelear.</p>';
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
@@ -560,7 +560,7 @@ function tick(dt){
 const now0=now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
-  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
+  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),S.cool.gym>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
   if(s!==sig){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
