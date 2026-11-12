@@ -645,7 +645,7 @@ function todo(){const L=[];
   const fi=S.foes.reduce((m,f,i)=>f.l<S.foes[m].l?i:m,0),f=S.foes[fi];
   if(f)L.push({a:'fight',i:fi,dis:S.en<2||S.hp<=2||S.st<fBr(f),ic:'🥊',t:'Atacar a '+f.n,d:'El rival más flojo · nivel '+f.l+' · ⚡2 · 💪'+fBr(f),go:'Atacar'});
   if(!locked()){const cl=S.cool.sleep>now();L.push({a:'sleep',i:0,dis:!canSleep(),ic:'😴',t:'Dormir',d:asleep()?'Ya estás durmiendo':SLEEP_MIN+' min · energía y salud x'+SLEEP_X+' · ✊'+slWl()+' · 💪'+slSt(),go:cl&&!asleep()?cd(S.cool.sleep):'Dormir'})}
-  if(S.hp<maxHp()*.5)L.push({ic:'🏥',t:'Estás herido',d:'Salud '+Math.floor(S.hp)+'/'+maxHp()+'. Cúrate antes de arriesgarte',tab:'hosp',go:'Curar'});
+  if(S.hp<maxHp()*.5)L.push({a:'heal',i:0,dis:locked()||S.cash<healCost()||S.en<3||S.wl<healWl(),ic:'🏥',t:'Estás herido',d:'Salud '+Math.floor(S.hp)+'/'+maxHp()+' · curarte: ⚡3 · ✊'+healWl()+' · '+fmt(healCost()),go:'Curar'});
   else if(!locked()&&!S.edu&&COURSES.some((c,i)=>!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
 const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
@@ -771,9 +771,9 @@ impf.addEventListener('change',async()=>{const f=impf.files[0];impf.value='';if(
   save();view()});
 
 function tick(dt){
-  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/60);S.wl=Math.min(maxWl(),S.wl+dt/45);S.terr=Math.max(0,S.terr-dt/120);
+  S.en=Math.min(maxEn(),S.en+dt/20);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/60);S.wl=Math.min(maxWl(),S.wl+dt/45);S.terr=Math.max(0,S.terr-dt/120);
   const n0=now(),sd=S.sleep?Math.max(0,(Math.min(n0,S.sleep)-(n0-dt*1000))/1000):0;
-  if(sd){S.en=Math.min(maxEn(),S.en+sd*(SLEEP_X-1)/25);S.hp=Math.min(maxHp(),S.hp+sd*(SLEEP_X-1)/60)}
+  if(sd){S.en=Math.min(maxEn(),S.en+sd*(SLEEP_X-1)/20);S.hp=Math.min(maxHp(),S.hp+sd*(SLEEP_X-1)/60)}
   if(S.sleep&&n0>=S.sleep){S.sleep=0;msg('Te despiertas descansado.','ok')}
   S.cash+=income()*dt/60;if(S.job>=0&&!inJail()&&!inHosp())S.lab+=dt/60*(.06+S.job*.02);
   const n=now();
