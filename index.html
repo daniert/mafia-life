@@ -99,18 +99,24 @@ h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;
 .ic-en{color:var(--en)}.ic-wl{color:var(--wl)}.ic-st{color:var(--st)}.ic-hp{color:var(--hp)}.ic-xp{color:var(--xp)}
 .bar .lab .ic{margin-right:4px;font-size:15px;align-self:center}
 .cost .ic{font-size:15px}
-.cost.short .ic{color:inherit}
 .tile .i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);color:var(--gold);font-size:18px;flex:none}
 .tile:hover .i{border-color:color-mix(in srgb,var(--brass) 50%,transparent)}
 nav.bottom button .i{font-size:21px;height:26px;display:flex;justify-content:center;align-items:center;opacity:.7;transition:opacity .15s}
 nav.bottom button[aria-current="true"] .i{opacity:1}
 .alert>.ic{font-size:18px;color:var(--ink);margin-right:-2px}
 .row .t .ic{margin-right:6px}
-.cost.short{color:color-mix(in srgb,var(--bad) 80%,var(--ink))}
+.cost.short{color:color-mix(in srgb,var(--bad) 55%,#f4a3c4);text-decoration:underline dotted;text-decoration-thickness:1.5px;text-underline-offset:3px}
 .row.locked .costs{opacity:.5}
 
 .row.locked .t,.row.locked .d{opacity:.5}
-.row .acts{display:flex;gap:6px;flex-shrink:0}
+.row .acts{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.row .btnw{display:flex;gap:6px}
+.acts .costs{gap:10px;justify-content:flex-end}
+.acts .cost{font-size:12.5px;color:var(--mute)}
+.acts .cost.short{color:color-mix(in srgb,var(--bad) 55%,#f4a3c4);text-decoration:none}
+.btn.miss,.btn.miss:disabled{display:inline-flex;align-items:center;justify-content:center;gap:5px;text-transform:none;letter-spacing:.02em;font-weight:600;
+  color:color-mix(in srgb,var(--bad) 55%,#f4a3c4);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.btn.miss .ic{font-size:14px}
 .btn{background:var(--brass);color:#16110a;border:1px solid transparent;border-radius:4px;padding:10px 16px;font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;
   min-width:96px;min-height:42px;cursor:pointer;transition:background .15s,filter .15s,transform .05s}
 .btn:hover:not(:disabled){filter:brightness(1.1)}
@@ -120,6 +126,8 @@ nav.bottom button[aria-current="true"] .i{opacity:1}
 .btn.alt{background:transparent;color:var(--gold);border-color:color-mix(in srgb,var(--brass) 55%,transparent)}
 .btn.alt:hover:not(:disabled){background:color-mix(in srgb,var(--brass) 10%,transparent);filter:none}
 .btn.alt:disabled{border-color:var(--hair);color:color-mix(in srgb,var(--mute) 70%,transparent)}
+.btn:disabled:has([data-cd]){display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--ink);border-color:color-mix(in srgb,var(--ink) 18%,transparent);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.btn .ic-clock{font-size:15px;opacity:.7}
 .btn.on{background:var(--ink);color:var(--deep);border-color:var(--ink)}
 button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
@@ -510,19 +518,27 @@ const ICP={en:'M13 2 4 14h7l-1 8 9-12h-7z',wl:'M12 5a3 3 0 0 0-5.5-1.3A3 3 0 0 0
  travel:'M2 12 22 4l-6 17-4-7zM12 14l10-10',shop:'M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0',inv:'M4 8h16v12H4zM4 8l2-4h12l2 4M10 12h4',
  gang:'M9 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM3 20c0-3.5 3-6 6-6s6 2.5 6 6M16.5 6.5a2.5 2.5 0 1 1 0 5M17 14c2.5.3 4 2.3 4 5',
  casino:'M4 4h16v16H4zM8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01',gem:'M6 4h12l3 5-9 11L3 9zM3 9h18M10 4 8 9l4 11 4-11-2-5',
- chart:'M4 4v16h16M8 15l4-5 3 3 5-6',events:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6'};
+ chart:'M4 4v16h16M8 15l4-5 3 3 5-6',events:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2'};
 const ic=k=>'<svg class="ic ic-'+k+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+ICP[k]+'"/></svg>';
-const EMO={'⚡':'en','✊':'wl','💪':'st','❤️':'hp','⭐':'xp','🏠':'home','💼':'case','🏋️':'gym','🥊':'fight','🧭':'explore','🎓':'school','🏥':'hosp','🚔':'jail','🏦':'bank','🏢':'biz','✈️':'travel','🛒':'shop','🎒':'inv','🔫':'gang','🃏':'casino','💍':'gem','📈':'chart','📜':'events','💾':'save'};
+const EMO={'⚡':'en','✊':'wl','💪':'st','❤️':'hp','⭐':'xp','🏠':'home','💼':'case','🏋️':'gym','🥊':'fight','🧭':'explore','🎓':'school','🏥':'hosp','🚔':'jail','🏦':'bank','🏢':'biz','✈️':'travel','🛒':'shop','🎒':'inv','🔫':'gang','🃏':'casino','💍':'gem','📈':'chart','📜':'events','💾':'save','⏱️':'clock'};
 const EMRE=new RegExp(Object.keys(EMO).join('|'),'g');
 const icons=h=>h.replace(EMRE,m=>ic(EMO[m]));
 const COST={'⚡':['en','--en','Energía'],'✊':['wl','--wl','Voluntad'],'💪':['st','--st','Valor']};
-function desc(d){const txt=[],chips=[];String(d).split(' · ').forEach(p=>{let m=p.match(/^(⚡|✊|💪)(\d+)$/);
-  if(m){const[k,v,n]=COST[m[1]];chips.push('<span class="cost'+(S[k]<+m[2]?' short':'')+'" title="'+n+'" aria-label="'+n+' '+m[2]+'">'+ic(k)+m[2]+'</span>');return}
+// Split a description into plain text, cost chips and what the player is missing
+function desc(d){const txt=[],chips=[],miss=[];String(d).split(' · ').forEach(p=>{let m=p.match(/^(⚡|✊|💪)(\d+)$/);
+  if(m){const[k,,n]=COST[m[1]],need=+m[2],sh=S[k]<need;if(sh)miss.push(ic(k)+Math.ceil(need-S[k]));
+    chips.push('<span class="cost'+(sh?' short':'')+'" title="'+n+'" aria-label="'+n+' '+need+'">'+ic(k)+need+'</span>');return}
   m=p.match(/^(cuota |billete )?\$([\d.]+)$/);
-  if(m){chips.push('<span class="cost cash'+(S.cash<+m[2].replace(/\./g,'')?' short':'')+'">'+p.replace(/^(cuota|billete) /,'')+'</span>');return}
+  if(m){const need=+m[2].replace(/\./g,''),sh=S.cash<need;if(sh)miss.push(fmt(need-S.cash));
+    chips.push('<span class="cost cash'+(sh?' short':'')+'">'+p.replace(/^(cuota|billete) /,'')+'</span>');return}
   txt.push(p)});
-  return (txt.length?'<span>'+txt.join(' · ')+'</span>':'')+(chips.length?'<span class="costs">'+chips.join('')+'</span>':'')}
-function row(t,d,btn,lock){return '<div class="row'+(lock?' locked':'')+'"><div><div class="t">'+t+'</div><div class="d">'+desc(d)+'</div></div><div class="acts">'+btn+'</div></div>'}
+  return {txt:txt.join(' · '),chips:chips.length?'<span class="costs">'+chips.join('')+'</span>':'',miss}}
+// Row: info on the left; action button with its cost underneath on the right.
+// A disabled button for lack of resources says what is missing instead of the action name.
+function row(t,d,btn,lock){const x=desc(d);
+  if(!lock&&x.miss.length&&!btn.includes('data-cd'))btn=btn.replace(/^(<button[^>]* disabled[^>]*>)[\s\S]*?(<\/button>)$/,(_,o,c)=>o.replace('class="btn','class="btn miss')+'Falta '+x.miss.slice(0,2).join(' ')+c);
+  return '<div class="row'+(lock?' locked':'')+'"><div><div class="t">'+t+'</div>'+(x.txt||lock&&x.chips?'<div class="d">'+x.txt+(lock?x.chips:'')+'</div>':'')+'</div>'+
+    (lock?'':'<div class="acts"><div class="btnw">'+btn+'</div>'+x.chips+'</div>')+'</div>'}
 function b(act,arg,label,dis,cls){return '<button class="btn'+(cls?' '+cls:'')+'" data-a="'+act+'"'+(arg!==undefined?' data-i="'+arg+'"':'')+(dis?' disabled':'')+'>'+label+'</button>'}
 const back=()=>'<button class="back" data-tab="explore">← Explorar</button>';
 function status(){let h='';
@@ -548,12 +564,12 @@ const VIEWS={
   return h+'<div class="card"><h3>Últimos eventos</h3>'+(S.log.length?evs(S.log.slice(0,4)):'<p class="hint">Aún no ha pasado nada.</p>')+'<div class="btns"><button class="btn alt" data-tab="events">Ver todos</button></div></div>'},
  crime(){if(inJail()){let h=status()+'<h2>Crímenes en la cárcel</h2><p class="hint">Aquí dentro se juega por pasar el rato. Te puedes llevar algún golpe.</p>';
   h+=row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()));
-  JCRIMES.forEach((c,i)=>{const on=crOn('j'+i);h+=row(c.n,(on?'Disponible en '+cd(S.crc['j'+i])+' · ':'')+'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,'Hacer',on||inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
+  JCRIMES.forEach((c,i)=>{const on=crOn('j'+i);h+=row(c.n,'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,on?'⏱️'+cd(S.crc['j'+i]):'Hacer',on||inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
   let h=status()+'<h2>Crímenes</h2><p class="hint">Si salen mal, puedes acabar herido o en la cárcel.</p>';
   CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{if(!shown(c,CRIMES))return;const lk=crLk(c),on=crOn(i);
-   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):(on?'Disponible en '+cd(S.crc[i])+' · ':'')+'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
+   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,on&&!lk?'⏱️'+cd(S.crc[i]):'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
  gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, descansas 30 s antes de volver a entrenar.</p>';
-  STATS.slice(0,3).forEach(s=>{const cl=S.cool.gym>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+(cl?'descansando '+cd(S.cool.gym):'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0]))),b('train',s[0],'Entrenar',d||S.cash<gymFee(s[0])))});
+  STATS.slice(0,3).forEach(s=>{const cl=S.cool.gym>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0])),b('train',s[0],cl?'⏱️'+cd(S.cool.gym):'Entrenar',d||S.cash<gymFee(s[0])))});
   return h},
  fight(){let h=status()+'<h2>Pelea</h2><p class="hint">Con 2 de salud o menos no puedes pelear.</p>';
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
