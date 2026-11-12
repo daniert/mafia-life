@@ -181,7 +181,8 @@ nav.bottom button .new{position:absolute;top:5px;left:calc(50% + 8px)}
   background:linear-gradient(135deg,color-mix(in srgb,var(--brass) 16%,var(--panel)) 0%,color-mix(in srgb,var(--panel) 60%,transparent) 70%)}
 .hero h2{margin:2px 0 2px;font-size:30px}
 .hero .eyb{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-.hero .lvl{position:absolute;right:16px;top:14px;text-align:center;font-family:"Playfair Display",Georgia,serif;font-size:34px;line-height:1;color:var(--gold)}
+.hero .hhd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.hero .lvl{flex:none;margin-top:-4px;text-align:center;font-family:"Playfair Display",Georgia,serif;font-size:34px;line-height:1;color:var(--gold)}
 .hero .lvl small{display:block;font:600 10px "Barlow",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .xpbar{height:8px;border-radius:4px;background:var(--hair);overflow:hidden;margin:12px 0 6px}
 .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--xp),color-mix(in srgb,var(--xp) 60%,#fff));border-radius:4px;transition:width .4s}
@@ -660,7 +661,7 @@ function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].fi
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
 const VIEWS={
- home(){const ng=nextGoal();let h='<div class="hero"><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2><div class="lvl">'+S.lvl+'<small>Nivel</small></div>'+
+ home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
   const st=status(),td=todo();
