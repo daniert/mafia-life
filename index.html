@@ -424,7 +424,11 @@ const STAKE=.5, stakeAmt=()=>Math.floor(S.cash*STAKE), noInvest=()=>!!S.loan, no
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
-const crEn=c=>c.br+1, crHp=c=>CR_VIO[CRIMES.indexOf(c)], fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
+// Crew shares the load of crimes: diminishing relief on energy and health damage, capped at 50%
+const relief=()=>.5*(S.g-1)/(S.g-1+8), crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
+const crEn=c=>crw(c.br+1), crHp=c=>crw(CR_VIO[CRIMES.indexOf(c)]), fBr=f=>1+Math.floor(f.l/3);
+// Each extra member needs ever more intelligence to manage
+const iqNeed=n=>n<=2?0:Math.round(2*Math.pow(n-2,1.6)), gangCap=()=>{let n=2;while(n<2+S.lvl*3&&S.iq>=iqNeed(n+1))n++;return n};
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
 const inHosp=()=>S.hosp>now(), inJail=()=>S.jail>now(), locked=()=>inHosp()||inJail();
@@ -456,7 +460,7 @@ const ACT={
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;const h1=v?rnd(0,v):0;S.hp-=h1;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.'+(h1?' Pierdes '+h1+' de salud.':''),'ok');gain(c.xp)}
   else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.wl=Math.max(0,S.wl-2);const h1=v?rnd(1,v):0;S.hp-=h1;msg(c.n+': te detiene la policía.'+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.','bad')}
-  else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
+  else{const d=crw(hd(c.dm+rnd(0,5)));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
  train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
@@ -579,7 +583,7 @@ const VIEWS={
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
   h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (⚡1 · 💪1)',locked()||S.st<1||S.en<1,'alt')+'</div>';
   return h},
- gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
+ gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra y cargan con parte del trabajo: los crímenes te cuestan un '+Math.round(relief()*100)+'% menos de energía y de salud.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+'. '+(gangCap()<2+S.lvl*3?'Necesitas inteligencia '+iqNeed(gangCap()+1)+' para dirigir a uno más.':'Sube de nivel para reclutar más.'):fmt(recruitCost())+' · máximo '+gangCap(),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
   if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros.</p>';
   RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
