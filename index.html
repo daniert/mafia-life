@@ -572,9 +572,9 @@ const ICP={en:'M13 2 4 14h7l-1 8 9-12h-7z',wl:'M12 5a3 3 0 0 0-5.5-1.3A3 3 0 0 0
  travel:'M2 12 22 4l-6 17-4-7zM12 14l10-10',shop:'M5 8h14l-1 12H6zM9 8a3 3 0 0 1 6 0',inv:'M4 8h16v12H4zM4 8l2-4h12l2 4M10 12h4',
  gang:'M9 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM3 20c0-3.5 3-6 6-6s6 2.5 6 6M16.5 6.5a2.5 2.5 0 1 1 0 5M17 14c2.5.3 4 2.3 4 5',
  casino:'M4 4h16v16H4zM8.5 8.5h.01M15.5 15.5h.01M12 12h.01M15.5 8.5h.01M8.5 15.5h.01',gem:'M6 4h12l3 5-9 11L3 9zM3 9h18M10 4 8 9l4 11 4-11-2-5',
- chart:'M4 4v16h16M8 15l4-5 3 3 5-6',events:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2'};
+ chart:'M4 4v16h16M8 15l4-5 3 3 5-6',events:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',save:'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-6h8v6',clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2',sleep:'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',job:'M9 3h6l-1.5 3 2.5 12-4 3-4-3 2.5-12z',new:'M12 3l2.3 5.7L20 9l-4.5 4 1.3 6L12 16l-4.8 3 1.3-6L4 9l5.7-.3z'};
 const ic=k=>'<svg class="ic ic-'+k+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+ICP[k]+'"/></svg>';
-const EMO={'⚡':'en','✊':'wl','💪':'st','❤️':'hp','⭐':'xp','🏠':'home','💼':'case','🏋️':'gym','🥊':'fight','🧭':'explore','🎓':'school','🏥':'hosp','🚔':'jail','🏦':'bank','🏢':'biz','✈️':'travel','🛒':'shop','🎒':'inv','🔫':'gang','🃏':'casino','💍':'gem','📈':'chart','📜':'events','💾':'save','⏱️':'clock'};
+const EMO={'⚡':'en','✊':'wl','💪':'st','❤️':'hp','⭐':'xp','🏠':'home','💼':'case','🏋️':'gym','🥊':'fight','🧭':'explore','🎓':'school','🏥':'hosp','🚔':'jail','🏦':'bank','🏢':'biz','✈️':'travel','🛒':'shop','🎒':'inv','🔫':'gang','🃏':'casino','💍':'gem','📈':'chart','📜':'events','💾':'save','⏱️':'clock','😴':'sleep','👔':'job','✨':'new'};
 const EMRE=new RegExp(Object.keys(EMO).join('|'),'g');
 const icons=h=>h.replace(EMRE,m=>ic(EMO[m]));
 const COST={'⚡':['en','--en','Energía'],'✊':['wl','--wl','Voluntad'],'💪':['st','--st','Valor']};
@@ -634,7 +634,7 @@ function markSeen(s){if(UNL[s])unl(s).forEach(x=>{if(!S.seen.includes(x[0]))S.se
 
 // Home suggestions: what you can do right now, one tap away
 function todo(){const L=[];
-  Object.keys(UNL).forEach(s=>{const f=fresh(s);if(f.length)L.push({hot:1,ic:'✓',t:'Novedad en '+SECN[s],d:f.map(x=>x[1]).slice(0,3).join(', ')+(f.length>3?' y '+(f.length-3)+' más':''),tab:s,go:'Ver'})});
+  Object.keys(UNL).forEach(s=>{const f=fresh(s);if(f.length)L.push({hot:1,ic:'✨',t:'Novedad en '+SECN[s],d:f.map(x=>x[1]).slice(0,3).join(', ')+(f.length>3?' y '+(f.length-3)+' más':''),tab:s,go:'Ver'})});
   if(S.sp)L.push({hot:1,ic:'📈',t:'Tienes '+pl(S.sp,'punto')+' de habilidad',d:'Sube tu energía, valor, salud o voluntad máximas',tab:'me',go:'Gastar'});
   if(locked())return L;
   const cs=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&!crOn(i)).sort((x,y)=>y[0].l-x[0].l),ok=cs.find(([c])=>S.st>=c.br&&S.en>=crEn(c)&&S.hp>crHp(c))||cs[0];
