@@ -412,8 +412,7 @@ const ACT={
  out(k,how){const f=k==='hosp'?'hosp':'jail';if(S[f]<=now())return;
   if(how==='c'){const c=outCry(S[f]);if(S.cry<c)return;S.cry-=c}else{const c=outCash(S[f]);if(S.cash<c)return;S.cash-=c}
   S[f]=0;if(f==='hosp')S.hp=Math.max(S.hp,maxHp()*.5);msg(f==='hosp'?'Pagas al médico y sales del hospital.':'Pagas la fianza y sales de la cárcel.','info')},
- job(i){const j=JOBS[i];if(S.lab<j.lab||S.iq<j.iq)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
- quit(){S.job=-1;msg('Dejas tu trabajo.','info')},
+ job(i){const j=JOBS[i];if(S.lab<j.lab||S.iq<j.iq||+i<=S.job)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
  study(i){const c=COURSES[i];if(locked()||S.edu||S.done.includes(+i)||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c))return;S.cash-=c.c;S.en-=scEn(c);S.wl-=scWl(c);S.edu={i:+i,end:now()+c.min*60000};msg('Te matriculas en «'+c.n+'». Termina en '+c.min+' min.','info')},
  temple(i){const t=TEMPLE[i];if(S.cry<t.c)return;S.cry-=t.c;
   [()=>S.en=maxEn(),()=>S.st=maxSt(),()=>S.wl=maxWl(),()=>S.iq+=5,()=>S.cash+=S.lvl*1000][i]();msg('Joyería: '+t.n.toLowerCase()+'.','ok',0)},
@@ -484,8 +483,8 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
    ['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['events','📜','Eventos','Historial'],['game','💾','Partida','Guardar y cargar']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'"><span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
  job(){let h=back()+'<h2>Empleo</h2><p class="hint">El sueldo entra cada minuto, aunque no juegues. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>';
-  JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i,rq=[j.lab?'Trabajo '+j.lab:'',j.iq?'Inteligencia '+j.iq:''].filter(Boolean).join(' e ');h+=row(j.n,fmt(j.pay)+'/min'+(rq?' · requiere '+rq:''),b('job',i,cur?'Actual':'Aceptar',lk||cur),lk)});
-  return h+(S.job>=0?'<div class="btns">'+b('quit',undefined,'Dejar el trabajo',false,'alt')+'</div>':'')},
+  JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i,rq=[j.lab?'Trabajo '+j.lab:'',j.iq?'Inteligencia '+j.iq:''].filter(Boolean).join(' e ');h+=row(j.n,fmt(j.pay)+'/min'+(rq?' · requiere '+rq:''),b('job',i,cur?'Actual':i<S.job?'Superado':'Aceptar',lk||cur||i<S.job),lk)});
+  return h},
  school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas 1 gema.</p>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
   COURSES.forEach((c,i)=>{const d=S.done.includes(i);h+=row(c.n,d?'Completado':'⚡'+scEn(c)+' · ✊'+scWl(c)+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,d?'Hecho':'Matricular',d||!!S.edu||locked()||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c)),d)});return h},
