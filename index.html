@@ -267,9 +267,9 @@ const RIVALS=[{s:3,l:1},{s:10,l:2},{s:25,l:3},{s:50,l:4},{s:100,l:5}];
 // Crew: named henchmen (S.g counts you + crew). They gain XP in gang wars and level up.
 const CREW_N=['Tony','Sal','Vito','Frankie','Nico','Lucky','Paulie','Benny','Carmine','Joey','Rocco','Enzo','Gino','Mickey','Fredo','Louie','Dino','Santo','Tommy','Vinnie'];
 const CREW_A=['«Dos Dedos»','«el Tostadas»','«Pocapena»','«Rodillas»','«el Mudo»','«Sinfreno»','«Calderilla»','«el Notario»','«Mandíbula»','«Siete Vidas»','«el Persianas»','«Gatillo Fácil»','«Bocachancla»','«el Fontanero»','«Lentejas»','«Tres Pisos»','«el Contable»','«Medio Kilo»','«Sordina»','«el Abuelo»','«Pestañas»','«Chatarra»','«el Párroco»','«Ojo de Vidrio»'];
-const crewName=()=>{const used=new Set(S.crew.map(m=>m.n));for(let k=0;k<50;k++){const n=CREW_N[rnd(0,CREW_N.length-1)]+' '+CREW_A[rnd(0,CREW_A.length-1)];if(!used.has(n))return n}return 'Recluta nº '+(S.crew.length+1)};
+const crewName=(s=S)=>{const used=new Set(s.crew.map(m=>m.n));for(let k=0;k<50;k++){const n=CREW_N[rnd(0,CREW_N.length-1)]+' '+CREW_A[rnd(0,CREW_A.length-1)];if(!used.has(n))return n}return 'Recluta nº '+(S.crew.length+1)};
 const crewNeed=m=>m.l*3;
-function crewSync(){while(S.crew.length<S.g-1)S.crew.push({n:crewName(),l:1,x:0});if(S.crew.length>S.g-1)S.crew.length=Math.max(0,S.g-1)}
+function crewSync(s=S){while(s.crew.length<s.g-1)s.crew.push({n:crewName(s),l:1,x:0});if(s.crew.length>s.g-1)s.crew.length=Math.max(0,s.g-1)}
 const gangPow=()=>1+S.crew.reduce((t,m)=>t+m.l,0), rivalPow=r=>r.s*r.l;
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
@@ -311,16 +311,17 @@ const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk
 function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
   if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
-  if(!Array.isArray(o.crew))o.crew=[];const s0=S;S=o;crewSync();S=s0;
+  if(!Array.isArray(o.crew))o.crew=[];crewSync(o);
   return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
-function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r))}catch(e){}return def()}
+// If a save can't be loaded, keep a copy instead of letting the next save() overwrite it
+function load(){const r=localStorage.getItem(KEY);if(!r)return def();try{return migrate(JSON.parse(r))}catch(e){console.error(e);try{localStorage.setItem(KEY+'_bak_'+Date.now(),r)}catch(_){}return def()}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 const $=s=>document.querySelector(s);
 const now=()=>Date.now();
-const rnd=(a,b)=>Math.floor(a+Math.random()*(b-a+1));
+function rnd(a,b){return Math.floor(a+Math.random()*(b-a+1))}
 const fmt=n=>'$'+String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 const f1=n=>(Math.floor(n*10)/10).toLocaleString('es-ES');
 const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
