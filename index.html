@@ -376,7 +376,7 @@ function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){cons
  const a=Math.round((l*4+l*l*.8+rnd(0,l*3))*t[1]);S.foes.push({n:C.fn[rnd(0,C.fn.length-1)]+' '+C.sn[rnd(0,C.sn.length-1)],l,a,t:t[0],m:t[2]})}}
 
 const ACT={
- jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;
+ jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(c.xp*S.lvl)}
   else{const d=hd(c.dm+rnd(0,8));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
  crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.hp-=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
@@ -393,8 +393,8 @@ const ACT={
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),d=hd(rnd(2,8)+Math.floor(f.l/2)-Math.floor(defT()/6));S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn)S.g++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. Recibes '+d+' de daño.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=hd(Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
- refoes(){if(locked()||S.st<1)return;S.st-=1;const w=Math.ceil(maxWl()*.08);S.wl=Math.max(0,S.wl-w);
-  if(S.en>0&&Math.random()<.3)S.en--;genFoes();msg('Recorres las calles buscando rivales.','info',0)},
+ refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;const w=Math.ceil(maxWl()*.08);S.wl=Math.max(0,S.wl-w);
+  genFoes();msg('Recorres las calles buscando rivales.','info',0)},
  recruit(){const c=recruitCost();if(S.cash<c||S.g>=gangCap())return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
  war(i){const r={n:rivalName(i),s:RIVALS[i].s};if(locked()||S.st<3||S.en<3||S.hp<=2)return;S.st-=3;S.en-=3;const won=Math.random()<S.g/(S.g+r.s)*wlF(),d=hd(Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4))));S.hp-=d;const hs=' Recibes '+d+' de daño.';
   if(won){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;S.fear=now()+600000;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 gema.'+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
@@ -459,7 +459,7 @@ const VIEWS={
    '<div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div><div class="stat"><span>Ingresos</span><b>'+fmt(income())+'/min</b></div><div class="stat"><span>Peleas ganadas</span><b>'+S.wins+'</b></div></div>';
   return h+'<div class="card"><h3>Últimos eventos</h3>'+(S.log.length?evs(S.log.slice(0,4)):'<p class="hint">Aún no ha pasado nada.</p>')+'<div class="btns"><button class="btn alt" data-tab="events">Ver todos</button></div></div>'},
  crime(){if(inJail()){let h=status()+'<h2>Crímenes en la cárcel</h2><p class="hint">Aquí dentro se juega por pasar el rato. Te puedes llevar algún golpe.</p>';
-  JCRIMES.forEach((c,i)=>{h+=row(c.n,'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,'Hacer',inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
+  JCRIMES.forEach((c,i)=>{const on=crOn('j'+i);h+=row(c.n,(on?'Disponible en '+cd(S.crc['j'+i])+' · ':'')+'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,'Hacer',on||inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
   let h=status()+'<h2>Crímenes</h2><p class="hint">Si salen mal, puedes acabar herido o en la cárcel.</p>';
   CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=crLk(c),on=crOn(i);
    h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):(on?'Disponible en '+cd(S.crc[i])+' · ':'')+'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
@@ -468,7 +468,7 @@ const VIEWS={
   return h},
  fight(){let h=status()+'<h2>Pelea</h2><p class="hint">Con 2 de salud o menos no puedes pelear.</p>';
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
-  h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales',locked()||S.st<1,'alt')+'</div>';
+  h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (⚡1 · 💪1 · ✊'+Math.ceil(maxWl()*.08)+')',locked()||S.st<1||S.en<1,'alt')+'</div>';
   return h},
  gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros.</p>';
@@ -559,7 +559,7 @@ function tick(dt){
 const now0=now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
-  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,CRIMES.filter((c,i)=>crOn(i)).length,income()&&beat%10===0?beat:0].join('|');
+  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
   if(s!==sig){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
