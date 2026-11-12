@@ -318,7 +318,10 @@ const rivalName=i=>CITIES[S.city].r[i];
 const JOBS=[{n:'Repartidor',lab:0,iq:0,pay:5},{n:'Camarero del club',lab:25,iq:0,pay:15},{n:'Chófer del jefe',lab:80,iq:20,pay:40},
  {n:'Contable de la familia',lab:200,iq:60,pay:100},{n:'Gerente del casino',lab:500,iq:130,pay:250}];
 const COURSES=[{n:'Clases nocturnas',min:5,c:500,iq:2},{n:'Contabilidad básica',min:15,c:2500,iq:5,lab:3},{n:'Derecho penal',min:30,c:8000,iq:10},
- {n:'Química',min:60,c:20000,iq:18},{n:'Economía internacional',min:120,c:60000,iq:35}];
+ {n:'Química',min:60,c:20000,iq:18},{n:'Economía internacional',min:120,c:60000,iq:35},
+ // City-exclusive courses (append only: saves store indexes in S.done / S.edu.i)
+ {n:'Contabilidad creativa',min:20,c:4000,iq:4,lab:6,at:[1]},{n:'Contar cartas',min:45,c:15000,iq:12,at:[2]},
+ {n:'Comercio del tabaco',min:90,c:40000,iq:12,lab:15,at:[3]},{n:'Código de honor',min:180,c:120000,iq:40,at:[4]}];
 // School costs: longer courses tire more
 const scEn=c=>Math.min(10,2+Math.floor(c.min/15)),scWl=c=>2+Math.floor(c.min/10);
 const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:500,k:'en',v:.5,d:'Recupera la mitad de la energía'},
@@ -534,7 +537,7 @@ const ACT={
   const c=outCash(S[f]);if(S.cash<c)return;S.cash-=c;
   S[f]=0;if(f==='hosp')S.hp=Math.max(S.hp,maxHp()*.5);msg(f==='hosp'?'Pagas al médico y sales del hospital.':'Pagas la fianza y sales de la cárcel.','info')},
  job(i){const j=JOBS[i];if(locked()||S.lab<j.lab||S.iq<j.iq||+i<=S.job)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
- study(i){const c=COURSES[i];if(locked()||S.edu||S.done.includes(+i)||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c))return;S.cash-=c.c;S.en-=scEn(c);S.wl-=scWl(c);S.edu={i:+i,end:now()+c.min*60000};msg('Te matriculas en «'+c.n+'». Termina en '+c.min+' min.','info')},
+ study(i){const c=COURSES[i];if(!avail(c)||locked()||S.edu||S.done.includes(+i)||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c))return;S.cash-=c.c;S.en-=scEn(c);S.wl-=scWl(c);S.edu={i:+i,end:now()+c.min*60000};msg('Te matriculas en «'+c.n+'». Termina en '+c.min+' min.','info')},
  temple(i){i=+i;const j=JEWELS[i];if(!j||jw(i)||S.cry<j.c)return;S.cry-=j.c;S.jw.push(i);msg('Compras: '+j.n+'.','ok',0)},
  sellgem(){if(S.cry<GEM_SELL)return;S.cry-=GEM_SELL;const g=S.lvl*1000;S.cash+=g;msg('El perista te da '+fmt(g)+' por '+GEM_SELL+' gemas.','ok',0)},
  bet(v){bet=+v},
@@ -650,7 +653,7 @@ function todo(){const L=[];
   if(f)L.push({a:'fight',i:fi,dis:S.en<2||S.hp<=2||S.st<fBr(f),ic:'🥊',t:'Atacar a '+f.n,d:'El rival más flojo · nivel '+f.l+' · ⚡2 · 💪'+fBr(f),go:'Atacar'});
   if(!locked()){const cl=S.cool.sleep>now();L.push({a:'sleep',i:0,dis:!canSleep(),ic:'😴',t:'Dormir',d:asleep()?'Ya estás durmiendo':SLEEP_MIN+' min · energía y salud x'+SLEEP_X+' · ✊'+slWl()+' · 💪'+slSt(),go:cl&&!asleep()?cd(S.cool.sleep):'Dormir'})}
   if(S.hp<maxHp()*.5)L.push({a:'heal',i:0,dis:locked()||S.cash<healCost()||S.en<3||S.wl<healWl(),ic:'🏥',t:'Estás herido',d:'Salud '+Math.floor(S.hp)+'/'+maxHp()+' · curarte: ⚡3 · ✊'+healWl()+' · '+fmt(healCost()),go:'Curar'});
-  else if(!locked()&&!S.edu&&COURSES.some((c,i)=>!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
+  else if(!locked()&&!S.edu&&COURSES.some((c,i)=>avail(c)&&!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
 const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
@@ -698,7 +701,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   return h},
  school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas 1 gema.</p>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
-  COURSES.forEach((c,i)=>{const d=S.done.includes(i);h+=row(c.n,d?'Completado':'⚡'+scEn(c)+' · ✊'+scWl(c)+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,d?'Hecho':'Matricular',d||!!S.edu||locked()||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c)),d)});return h},
+  COURSES.forEach((c,i)=>{const d=S.done.includes(i),far=!d&&!avail(c);if(far)return h+=row(c.n,'Solo en '+c.at.map(k=>CITIES[k].n).join(', ')+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,'Matricular',true),true);h+=row(c.n+(avail(c)?excl(c):''),d?'Completado':'⚡'+scEn(c)+' · ✊'+scWl(c)+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,d?'Hecho':'Matricular',d||!!S.edu||locked()||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c)),d)});return h},
  hosp(){let h=back()+status()+'<h2>Hospital</h2>';
   if(inHosp())return h+'<p class="hint">Te recuperas mientras pasa el tiempo. Puedes pagar para salir antes.</p><div class="btns">'+b('out','hosp|m','Pagar '+fmt(outCash(S.hosp)),S.cash<outCash(S.hosp))+'</div>';
   return h+row('Curarte del todo',S.hp>=maxHp()?'Ya estás al máximo':'⚡3 · ✊'+healWl()+' · '+fmt(healCost()),b('heal',undefined,'Curar',S.hp>=maxHp()||S.cash<healCost()||S.en<3||S.wl<healWl()))},
