@@ -653,10 +653,11 @@ function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].fi
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
 const VIEWS={
- home(){const ng=nextGoal();let h=status()+'<div class="hero"><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2><div class="lvl">'+S.lvl+'<small>Nivel</small></div>'+
+ home(){const ng=nextGoal();let h='<div class="hero"><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2><div class="lvl">'+S.lvl+'<small>Nivel</small></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
-  h+='<h3>Ahora mismo</h3><div class="todo">'+todo().map(actBtn).join('')+'</div>';
+  const st=status(),td=todo();
+  if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
   h+='<div class="card"><h3>Estadísticas</h3><div class="sgrid">'+STATS.map(s=>'<div><small>'+s[1]+'</small><b>'+f1(S[s[0]])+'</b></div>').join('')+
    '<div class="tot"><small>Total</small><b>'+f1(STATS.reduce((t,s)=>t+S[s[0]],0))+'</b></div></div></div>';
   h+='<div class="card"><h3>Tu familia</h3><div class="stat"><span>Ataque total</span><b>'+atkT()+'</b></div><div class="stat"><span>Defensa total</span><b>'+defT()+'</b></div>'+
