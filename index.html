@@ -280,7 +280,8 @@ function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
   if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
   if(!Array.isArray(o.crew))o.crew=[];const s0=S;S=o;crewSync();S=s0;
   return o}
-let S=load(), tab='home', bet=100, reels='🎰 🎰 🎰';
+// Current section lives in the URL hash so a reload keeps you where you were
+let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
 function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r))}catch(e){}return def()}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
@@ -574,7 +575,7 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
 function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene()}const tc=getComputedStyle(document.documentElement).getPropertyValue('--deep').trim();document.querySelector('meta[name=theme-color]').content=tc;$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
-function view(){if(!S.foes.length)genFoes();$('#view').innerHTML=VIEWS[tab]();
+function view(){if(!VIEWS[tab])tab='home';if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=VIEWS[tab]();
   $('#nav').innerHTML=NAV.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===topTab(tab)?' aria-current="true"':'')+'><span class="i" aria-hidden="true">'+t[2]+'</span>'+t[1]+'</button>').join('');
   $('#side').innerHTML=MENU.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'><span>'+t[1]+'</span>'+(t[0]==='hosp'&&inHosp()||t[0]==='jail'&&inJail()?'<span class="pill">●</span>':'')+'</button>').join('');head()}
 
