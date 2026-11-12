@@ -1,4 +1,4 @@
-const V='mafialife-v8';
+const V='mafialife-v11';
 const CORE=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './fonts/barlow-400.woff2','./fonts/barlow-600.woff2','./fonts/barlow-700.woff2','./fonts/playfair-display.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
