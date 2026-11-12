@@ -383,11 +383,11 @@ const ACT={
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(c.xp*S.lvl)}
   else{const d=hd(c.dm+rnd(0,8));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.hp-=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
+ crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);const h0=crHp(c);S.hp-=h0;S.st-=c.br;S.crc[i]=now()+crCd(c);
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
-   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.','ok');gain(c.xp)}
-  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
-  else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
+   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'. Pierdes '+h0+' de salud.','ok');gain(c.xp)}
+  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. Pierdes '+h0+' de salud y pasas '+m+' min en la cárcel.','bad')}
+  else{const d=hd(c.dm+rnd(0,5));S.hp-=d;msg(c.n+': sale mal. Pierdes '+(h0+d)+' de salud.'+hospital(),'bad')}},
  train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
