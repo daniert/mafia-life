@@ -235,7 +235,7 @@ const JOBS=[{n:'Repartidor',lab:0,iq:0,pay:5},{n:'Camarero del club',lab:20,iq:0
 const COURSES=[{n:'Clases nocturnas',min:5,c:500,iq:2},{n:'Contabilidad básica',min:15,c:2500,iq:5,lab:3},{n:'Derecho penal',min:30,c:8000,iq:10},
  {n:'Química',min:60,c:20000,iq:18},{n:'Economía internacional',min:120,c:60000,iq:35}];
 // School costs: longer courses tire more
-const scEn=c=>Math.min(10,2+Math.floor(c.min/15)),scWl=c=>Math.ceil(maxWl()*(.1+c.min/400));
+const scEn=c=>Math.min(10,2+Math.floor(c.min/15)),scWl=c=>2+Math.floor(c.min/10);
 const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:500,k:'en',v:.5,d:'Recupera la mitad de la energía'},
  {n:'Petaca de whisky',p:500,k:'st',v:.5,d:'Recupera la mitad del valor'},{n:'Puro cubano',p:700,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2,3]},
  {n:'Perrito de Coney Island',p:150,k:'en',v:.25,d:'Recupera un cuarto de la energía',at:[0]},
@@ -246,7 +246,8 @@ const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'}
  {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]}];
 const TEMPLE=[{n:'Rellenar energía',c:5},{n:'Rellenar valor',c:5},{n:'Rellenar voluntad',c:3},{n:'+5 de inteligencia',c:25},{n:'Cambiar por dinero',c:10}];
 // Gym energy per session, by stat
-const healWl=()=>Math.ceil(maxWl()*.15),gWl=()=>Math.ceil(maxWl()*.2);
+// Fixed willpower costs, so raising the max actually buys more actions
+const healWl=()=>3,gWl=()=>4;
 const GYM_EN={atk:4,agi:3,def:5},gEn=k=>GYM_EN[k];
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
 const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
@@ -275,7 +276,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>5+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+S.hpB, maxWl=()=>20+S.wlB, need=()=>40*S.lvl;
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>5+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>40*S.lvl;
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
