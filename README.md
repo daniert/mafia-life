@@ -28,23 +28,24 @@ Empiezas con $500 y un trabajo de poca monta. Comete crímenes, entrena en el gi
 
 | | |
 |---|---|
-| 💼 **Crímenes** | Gastan energía y valor, y cada golpe necesita un tiempo antes de repetirlo. Si sale mal, al hospital o a la cárcel |
-| 🚔 **Crímenes de cárcel** | Mientras estás dentro: poco dinero, buena experiencia y bastante riesgo para la salud |
-| 🏋️ **Gimnasio** | Entrena Fuerza, Agilidad o Guardia; cada sesión gasta energía, voluntad y una cuota |
+| 💼 **Crímenes** | Gastan energía y valor. Los pequeños se repiten enseguida; los grandes golpes tardan en volver a estar a tiro. Los más violentos pueden herirte aunque salgan bien. Nuevos crímenes al subir de nivel |
+| 🚔 **Crímenes de cárcel** y fuga | Mientras estás dentro: poco dinero, buena experiencia y bastante riesgo. O juégatelo todo a una fuga |
+| 🏋️ **Gimnasio** | Entrena Fuerza, Agilidad o Guardia; cada sesión gasta energía, voluntad y una cuota, y después toca descansar |
 | 🥊 **Peleas** | Rivales de tu zona; gastan energía y valor, y te juegas salud y dinero |
-| 👥 **Tu banda** y ⚔️ **guerras** | Recluta miembros y enfréntate a las bandas rivales de cada ciudad |
+| 👥 **Tu banda** y ⚔️ **guerras** | Recluta matones con apodo propio, que ganan experiencia y nivel en cada guerra contra las bandas rivales |
 | 💼 **Empleo** | Sueldo por minuto y experiencia que llega sola; los mejores puestos piden Trabajo e Inteligencia |
 | 🎓 **Escuela** | Cursos en tiempo real que suben la Inteligencia |
 | 🏥 **Hospital** y 🚔 **cárcel** | Tiempo de espera real; paga o usa gemas para salir antes |
-| 💎 **Gemas** y joyería | Se ganan jugando y se cambian por barras llenas, inteligencia o dinero |
+| 💎 **Gemas** y joyería | Se ganan jugando. Cómpralas en joyas que, dicen, traen suerte, o véndelas al perista |
 | 🎰 **Casino** | Tragaperras, ruleta y cajas de la suerte (5 al día) |
-| 🛒 **Tiendas** e 🎒 **inventario** | Armas, protección, vehículos y objetos (botiquín, bebida energética…) |
-| 🏢 **Negocios** y 🏦 **banco** | Ocho negocios para ingresos pasivos (los mejores piden inteligencia) y dinero a salvo |
+| 🛒 **Tiendas** e 🎒 **inventario** | Armas, protección, vehículos y objetos; el mejor material se desbloquea con el nivel |
+| 🏢 **Negocios** | Ocho negocios para ingresos pasivos; abrir cada uno pide dinero, voluntad e inteligencia |
+| 🏦 **Banco** | Cuenta a salvo, depósitos a plazo, inversiones con riesgo y préstamos (cuidado con los cobradores) |
 | ✈️ **Viajar** | Nueva York, Chicago, Las Vegas, La Habana y Palermo |
 | 📈 **Habilidades** | Cada punto de nivel sube 1 el máximo de una barra |
 | 📜 **Eventos** | Historial de lo que te ha pasado |
 
-Las barras son las del original: ⚡ **Energía**, ✊ **Voluntad**, 💪 **Valor**, ❤️ **Salud** y ⭐ **XP**. Cada acción indica con esos mismos iconos lo que cuesta; el resto de efectos los tendrás que descubrir jugando. En el móvil la navegación va abajo; en pantallas anchas hay una columna lateral con estadísticas y menú, como en el juego de la época.
+Las barras son las del original: ⚡ **Energía**, ✊ **Voluntad**, 💪 **Valor**, ❤️ **Salud** y ⭐ **XP**. El valor es para la calle (crímenes, peleas, guerras) y la voluntad, para la disciplina (gimnasio, escuela, hospital, negocios). Cada acción indica con esos mismos iconos lo que cuesta; el resto de efectos los tendrás que descubrir jugando. En el móvil la navegación va abajo; en pantallas anchas hay una columna lateral con estadísticas y menú, como en el juego de la época.
 
 Los rangos van de **Ratero** a **Matón**, **Hombre de honor**, **Capo**, **Consigliere** y **Don**.
 
