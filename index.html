@@ -274,7 +274,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+2*S.enB+S.lvl, maxSt=()=>5+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+4*S.hpB, maxWl=()=>20+2*S.wlB, need=()=>40*S.lvl;
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>5+S.stB+Math.floor(S.lvl/2), maxHp=()=>20+S.hpB, maxWl=()=>20+S.wlB, need=()=>40*S.lvl;
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -403,7 +403,7 @@ const ACT={
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p||S.iq<BIZ[i].iq)return;S.cash-=p;S.biz[i]++;msg('Compras: '+BIZ[i].n+'.','ok')},
- skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp+=4;if(k==='wlB')S.wl+=2;msg('Habilidad mejorada.','ok',0)},
+ skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp++;if(k==='wlB')S.wl++;msg('Habilidad mejorada.','ok',0)},
  heal(){const c=healCost();if(inHosp()||S.hp>=maxHp()||S.cash<c||S.en<3||S.st<2)return;S.cash-=c;S.en-=3;S.st-=2;S.hp=maxHp();msg('El médico te deja como nuevo por '+fmt(c)+'.','ok',0)},
  out(k,how){const f=k==='hosp'?'hosp':'jail';if(S[f]<=now())return;
   if(how==='c'){const c=outCry(S[f]);if(S.cry<c)return;S.cry-=c}else{const c=outCash(S[f]);if(S.cash<c)return;S.cash-=c}
@@ -511,8 +511,8 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  temple(){let h=back()+'<h2>Joyería</h2><p class="hint">Tienes <b>'+pl(S.cry,'gema')+'</b>. Cámbialas por lo que necesites.</p>';
   TEMPLE.forEach((t,i)=>{h+=row(t.n,t.c+' gemas'+(i===4?' → '+fmt(S.lvl*1000):''),b('temple',i,'Cambiar',S.cry<t.c))});return h},
  events(){return back()+'<h2>Eventos</h2>'+(S.log.length?evs(S.log):'<p class="hint">Aún no ha pasado nada.</p>')},
- me(){let h=back()+'<h2>Habilidades</h2><p class="hint">Puntos disponibles: <b>'+S.sp+'</b>. Ganas puntos al subir de nivel.</p>';
-  [['enB','⚡ Energía máxima',maxEn(),2],['stB','💪 Valor máximo',maxSt(),1],['hpB','❤️ Salud máxima',maxHp(),4],['wlB','✊ Voluntad máxima',maxWl(),2]].forEach(s=>{h+=row(s[1],'Actual: '+s[2],b('skill',s[0],'+'+s[3],S.sp<1))});
+ me(){let h=back()+'<h2>Habilidades</h2><p class="hint">Puntos disponibles: <b>'+S.sp+'</b>. Cada punto sube 1 el máximo que elijas. Ganas puntos al subir de nivel.</p>';
+  [['enB','⚡ Energía máxima',maxEn()],['stB','💪 Valor máximo',maxSt()],['hpB','❤️ Salud máxima',maxHp()],['wlB','✊ Voluntad máxima',maxWl()]].forEach(s=>{h+=row(s[1],'Actual: '+s[2],b('skill',s[0],'+1',S.sp<1))});
   return h}
 };
 const topTab=t=>NAV.some(n=>n[0]===t)?t:'explore';
