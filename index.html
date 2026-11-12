@@ -142,7 +142,7 @@ main{max-width:560px;margin:0 auto}
       <div><small>Efectivo</small><span id="cash"></span></div>
       <div class="bnk"><small>Banco</small><span id="bank"></span></div>
       <div><small>Nivel</small><span id="lvl"></span></div>
-      <div class="cry"><small>Cristales</small><span id="cry"></span></div>
+      <div class="cry"><small>Gemas</small><span id="cry"></span></div>
     </div>
     </div>
     <div class="bars" id="bars"></div>
@@ -183,7 +183,9 @@ const CRIMES=[
  {n:'Golpe a un banco',br:6,dm:24,a:3500,b:5500,xp:22,p:.48,l:10},
  {n:'Atraco a la Reserva',br:8,dm:36,a:11000,b:17000,xp:40,p:.40,l:15},
  {n:'Falsificar documentos',br:4,dm:8,a:900,b:1500,xp:10,p:.70,l:5,iq:20},
- {n:'Vaciar cajeros con un portátil',br:6,dm:14,a:2800,b:4200,xp:18,p:.60,l:8,iq:45}];
+ {n:'Vaciar cajeros con un portátil',br:6,dm:14,a:2800,b:4200,xp:18,p:.60,l:8,iq:45},
+ {n:'Blanquear dinero en el casino',br:5,dm:10,a:2000,b:3200,xp:14,p:.72,l:6,bz:1},
+ {n:'Colocar billetes falsos',br:7,dm:18,a:6000,b:9500,xp:28,p:.62,l:10,bz:2}];
 // at = city indices where it is sold (missing = everywhere). Indices are saved: only append, keep power order.
 const WEAPONS=[{n:'Navaja',p:300,v:3},{n:'Pistola',p:1500,v:8},{n:'Escopeta recortada',p:6000,v:18,at:[1,2,3,4]},
  {n:'Ametralladora Thompson',p:25000,v:40,at:[1,4]},{n:'Lupara siciliana',p:60000,v:70,at:[4]}];
@@ -217,10 +219,10 @@ const MENU=[['home','Inicio'],['inv','Inventario'],['events','Eventos'],['explor
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:100,wl:100,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,biz:[0,0,0],mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,done:[],
- hosp:0,jail:0,inv:{},lb:{d:'',n:0},log:[],unr:0,t:Date.now()});
+ hosp:0,jail:0,inv:{},lb:{d:'',n:0},cool:{},terr:0,fear:0,log:[],unr:0,t:Date.now()});
 function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
-  if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, cristales, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}],o.unr=1;
+  if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}],o.unr=1;
   return o}
 let S=load(), tab='home', bet=100, reels='🎰 🎰 🎰';
 function load(){try{const r=localStorage.getItem(KEY);if(r)return migrate(JSON.parse(r))}catch(e){}return def()}
@@ -243,12 +245,16 @@ const atkT=()=>Math.floor(S.atk)+(S.w>=0?WEAPONS[S.w].v:0)+Math.floor(S.g*.5);
 const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
 const defT=()=>Math.floor(S.def)+(S.a>=0?ARMOR[S.a].v:0)+Math.floor(S.g*.5);
 // Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
-const fightP=f=>{const a=atkT()+Math.floor(S.agi)*.5,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.92,Math.max(.05,r*.8**d))};
+const fightP=f=>{const a=atkT()+Math.floor(S.agi)*.5,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.95,Math.max(.05,r*.8**d+(S.fear>now()?.1:0)))};
 const crimeP=(c,i)=>Math.min(.97,c.p+Math.min(.15,(S.mast[i]||0)*.003)+Math.min(.05,S.iq*.001));
 const pay=()=>S.job>=0?JOBS[S.job].pay:0;
-const income=()=>S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0)+pay();
+const bizMul=()=>1+S.iq*.002;
+const income=()=>S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0)*bizMul()+pay();
 const bizPrice=i=>Math.floor(BIZ[i].p*Math.pow(1.15,S.biz[i]));
 const itemPrice=i=>Math.floor(ITEMS[i].p*(1+S.lvl*.1));
+const crLk=c=>S.lvl<c.l||S.iq<(c.iq||0)||(c.bz!==undefined&&!S.biz[c.bz]);
+const jailP=()=>.4*Math.max(.4,1-S.agi*.005);
+const crEn=c=>c.br+1, crHp=c=>c.br*2, fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3, wkWl=()=>Math.ceil(maxWl()*.15);
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*(1+S.lvl*.5));
 const inHosp=()=>S.hosp>now(), inJail=()=>S.jail>now(), locked=()=>inHosp()||inJail();
@@ -259,7 +265,7 @@ let msgT;
 function msg(t,k,log){const m=$('#msg');m.textContent=t;m.className=(k||'info')+' show';clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),Math.max(3500,t.length*60));
   if(log!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40);if(tab!=='events')S.unr++}}
 function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.cry+=2;S.en=maxEn();S.st=maxSt();S.hp=maxHp();S.wl=maxWl();
-  msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 cristales.','ok')}}
+  msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 gemas.','ok')}}
 function hospital(){if(S.hp>0)return '';const l=Math.floor(S.cash*.1),m=Math.min(30,2+Math.floor(S.lvl/3));
   S.cash-=l;S.hp=1;S.hosp=now()+m*60000;return ' Acabas '+m+' min en el hospital y pierdes '+fmt(l)+'.'}
 // Foe archetypes: power multiplier and loot multiplier.
@@ -269,26 +275,26 @@ function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){cons
  const a=Math.round((l*4+l*l*.8+rnd(0,l*3))*t[1]);S.foes.push({n:C.fn[rnd(0,C.fn.length-1)]+' '+C.sn[rnd(0,C.sn.length-1)],l,a,t:t[0],m:t[2]})}}
 
 const ACT={
- crime(i){i=+i;const c=CRIMES[i];if(locked()||S.lvl<c.l||S.iq<(c.iq||0)||S.st<c.br)return;S.st-=c.br;
-  if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m);S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
-   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': éxito. Ganas '+fmt(g)+(cr?', 1 cristal':'')+' y '+c.xp+' XP.','ok');gain(c.xp)}
-  else if(Math.random()<.4){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
+ crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.hp-=crHp(c);
+  if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
+   const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': éxito. Ganas '+fmt(g)+(cr?', 1 gema':'')+' y '+c.xp+' XP.','ok');gain(c.xp)}
+  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
   else{const d=c.dm+rnd(0,5);S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- train(k,all){if(inHosp()||S.en<1)return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k),u=Math.min(all?Math.floor(S.en):1,Math.floor(S.cash/fee));
+ train(k,all){if(inHosp()||S.en<1||k==='lab'||S.cool[k]>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k),u=Math.min(all?Math.floor(S.en):1,Math.floor(S.cash/fee));
   if(u<1){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}let g=0;
   // Diminishing returns: the higher the stat, the less each session gives.
   for(let n=0;n<u;n++){g+=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k]);S.wl=Math.max(0,S.wl-maxWl()*.06)}
-  S.en-=u;S.cash-=u*fee;S[k]+=g;msg('Entrenas '+nm.toLowerCase()+' ('+u+' de energía, '+fmt(u*fee)+'): +'+f1(g)+'.','ok',0)},
- fight(i){const f=S.foes[i];if(locked()||S.en<2||S.hp<=10||!f)return;S.en-=2;
-  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m);S.cash+=g;S.wins++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.','ok');gain(Math.round((f.l+2)*(f.m||1)))}
+  S.en-=u;S.cash-=u*fee;S[k]+=g;S.cool[k]=now()+u*30000;msg('Entrenas '+nm.toLowerCase()+' ('+u+' de energía, '+fmt(u*fee)+'): +'+f1(g)+'.','ok',0)},
+ fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=10||S.st<fBr(f))return;S.en-=2;
+  if(Math.random()<fightP(f)){const g=Math.floor(f.l*40*(f.m||1)*city().m),d=Math.max(1,rnd(2,8)+Math.floor(f.l/2)-Math.floor(defT()/6));S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn)S.g++;msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. Recibes '+d+' de daño. Menos competencia: crímenes +'+Math.floor(S.terr)+'% de botín.'+(jn?' Impresionado, se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=Math.max(5,rnd(10,18)+f.l-Math.floor(defT()/4));S.hp-=d;const l=Math.floor(S.cash*.05);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
  refoes(){if(locked()||S.st<1)return;S.st-=1;const w=Math.ceil(maxWl()*.08);S.wl=Math.max(0,S.wl-w);
   if(S.en>0&&Math.random()<.3)S.en--;genFoes();msg('Recorres las calles buscando rivales. Cansancio: −1 valor, −'+w+' voluntad.','info',0)},
- recruit(){const c=recruitCost();if(S.cash<c||S.g>=500)return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
- war(i){const r={n:rivalName(i),s:RIVALS[i].s};if(locked()||S.st<3)return;S.st-=3;
-  if(Math.random()<S.g/(S.g+r.s)){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 cristal.','ok');gain(Math.ceil(r.s/2)+5)}
-  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).','bad')}},
+ recruit(){const c=recruitCost();if(S.cash<c||S.g>=gangCap())return;S.cash-=c;S.g++;msg('Nuevo miembro en la banda. Ahora sois '+S.g+'.','ok')},
+ war(i){const r={n:rivalName(i),s:RIVALS[i].s};if(locked()||S.st<3||S.en<3||S.hp<=10)return;S.st-=3;S.en-=3;const won=Math.random()<S.g/(S.g+r.s),d=Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4)));S.hp-=d;const hs=' Recibes '+d+' de daño.';
+  if(won){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;S.fear=now()+600000;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 gema. Los rivales del barrio os temen: +10% en peleas durante 10 min.'+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
+  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).'+hs+hospital(),'bad')}},
  travel(i){const c=CITIES[i];if(locked()||i==S.city||S.lvl<c.l||S.cash<c.c)return;S.cash-=c.c;S.city=+i;genFoes();msg('Llegas a '+c.n+'. Los pagos se multiplican por '+c.m+'.','info')},
  buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i||!avail(it))return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
@@ -300,10 +306,12 @@ const ACT={
   if(how==='c'){const c=outCry(S[f]);if(S.cry<c)return;S.cry-=c}else{const c=outCash(S[f]);if(S.cash<c)return;S.cash-=c}
   S[f]=0;if(f==='hosp')S.hp=Math.max(S.hp,maxHp()*.5);msg(f==='hosp'?'Pagas al médico y sales del hospital.':'Pagas la fianza y sales de la cárcel.','info')},
  job(i){const j=JOBS[i];if(S.lab<j.lab||S.iq<j.iq)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
+ work(){if(locked()||S.job<0||S.en<2||S.wl<wkWl())return;const g=(1+S.job*.5)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4),p=pay()*3;
+  S.en-=2;S.wl-=wkWl();S.lab+=g;S.cash+=p;msg('Trabajas un turno: +'+f1(g)+' de trabajo y '+fmt(p)+'.','ok',0)},
  quit(){S.job=-1;msg('Dejas tu trabajo.','info')},
  study(i){const c=COURSES[i];if(S.edu||S.done.includes(+i)||S.cash<c.c)return;S.cash-=c.c;S.edu={i:+i,end:now()+c.min*60000};msg('Te matriculas en «'+c.n+'». Termina en '+c.min+' min.','info')},
  temple(i){const t=TEMPLE[i];if(S.cry<t.c)return;S.cry-=t.c;
-  [()=>S.en=maxEn(),()=>S.st=maxSt(),()=>S.wl=maxWl(),()=>S.iq+=5,()=>S.cash+=S.lvl*1000][i]();msg('Templo de cristal: '+t.n.toLowerCase()+'.','ok',0)},
+  [()=>S.en=maxEn(),()=>S.st=maxSt(),()=>S.wl=maxWl(),()=>S.iq+=5,()=>S.cash+=S.lvl*1000][i]();msg('Joyería: '+t.n.toLowerCase()+'.','ok',0)},
  bet(v){bet=+v},
  slot(){if(locked()||S.cash<bet)return;const R=['🍒','🍋','🔔','💎','7️⃣'],X=[5,8,10,15,25],r=[0,0,0].map(()=>rnd(0,4));reels=r.map(x=>R[x]).join(' ');
   let w=0;if(r[0]===r[1]&&r[1]===r[2])w=bet*X[r[0]];else if(r[0]===r[1]||r[1]===r[2]||r[0]===r[2])w=bet;
@@ -312,7 +320,7 @@ const ACT={
   const w=col===want?bet*(c==='z'?36:2):0;S.cash+=w-bet;msg('La bola cae en el '+n+' '+col+'. '+(w?'Ganas '+fmt(w-bet)+'.':'Pierdes '+fmt(bet)+'.'),w?'ok':'bad',c==='z'&&w?1:0)},
  box(){const c=boxCost();if(locked()||S.cash<c||boxesLeft()<1)return;S.cash-=c;if(S.lb.d!==today())S.lb={d:today(),n:0};S.lb.n++;const r=Math.random();
   if(r<.35){const g=Math.floor(c*(.5+Math.random()*2.5));S.cash+=g;msg('Caja de la suerte: '+fmt(g)+'.','ok')}
-  else if(r<.55){const k=rnd(1,3);S.cry+=k;msg('Caja de la suerte: '+k+' cristal(es).','ok')}
+  else if(r<.55){const k=rnd(1,3);S.cry+=k;msg('Caja de la suerte: '+k+' gema(s).','ok')}
   else if(r<.7){const i=rnd(0,ITEMS.length-1);S.inv[i]=(S.inv[i]||0)+1;msg('Caja de la suerte: '+ITEMS[i].n+'.','ok')}
   else if(r<.85){const x=Math.ceil(need()*.1);msg('Caja de la suerte: '+x+' XP.','ok');gain(x)}
   else msg('Caja de la suerte: vacía. Mala suerte.','bad',0)},
@@ -334,7 +342,7 @@ function stake(){return '<div class="btns">'+[100,1000,10000,100000].map(v=>b('b
 function rel(t){const s=(now()-t)/1000;return s<60?'ahora':s<3600?'hace '+Math.floor(s/60)+' min':s<86400?'hace '+Math.floor(s/3600)+' h':'hace '+Math.floor(s/86400)+' d'}
 const EVI={ok:'✓',bad:'✕',info:'!'};
 function evs(L){let g='';return L.map(e=>{const r=rel(e.t),h=r!==g?'<div class="evh">'+(g=r)+'</div>':'';
-  let m=e.m.replace(/</g,'&lt;').replace(/(\$\d[\d.,]*\d|\$\d|[+-]?\d+ (?:XP|de \w+|puntos? de habilidad|cristal(?:es)?|min))/g,'<em>$1</em>');
+  let m=e.m.replace(/</g,'&lt;').replace(/(\$\d[\d.,]*\d|\$\d|[+-]?\d+ (?:XP|de \w+|puntos? de habilidad|gemas?|min))/g,'<em>$1</em>');
   m=m.replace(/^([^:.!]{3,40}):\s*/,'<b>$1</b> · ');
   return h+'<div class="ev '+e.k+'"><i>'+(EVI[e.k]||'•')+'</i><p>'+m+'</p></div>'}).join('')}
 
@@ -347,39 +355,39 @@ const VIEWS={
    '<div class="stat"><span>Banda</span><b>'+S.g+' miembros</b></div><div class="stat"><span>Trabajo</span><b>'+(S.job>=0?JOBS[S.job].n:'Sin empleo')+'</b></div>'+
    '<div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div><div class="stat"><span>Ingresos</span><b>'+fmt(income())+'/min</b></div><div class="stat"><span>Peleas ganadas</span><b>'+S.wins+'</b></div></div>';
   return h+'<div class="card"><h3>Últimos eventos</h3>'+(S.log.length?evs(S.log.slice(0,4)):'<p class="hint">Aún no ha pasado nada.</p>')+'<div class="btns"><button class="btn alt" data-tab="events">Ver todos</button></div></div>'},
- crime(){let h=status()+'<h2>Crímenes</h2><p class="hint">Gastan valor. Si sale mal puedes acabar herido o en la cárcel. La práctica y la inteligencia mejoran el éxito.</p>';
-  CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=S.lvl<c.l||S.iq<(c.iq||0);
-   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:''):'Valor '+c.br+' · '+fmt(c.a*city().m)+' a '+fmt(c.b*city().m)+' · éxito '+Math.round(crimeP(c,i)*100)+'%',b('crime',i,'Hacer',lk||locked()||S.st<c.br),lk)});return h},
- gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Entrenar gasta energía y cuesta una cuota que sube con tu nivel en esa estadística. Cuanto más alta, menos mejoras. Con más voluntad (ahora '+Math.round(S.wl/maxWl()*100)+'%) ganas más; cada entrenamiento la gasta. Se puede entrenar en la cárcel, pero no en el hospital.</p>';
-  STATS.slice(0,4).forEach(s=>{const d=inHosp()||S.en<1;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · cuota '+fmt(gymFee(s[0]))+'/energía',b('train',s[0],'×1',d||S.cash<gymFee(s[0]),'sm')+b('train',s[0]+'|all','Todo',d,'alt sm'))});
-  return h+'<p class="hint">Fuerza da ataque, Agilidad ayuda a acertar, Guardia reduce el daño y Trabajo te da mejores empleos. La inteligencia se gana en la escuela.</p>'},
- fight(){let h=status()+'<h2>Pelear</h2><p class="hint">Cada pelea cuesta 2 de energía. Con 10 de salud o menos no puedes pelear. Ataque '+atkT()+' · Agilidad '+Math.floor(S.agi)+'.</p>';
-  S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · fuerza '+f.a+' · probabilidad de ganar '+Math.round(fightP(f)*100)+'%',b('fight',i,'Atacar',locked()||S.en<2||S.hp<=10))});
+ crime(){let h=status()+'<h2>Crímenes</h2><p class="hint">Gastan energía y algo de salud, y exigen un mínimo de valor (no lo gastan). Si sale mal puedes acabar herido o en la cárcel. La práctica y la inteligencia mejoran el éxito; la agilidad te ayuda a escapar de la policía.'+(S.terr>=1?' Por las peleas ganadas hay menos competencia: <b>+'+Math.floor(S.terr)+'%</b> de botín (baja con el tiempo).':' Ganar peleas reduce la competencia y sube el botín.')+'</p>';
+  CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=crLk(c);
+   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):'Valor mín. '+c.br+' · −'+crEn(c)+' energía · −'+crHp(c)+' salud · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100))+' · éxito '+Math.round(crimeP(c,i)*100)+'%',b('crime',i,'Hacer',lk||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
+ gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Entrenar gasta energía y cuesta una cuota que sube con tu nivel en esa estadística. Cuanto más alta, menos mejoras. Tras entrenar una estadística debe descansar (30 s por energía gastada) antes de volver a entrenarla. Con más voluntad (ahora '+Math.round(S.wl/maxWl()*100)+'%) ganas más; cada entrenamiento la gasta. Se puede entrenar en la cárcel, pero no en el hospital.</p>';
+  STATS.slice(0,3).forEach(s=>{const cl=S.cool[s[0]]>now(),d=inHosp()||S.en<1||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+(cl?'descansando '+cd(S.cool[s[0]]):'cuota '+fmt(gymFee(s[0]))+'/energía'),b('train',s[0],'×1',d||S.cash<gymFee(s[0]),'sm')+b('train',s[0]+'|all','Todo',d,'alt sm'))});
+  return h+'<p class="hint">Fuerza da ataque, Agilidad ayuda a acertar, y Guardia reduce el daño. El Trabajo sube trabajando y la inteligencia, en la escuela.</p>'},
+ fight(){let h=status()+'<h2>Pelear</h2><p class="hint">Cada pelea cuesta 2 de energía y el daño que recibas. Exige más valor cuanto mayor es el nivel del rival (no lo gasta). Con 10 de salud o menos no puedes pelear. Ataque '+atkT()+' · Agilidad '+Math.floor(S.agi)+'.'+(S.fear>now()?' Os temen tras vuestra última guerra: +10% durante '+cd(S.fear)+'.':'')+'</p>';
+  S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · valor mín. '+fBr(f)+' · probabilidad de ganar '+Math.round(fightP(f)*100)+'%',b('fight',i,'Atacar',locked()||S.en<2||S.hp<=10||S.st<fBr(f)))});
   h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (−1 valor, −voluntad)',locked()||S.st<1,'alt')+'</div>';
-  h+='<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>. Cada dos miembros suman 1 de ataque y 1 de defensa.</p>'+row('Reclutar un matón',fmt(recruitCost()),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=500));
-  h+='<h2>Guerras de bandas</h2><p class="hint">Cada guerra cuesta 3 de valor. Si pierdes, pierdes miembros.</p>';
-  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros · probabilidad de ganar '+Math.round(S.g/(S.g+r.s)*100)+'%',b('war',i,'Guerra',locked()||S.st<3))});return h},
+  h+='<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b>. Cada dos miembros suman 1 de ataque y 1 de defensa.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
+  h+='<h2>Guerras de bandas</h2><p class="hint">Cada guerra cuesta 3 de energía, 3 de valor y el daño que recibas. Si pierdes, pierdes miembros.</p>';
+  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros · probabilidad de ganar '+Math.round(S.g/(S.g+r.s)*100)+'%',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=10))});return h},
  explore(){const G=[['Ciudad',[['job','💼','Tu trabajo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Vacía para ti']]],
    ['Dinero',[['bank','🏦','Banco',fmt(S.bank)],['biz','🏢','Negocios',fmt(income())+'/min'],['travel','✈️','Agencia de viajes',city().n]]],
    ['Mercado',[['shop','🛒','Tiendas','Armas y objetos'],['inv','🎒','Inventario',Object.values(S.inv).reduce((t,n)=>t+n,0)+' objetos']]],
-   ['Lado oscuro',[['casino','🎰','Casino','Tragaperras, ruleta, cajas'],['temple','💎','Templo de cristal',S.cry+' cristales']]],
+   ['Lado oscuro',[['casino','🎰','Casino','Tragaperras, ruleta, cajas'],['temple','💎','Joyería',S.cry+' gemas']]],
    ['Tú',[['me','📈','Perfil',S.sp?S.sp+' puntos':'Habilidades y partida'],['events','📜','Eventos',S.unr?S.unr+' nuevos':'Historial']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'"><span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
- job(){let h=back()+'<h2>Tu trabajo</h2><p class="hint">El sueldo entra cada minuto, también sin jugar. Trabajar sube poco a poco tu estadística de Trabajo. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>';
+ job(){let h=back()+'<h2>Tu trabajo</h2><p class="hint">El sueldo entra cada minuto, también sin jugar. Para subir tu estadística de Trabajo tienes que trabajar turnos: cada turno gasta 2 de energía y '+wkWl()+' de voluntad, y te paga 3 minutos de sueldo. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>';
   JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i;h+=row(j.n+(cur?' (actual)':''),fmt(j.pay)+'/min · requiere Trabajo '+j.lab+(j.iq?' e Inteligencia '+j.iq:''),b('job',i,cur?'Actual':'Aceptar',lk||cur),lk)});
-  return h+(S.job>=0?'<div class="btns">'+b('quit',undefined,'Dejar el trabajo',false,'alt')+'</div>':'')},
- school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas inteligencia y 1 cristal.</p>';
+  return h+(S.job>=0?'<div class="btns">'+b('work',undefined,'Trabajar un turno',locked()||S.en<2||S.wl<wkWl())+b('quit',undefined,'Dejar el trabajo',false,'alt')+'</div>':'')},
+ school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas inteligencia y 1 gema.</p>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
   COURSES.forEach((c,i)=>{const d=S.done.includes(i);h+=row(c.n,d?'Completado':fmt(c.c)+' · '+c.min+' min · +'+c.iq+' inteligencia'+(c.lab?' y +'+c.lab+' trabajo':''),b('study',i,d?'Hecho':'Matricular',d||!!S.edu||S.cash<c.c),d)});return h},
  hosp(){let h=back()+status()+'<h2>Hospital</h2>';
-  if(inHosp())return h+'<p class="hint">Te recuperas mientras pasa el tiempo. Puedes pagar para salir antes.</p><div class="btns">'+b('out','hosp|m','Pagar '+fmt(outCash(S.hosp)),S.cash<outCash(S.hosp))+b('out','hosp|c',outCry(S.hosp)+' cristales',S.cry<outCry(S.hosp),'alt')+'</div>';
+  if(inHosp())return h+'<p class="hint">Te recuperas mientras pasa el tiempo. Puedes pagar para salir antes.</p><div class="btns">'+b('out','hosp|m','Pagar '+fmt(outCash(S.hosp)),S.cash<outCash(S.hosp))+b('out','hosp|c',outCry(S.hosp)+' gemas',S.cry<outCry(S.hosp),'alt')+'</div>';
   return h+row('Curarte del todo',S.hp>=maxHp()?'Ya estás al máximo':fmt(healCost()),b('heal',undefined,'Curar',S.hp>=maxHp()||S.cash<healCost()))},
  jail(){let h=back()+status()+'<h2>Cárcel</h2>';
-  if(inJail())return h+'<p class="hint">No puedes cometer crímenes, pelear ni viajar. El gimnasio de la cárcel sí está abierto.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+b('out','jail|c',outCry(S.jail)+' cristales',S.cry<outCry(S.jail),'alt')+'</div>';
+  if(inJail())return h+'<p class="hint">No puedes cometer crímenes, pelear ni viajar. El gimnasio de la cárcel sí está abierto.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+b('out','jail|c',outCry(S.jail)+' gemas',S.cry<outCry(S.jail),'alt')+'</div>';
   return h+'<p class="hint">Estás libre. Si un crimen sale mal, la policía puede encerrarte unos minutos.</p>'},
  bank(){return back()+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p><div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><div class="btns">'+b('dep',undefined,'Depositar todo',S.cash<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>'},
- biz(){let h=back()+'<h2>Negocios</h2><p class="hint">Ingresos por minuto, también cuando no estás. Ahora: '+fmt(income())+'/min (sueldo incluido).</p>';
-  BIZ.forEach((w,i)=>{h+=row(w.n+' ×'+S.biz[i],'+'+fmt(w.v)+'/min · '+fmt(bizPrice(i)),b('biz',i,'Comprar',S.cash<bizPrice(i)))});return h},
+ biz(){let h=back()+'<h2>Negocios</h2><p class="hint">Ingresos por minuto, también cuando no estás. Ahora: '+fmt(income())+'/min (sueldo incluido). Tu inteligencia sube su rendimiento un '+Math.round(S.iq*.2)+'%.</p>';
+  BIZ.forEach((w,i)=>{h+=row(w.n+' ×'+S.biz[i],'+'+fmt(w.v*bizMul())+'/min · '+fmt(bizPrice(i)),b('biz',i,'Comprar',S.cash<bizPrice(i)))});return h},
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2><p class="hint">En cada ciudad cambia lo que ganas en crímenes, peleas y guerras.</p>';
   CITIES.forEach((c,i)=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':''),lk?'Requiere nivel '+c.l:'Pagos ×'+c.m+' · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<c.c),lk)});return h},
  shop(){let h=back()+'<h2>Armas</h2>';
@@ -392,9 +400,9 @@ const VIEWS={
  casino(){let h=back()+status()+'<h2>Casino</h2><p class="hint">Elige tu apuesta.</p>'+stake();
   h+='<h2>Tragaperras</h2><div class="reels" aria-hidden="true">'+reels+'</div><p class="hint">Tres iguales: de ×5 (🍒) a ×25 (7️⃣). Dos iguales: recuperas la apuesta.</p><div class="btns">'+b('slot',undefined,'Tirar',locked()||S.cash<bet)+'</div>';
   h+='<h2>Ruleta</h2><p class="hint">Rojo o negro pagan ×2. El 0 verde paga ×36.</p><div class="btns">'+b('roul','r','Rojo',locked()||S.cash<bet)+b('roul','n','Negro',locked()||S.cash<bet,'alt')+b('roul','z','0 verde',locked()||S.cash<bet,'alt')+'</div>';
-  return h+'<h2>Cajas de la suerte</h2>'+row('Abrir una caja',fmt(boxCost())+' · quedan '+boxesLeft()+' hoy · dinero, cristales, objetos o XP',b('box',undefined,'Abrir',locked()||S.cash<boxCost()||boxesLeft()<1))},
- temple(){let h=back()+'<h2>Templo de cristal</h2><p class="hint">Tienes <b>'+S.cry+'</b> cristales. Los ganas al subir de nivel, en crímenes difíciles, guerras, cursos y cajas de la suerte.</p>';
-  TEMPLE.forEach((t,i)=>{h+=row(t.n,t.c+' cristales'+(i===4?' → '+fmt(S.lvl*1000):''),b('temple',i,'Cambiar',S.cry<t.c))});return h},
+  return h+'<h2>Cajas de la suerte</h2>'+row('Abrir una caja',fmt(boxCost())+' · quedan '+boxesLeft()+' hoy · dinero, gemas, objetos o XP',b('box',undefined,'Abrir',locked()||S.cash<boxCost()||boxesLeft()<1))},
+ temple(){let h=back()+'<h2>Joyería</h2><p class="hint">Tienes <b>'+S.cry+'</b> gemas. Las ganas al subir de nivel, en crímenes difíciles, guerras, cursos y cajas de la suerte.</p>';
+  TEMPLE.forEach((t,i)=>{h+=row(t.n,t.c+' gemas'+(i===4?' → '+fmt(S.lvl*1000):''),b('temple',i,'Cambiar',S.cry<t.c))});return h},
  events(){return back()+'<h2>Eventos</h2>'+(S.log.length?evs(S.log):'<p class="hint">Aún no ha pasado nada.</p>')},
  me(){let h=back()+'<h2>Habilidades</h2><p class="hint">Puntos disponibles: <b>'+S.sp+'</b>. Ganas 3 por nivel. Las estadísticas se entrenan en el gimnasio.</p>';
   [['enB','Energía máxima',maxEn()],['stB','Valor máximo',maxSt()],['hpB','Salud máxima',maxHp()],['wlB','Voluntad máxima',maxWl()]].forEach(s=>{h+=row(s[1],'Actual: '+s[2],b('skill',s[0],'+1',S.sp<1))});
@@ -435,16 +443,16 @@ impf.addEventListener('change',async()=>{const f=impf.files[0];impf.value='';if(
   save();view()});
 
 function tick(dt){
-  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/12);S.wl=Math.min(maxWl(),S.wl+dt/9);
-  S.cash+=income()*dt/60;if(S.job>=0)S.lab+=dt/60*.05*(S.job+1);
+  S.en=Math.min(maxEn(),S.en+dt/25);S.st=Math.min(maxSt(),S.st+dt/40);S.hp=Math.min(maxHp(),S.hp+dt/12);S.wl=Math.min(maxWl(),S.wl+dt/9);S.terr=Math.max(0,S.terr-dt/120);
+  S.cash+=income()*dt/60;
   const n=now();
   if(S.hosp&&n>=S.hosp){S.hosp=0;S.hp=Math.max(S.hp,maxHp()*.5);msg('Te dan el alta en el hospital.','info')}
   if(S.jail&&n>=S.jail){S.jail=0;msg('Sales de la cárcel. Pórtate bien.','info')}
-  if(S.edu&&n>=S.edu.end){const c=COURSES[S.edu.i];S.iq+=c.iq;if(c.lab)S.lab+=c.lab;S.done.push(S.edu.i);S.edu=null;S.cry++;msg('Terminas «'+c.n+'»: +'+c.iq+' de inteligencia y 1 cristal.','ok')}}
+  if(S.edu&&n>=S.edu.end){const c=COURSES[S.edu.i];S.iq+=c.iq;if(c.lab)S.lab+=c.lab;S.done.push(S.edu.i);S.edu=null;S.cry++;msg('Terminas «'+c.n+'»: +'+c.iq+' de inteligencia y 1 gema.','ok')}}
 const now0=now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
-  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/10),inHosp(),inJail(),!!S.edu,S.unr,income()&&beat%10===0?beat:0].join('|');
+  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/10),inHosp(),inJail(),!!S.edu,S.unr,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,income()&&beat%10===0?beat:0].join('|');
   if(s!==sig){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
