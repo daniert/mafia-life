@@ -403,7 +403,7 @@ const wlF=()=>.75+.25*S.wl/maxWl();
 const FOE_S={x:{a:1,g:.5,d:0,hit:1,steal:1},b:{a:1,g:.5,d:.4,hit:1.4,steal:1},t:{a:1.3,g:.25,d:0,hit:1,steal:1},q:{a:.8,g:1,d:0,hit:1,steal:1.6}}, fS=f=>FOE_S[f.s]||FOE_S.x;
 const fightP=f=>{const s=fS(f),a=atkT()*s.a+Math.floor(agiT())*s.g+defT()*s.d,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.95,Math.max(.05,(r*.8**d+(S.fear>now()?.1:0))*wlF()))};
 const crimeP=(c,i)=>Math.min(.97,(c.p+Math.min(.15,(S.mast[i]||0)*.003)+Math.min(.05,S.iq*.001))*wlF());
-const pay=()=>S.job>=0?JOBS[S.job].pay:0;
+const pay=()=>S.job>=0&&!inHosp()?JOBS[S.job].pay:0;
 const bizMul=()=>1+S.iq*.002;
 const income=()=>(S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0)*bizMul()+pay())*(jw(0)?1.05:1);
 const bizPrice=i=>Math.floor(BIZ[i].p*Math.pow(1.15,S.biz[i]));
