@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mafia Life</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1c080b">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -340,7 +342,10 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,veh:[],biz:[0,0,0,0,0,0,0,0],seen:null,mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,done:[],
  hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],term:null,fund:null,loan:null,terr:0,fear:0,log:[],t:Date.now()});
-function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
+function migrate(d){const old=(d.v||1)<VER,o=def();
+  // Untrusted input (imports): keep only known keys whose type matches the default
+  for(const k of Object.keys(o))if(Object.hasOwn(d,k)&&d[k]!=null&&(o[k]===null||typeof d[k]===typeof o[k]&&Array.isArray(d[k])===Array.isArray(o[k])))o[k]=d[k];
+  o.log=Array.isArray(o.log)?o.log.filter(e=>e&&typeof e.m==='string'&&typeof e.t==='number').map(e=>({t:e.t,k:['ok','bad','info'].includes(e.k)?e.k:'info',m:e.m})):[];o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
   if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
   if(!Array.isArray(o.crew))o.crew=[];crewSync(o);
@@ -523,7 +528,7 @@ const ACT={
  out(k,how){const f=k==='hosp'?'hosp':'jail';if(S[f]<=now())return;
   if(how==='c'){const c=outCry(S[f]);if(S.cry<c)return;S.cry-=c}else{const c=outCash(S[f]);if(S.cash<c)return;S.cash-=c}
   S[f]=0;if(f==='hosp')S.hp=Math.max(S.hp,maxHp()*.5);msg(f==='hosp'?'Pagas al médico y sales del hospital.':'Pagas la fianza y sales de la cárcel.','info')},
- job(i){const j=JOBS[i];if(inJail()||S.lab<j.lab||S.iq<j.iq||+i<=S.job)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
+ job(i){const j=JOBS[i];if(locked()||S.lab<j.lab||S.iq<j.iq||+i<=S.job)return;S.job=+i;msg('Empiezas a trabajar de '+j.n.toLowerCase()+': '+fmt(j.pay)+' por minuto.','ok')},
  study(i){const c=COURSES[i];if(locked()||S.edu||S.done.includes(+i)||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c))return;S.cash-=c.c;S.en-=scEn(c);S.wl-=scWl(c);S.edu={i:+i,end:now()+c.min*60000};msg('Te matriculas en «'+c.n+'». Termina en '+c.min+' min.','info')},
  temple(i){i=+i;const j=JEWELS[i];if(!j||jw(i)||S.cry<j.c)return;S.cry-=j.c;S.jw.push(i);msg('Compras: '+j.n+'.','ok',0)},
  sellgem(){if(S.cry<GEM_SELL)return;S.cry-=GEM_SELL;const g=S.lvl*1000;S.cash+=g;msg('El perista te da '+fmt(g)+' por '+GEM_SELL+' gemas.','ok',0)},
@@ -674,8 +679,8 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
    ['Lado oscuro',[['gang','🔫','Tu banda',pl(S.g,'miembro')],['casino','🃏','Casino','Tragaperras, ruleta, cajas'],['temple','💍','Joyería',pl(S.cry,'gema')]]],
    ['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['events','📜','Eventos','Historial'],['game','💾','Partida','Guardar y cargar']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
- job(){let h=back()+'<h2>Empleo</h2><p class="hint">El sueldo entra cada minuto, aunque no juegues. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>'+(inJail()?'<div class="alert">🚔 <span>Nadie contrata a alguien que está en la cárcel. Espera a salir.</span></div>':'');
-  JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i,rq=[j.lab?'Trabajo '+j.lab:'',j.iq?'Inteligencia '+j.iq:''].filter(Boolean).join(' e ');h+=row(j.n+(lk?'':newTag('job','j'+i)),fmt(j.pay)+'/min'+(rq?' · requiere '+rq:''),b('job',i,cur?'Actual':i<S.job?'Superado':'Aceptar',lk||cur||i<S.job||inJail()),lk)});
+ job(){let h=back()+'<h2>Empleo</h2><p class="hint">El sueldo entra cada minuto, aunque no juegues. Tienes Trabajo '+f1(S.lab)+' e Inteligencia '+f1(S.iq)+'.</p>'+(locked()?'<div class="alert">'+(inJail()?'🚔':'🏥')+' <span>Nadie te contrata mientras estás en '+(inJail()?'la cárcel':'el hospital')+'. Espera a salir.</span></div>':'');
+  JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i,rq=[j.lab?'Trabajo '+j.lab:'',j.iq?'Inteligencia '+j.iq:''].filter(Boolean).join(' e ');h+=row(j.n+(lk?'':newTag('job','j'+i)),fmt(j.pay)+'/min'+(rq?' · requiere '+rq:''),b('job',i,cur?'Actual':i<S.job?'Superado':'Aceptar',lk||cur||i<S.job||locked()),lk)});
   return h},
  school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas 1 gema.</p>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
@@ -724,11 +729,11 @@ const topTab=t=>NAV.some(n=>n[0]===t)?t:'explore';
 
 function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl,maxWl(),'--wl','✊'],['Valor',S.st,maxSt(),'--st','💪'],['Salud',S.hp,maxHp(),'--hp','❤️'],['XP',S.xp,need(),'--xp','⭐']];
   $('#bars').innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'">'+Math.floor(x[1])+(innerWidth<860?'':'/'+x[2])+'</b></div><div class="track"><div class="fill" style="width:'+Math.max(0,Math.min(100,x[1]/x[2]*100))+'%;background:var('+x[3]+')"></div></div></div>').join('')}
-function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene()}const tc=getComputedStyle(document.documentElement).getPropertyValue('--deep').trim();document.querySelector('meta[name=theme-color]').content=tc;$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
+function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
 let curTab=null;
-function view(){if(!VIEWS[tab])tab='home';if(!S.seen)S.seen=allUnl();if(tab!==curTab){markSeen(curTab);curTab=tab}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
+function view(){if(!Object.hasOwn(VIEWS,tab))tab='home';if(!S.seen)S.seen=allUnl();if(tab!==curTab){markSeen(curTab);curTab=tab}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
   $('#nav').innerHTML=NAV.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===topTab(tab)?' aria-current="true"':'')+'><span class="i" aria-hidden="true">'+icons(t[2])+'</span>'+t[1]+(badge(t[0])?NEW:'')+'</button>').join('');
   $('#side').innerHTML=MENU.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'><span>'+t[1]+'</span>'+(t[0]==='hosp'&&inHosp()||t[0]==='jail'&&inJail()?'<span class="pill">●</span>':badge(t[0])?NEW:'')+'</button>').join('');head()}
 
