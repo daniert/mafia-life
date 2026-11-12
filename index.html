@@ -248,7 +248,7 @@ const TEMPLE=[{n:'Rellenar energía',c:5},{n:'Rellenar valor',c:5},{n:'Rellenar 
 // Gym energy per session, by stat
 const GYM_EN={atk:4,agi:3,def:5},gEn=k=>GYM_EN[k];
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
-const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Soldado'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
+const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
 const REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 const NAV=[['home','Inicio','🏠'],['crime','Crímenes','💼'],['gym','Gimnasio','🏋️'],['fight','Pelea','🥊'],['explore','Explorar','🧭']];
 const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fight','Pelea'],['gang','Banda'],['gym','Gimnasio'],['me','Habilidades'],['inv','Inventario'],['events','Eventos']];
@@ -256,7 +256,7 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,veh:[],biz:[0,0,0,0,0,0,0,0],mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,done:[],
- hosp:0,jail:0,inv:{},lb:{d:'',n:0},cool:{},terr:0,fear:0,log:[],t:Date.now()});
+ hosp:0,jail:0,inv:{},lb:{d:'',n:0},cool:{},crc:{},terr:0,fear:0,log:[],t:Date.now()});
 function migrate(d){const old=(d.v||1)<VER,o=Object.assign(def(),d);o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
   if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
@@ -353,6 +353,8 @@ const bizPrice=i=>Math.floor(BIZ[i].p*Math.pow(1.15,S.biz[i]));
 const itemPrice=i=>Math.floor(ITEMS[i].p*(1+S.lvl*.1));
 const crLk=c=>S.lvl<c.l||S.iq<(c.iq||0)||(c.bz!==undefined&&!S.biz[c.bz]);
 const jailP=()=>.4*Math.max(.4,1-agiT()*.005);
+// Crime cooldown (ms): bigger jobs take longer to set up again
+const crCd=c=>Math.round((.5+c.br*1.2)*60000), crOn=i=>(S.crc[i]||0)>now();
 const crEn=c=>c.br+1, crHp=c=>hd(c.br*2), fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
@@ -377,7 +379,7 @@ const ACT={
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(c.xp*S.lvl)}
   else{const d=hd(c.dm+rnd(0,8));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
- crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.hp-=crHp(c);S.st-=c.br;
+ crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.hp-=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.','ok');gain(c.xp)}
   else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;msg(c.n+': te detiene la policía. '+m+' min en la cárcel.','bad')}
@@ -398,7 +400,7 @@ const ACT={
   if(won){const g=Math.floor(r.s*60*city().m);S.cash+=g;S.cry++;S.fear=now()+600000;msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+' y 1 gema.'+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
   else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));S.g-=l;msg(r.n+' os aplasta. Pierdes '+l+' miembro(s).'+hs+hospital(),'bad')}},
  travel(i){const c=CITIES[i];if(locked()||i==S.city||S.lvl<c.l||S.cash<c.c||S.en<5)return;S.cash-=c.c;S.en-=5;S.city=+i;genFoes();msg('Llegas a '+c.n+'.','info')},
- veh(i){i=+i;const v=VEHICLES[i];if(!v||S.cash<v.p||S.veh.includes(i))return;S.cash-=v.p;S.veh.push(i);msg('Compras: '+v.n+'.','ok',0)},
+ veh(i){i=+i;const v=VEHICLES[i];if(!v||S.cash<v.p||S.veh.includes(i)||i<Math.max(-1,...S.veh))return;S.cash-=v.p;S.veh.push(i);msg('Compras: '+v.n+'.','ok',0)},
  buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i||!avail(it))return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
@@ -459,8 +461,8 @@ const VIEWS={
  crime(){if(inJail()){let h=status()+'<h2>Crímenes en la cárcel</h2><p class="hint">Aquí dentro se juega por pasar el rato. Te puedes llevar algún golpe.</p>';
   JCRIMES.forEach((c,i)=>{h+=row(c.n,'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,'Hacer',inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
   let h=status()+'<h2>Crímenes</h2><p class="hint">Si salen mal, puedes acabar herido o en la cárcel.</p>';
-  CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=crLk(c);
-   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,'Hacer',lk||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
+  CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const lk=crLk(c),on=crOn(i);
+   h+=row(c.n,lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):(on?'Disponible en '+cd(S.crc[i])+' · ':'')+'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
  gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, esa estadística descansa 30 s.</p>';
   STATS.slice(0,3).forEach(s=>{const cl=S.cool[s[0]]>now(),d=inHosp()||S.en<gEn(s[0])||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+(cl?'descansando '+cd(S.cool[s[0]]):'⚡'+gEn(s[0])+' · ✊'+Math.ceil(maxWl()*.2)+' · cuota '+fmt(gymFee(s[0]))),b('train',s[0],'Entrenar',d||S.cash<gymFee(s[0])))});
   return h},
@@ -497,9 +499,9 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2>';
   CITIES.forEach((c,i)=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':''),lk?'Requiere nivel '+c.l:'⚡5 · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<c.c||S.en<5),lk)});return h},
  shop(){let h=back()+'<h2>Armas</h2>';
-  WEAPONS.forEach((w,i)=>{const own=S.w>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' ataque · '+fmt(w.p),b('buy','w|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Protección</h2>';ARMOR.forEach((w,i)=>{const own=S.a>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' defensa · '+fmt(w.p),b('buy','a|'+i,own?'Tienes':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Vehículos</h2>';VEHICLES.forEach((v,i)=>{const own=S.veh.includes(i);h+=row(v.n,'+'+v.v+' agilidad · '+fmt(v.p),b('veh',i,own?'Tienes':'Comprar',own||S.cash<v.p))});
+  WEAPONS.forEach((w,i)=>{const own=S.w>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' ataque · '+fmt(w.p),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Protección</h2>';ARMOR.forEach((w,i)=>{const own=S.a>=i;if(!avail(w))return;h+=row(w.n+excl(w),'+'+w.v+' defensa · '+fmt(w.p),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Vehículos</h2>';VEHICLES.forEach((v,i)=>{const own=S.veh.includes(i),low=i<Math.max(-1,...S.veh);h+=row(v.n,'+'+v.v+' agilidad · '+fmt(v.p),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<v.p))});
   h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
  inv(){let h=back()+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3><div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n:'Ninguna')+'</b></div><div class="stat"><span>Protección</span><b>'+(S.a>=0?ARMOR[S.a].n:'Ninguna')+'</b></div><div class="stat"><span>Vehículos</span><b>'+(S.veh.length?S.veh.map(i=>VEHICLES[i].n).join(', '):'Ninguno')+'</b></div></div><h2>Objetos</h2>';
   const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
@@ -557,7 +559,7 @@ function tick(dt){
 const now0=now();tick(Math.min(3600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
-  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,income()&&beat%10===0?beat:0].join('|');
+  const s=[Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),STATS.filter(s=>S.cool[s[0]]>now()).length,CRIMES.filter((c,i)=>crOn(i)).length,income()&&beat%10===0?beat:0].join('|');
   if(s!==sig){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
