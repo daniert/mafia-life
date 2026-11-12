@@ -422,8 +422,8 @@ const FUNDS=[{n:'Bonos del puerto',min:60,lo:-.05,hi:.2},{n:'Acciones de la navi
 // Deposits/investments take a fixed share of cash; they can't overlap with a loan (no borrow-to-invest arbitrage)
 const STAKE=.5, stakeAmt=()=>Math.floor(S.cash*STAKE), noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
-// Escape attempt costs most of your energy and valor
-const escEn=()=>Math.ceil(maxEn()*.8),escSt=()=>Math.ceil(maxSt()*.8);
+// Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
+const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
 const crEn=c=>c.br+1, crHp=c=>CR_VIO[CRIMES.indexOf(c)], fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
