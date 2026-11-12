@@ -356,7 +356,9 @@ const itemPrice=i=>Math.floor(ITEMS[i].p*(1+S.lvl*.1));
 const crLk=c=>S.lvl<c.l||S.iq<(c.iq||0)||(c.bz!==undefined&&!S.biz[c.bz]);
 const jailP=()=>.4*Math.max(.4,1-agiT()*.005);
 // Crime cooldown (ms): bigger jobs take longer to set up again
-const crCd=c=>Math.round((.5+c.br*1.2)*60000), crOn=i=>(S.crc[i]||0)>now();
+// Crime cooldown in seconds, by CRIMES index: street-level jobs are plentiful, big targets are rare
+const CR_CD=[10,20,60,480,900,1800,3600,180,600,300,360];
+const crCd=c=>CR_CD[CRIMES.indexOf(c)]*1000, crOn=i=>(S.crc[i]||0)>now();
 const crEn=c=>c.br+1, crHp=c=>hd(c.br*2), fBr=f=>1+Math.floor(f.l/3), gangCap=()=>2+S.lvl*3;
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
