@@ -668,9 +668,15 @@ const VIEWS={
   if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
   h+='<div class="card"><h3>Estadísticas</h3><div class="sgrid">'+STATS.map(s=>'<div><small>'+s[1]+'</small><b>'+f1(S[s[0]])+'</b></div>').join('')+
    '<div class="tot"><small>Total</small><b>'+f1(STATS.reduce((t,s)=>t+S[s[0]],0))+'</b></div></div></div>';
-  h+='<div class="card"><h3>Tu familia</h3><div class="stat"><span>Ataque total</span><b>'+atkT()+'</b></div><div class="stat"><span>Defensa total</span><b>'+defT()+'</b></div>'+
-   '<div class="stat"><span>Banda</span><b>'+pl(S.g,'miembro')+'</b></div><div class="stat"><span>Empleo</span><b>'+(S.job>=0?JOBS[S.job].n:'Sin empleo')+'</b></div>'+
-   '<div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div><div class="stat"><span>Ingresos</span><b>'+fmt(income())+'/min</b></div><div class="stat"><span>Peleas ganadas</span><b>'+S.wins+'</b></div></div>';
+  // Summary cards: rows with nothing to show are left out, and so is an empty card
+  const sr=(k,v)=>v?'<div class="stat"><span>'+k+'</span><b>'+v+'</b></div>':'',card=(t,r)=>r?'<div class="card"><h3>'+t+'</h3>'+r+'</div>':'',nb=S.biz.reduce((t,n)=>t+n,0);
+  h+=card('Tu familia',sr('Banda',pl(S.g,'miembro'))+sr('Arma',S.w>=0&&WEAPONS[S.w].n)+sr('Protección',S.a>=0&&ARMOR[S.a].n)+
+   sr('Ataque total',atkT())+sr('Defensa total',defT())+sr('Peleas ganadas',S.wins));
+  h+=card('Tu dinero',sr('Empleo',S.job>=0&&JOBS[S.job].n+' · '+fmt(JOBS[S.job].pay)+'/min')+sr('Negocios',nb&&pl(nb,'negocio'))+
+   sr('Ingresos totales',income()>0&&fmt(income())+'/min')+sr('En el banco',S.bank>0&&fmt(S.bank))+
+   sr('Depósito',S.term&&TERMS[S.term.i].n+' · '+fmt(S.term.a)+' · vence en '+cd(S.term.end))+
+   sr('Inversión',S.fund&&FUNDS[S.fund.i].n+' · '+fmt(S.fund.a)+' · termina en '+cd(S.fund.end))+
+   sr(S.loan&&S.loan.v?'Deuda con los cobradores':'Préstamo',S.loan&&'Debes '+fmt(S.loan.a)+' · '+(S.loan.v?'vuelven en ':'vence en ')+cd(S.loan.end)));
   return h+'<div class="card"><h3>Últimos eventos</h3>'+(S.log.length?evs(S.log.slice(0,4)):'<p class="hint">Aún no ha pasado nada.</p>')+'<div class="btns"><button class="btn alt" data-tab="events">Ver todos</button></div></div>'},
  crime(){if(inJail()){let h=status()+'<h2>Crímenes en la cárcel</h2><p class="hint">Aquí dentro se juega por pasar el rato. Te puedes llevar algún golpe.</p>';
   h+=row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()));
