@@ -5,75 +5,46 @@
 <h1 align="center">Mafia Life</h1>
 
 <p align="center">
-  Juego de rol mafioso por turnos, en el navegador y sin instalación.<br>
+  Juego de mafia por turnos en el navegador. Gratis, sin instalación y sin anuncios.<br>
   <a href="https://daniert.github.io/mafia-life/"><strong>▶ Jugar ahora</strong></a>
 </p>
 
 <p align="center">
-  <img alt="PWA" src="https://img.shields.io/badge/PWA-instalable-5A0FC8">
-  <img alt="Vanilla JS" src="https://img.shields.io/badge/JS-vanilla-F7DF1E">
-  <img alt="Sin dependencias" src="https://img.shields.io/badge/dependencias-0-brightgreen">
-  <img alt="GitHub Pages" src="https://img.shields.io/badge/hosting-GitHub%20Pages-222">
+  <img src="docs/screenshots/home.jpg" width="250" alt="Pantalla de inicio">
+  <img src="docs/screenshots/crimes.jpg" width="250" alt="Crímenes">
+  <img src="docs/screenshots/explore.jpg" width="250" alt="Explorar">
 </p>
-
----
 
 ## 🎩 De qué va
 
-Empiezas con $500 y un trabajo de poca monta. Comete crímenes, entrena en el gimnasio, estudia, compra negocios y vehículos, monta tu banda y convierte tu nombre en leyenda de Nueva York a Palermo. Pasarás de ratero a Don.
+Empiezas con $500 en Nueva York y sin nombre. Comete crímenes, entrena, estudia, monta negocios y forma tu banda hasta pasar de **Ratero** a **Don**.
 
-> 🕰️ **Un homenaje.** Mafia Life es un tributo a aquellos juegos de mafia para Android a los que jugaba allá por 2010-2012 con la gente de la oficina: energía que se recarga, valor para los crímenes, la cárcel, el hospital y peleas entre compañeros a la hora del café.
+Es un homenaje a los juegos de mafia para Android de 2010-2012: energía que se recarga con el tiempo, cárcel, hospital y peleas entre compañeros a la hora del café.
 
-## ✨ Qué incluye
+## ✨ Qué puedes hacer
 
-| | |
-|---|---|
-| 💼 **Crímenes** | Gastan energía y valor. Los pequeños se repiten enseguida; los grandes golpes tardan en volver a estar a tiro. Los más violentos pueden herirte aunque salgan bien. Nuevos crímenes al subir de nivel |
-| 🚔 **Crímenes de cárcel** y fuga | Mientras estás dentro: poco dinero, buena experiencia y bastante riesgo; si salen mal, los guardias pueden alargarte la condena. O juégatelo todo a una fuga |
-| 🏋️ **Gimnasio** | Entrena Fuerza, Agilidad o Guardia; cada sesión gasta energía, voluntad y una cuota, y después toca descansar |
-| 🥊 **Peleas** | Rivales de tu zona; gastan energía y valor, y te juegas salud y dinero |
-| 👥 **Tu banda** y ⚔️ **guerras** | Recluta matones con apodo propio, que ganan experiencia y nivel en cada guerra contra las bandas rivales |
-| 💼 **Empleo** | Sueldo por minuto y experiencia que llega sola; los mejores puestos piden Trabajo e Inteligencia |
-| 🎓 **Escuela** | Cursos en tiempo real que suben la Inteligencia |
-| 🏥 **Hospital** y 🚔 **cárcel** | Tiempo de espera real; paga o usa gemas para salir antes |
-| 💎 **Gemas** y joyería | Se ganan jugando. Cómpralas en joyas que, dicen, traen suerte, o véndelas al perista |
-| 🎰 **Casino** | Tragaperras, ruleta y cajas de la suerte (5 al día) |
-| 🛒 **Tiendas** e 🎒 **inventario** | Armas, protección, vehículos y objetos; el mejor material se desbloquea con el nivel |
-| 🏢 **Negocios** | Ocho negocios para ingresos pasivos; abrir cada uno pide dinero, voluntad e inteligencia |
-| 🏦 **Banco** | Cuenta a salvo, depósitos a plazo, inversiones con riesgo y préstamos (cuidado con los cobradores) |
-| ✈️ **Viajar** | Nueva York, Chicago, Las Vegas, La Habana y Palermo |
-| 📈 **Habilidades** | Cada punto de nivel sube 1 el máximo de una barra |
-| 📜 **Eventos** | Historial de lo que te ha pasado |
+- 💼 **Crímenes** para ganar dinero y experiencia (y arriesgarte a la cárcel)
+- 🏋️ **Gimnasio**, 🎓 **escuela** y 💼 **empleo** para mejorar tu personaje
+- 🥊 **Peleas** con rivales y ⚔️ **guerras** con tu banda
+- 🏢 **Negocios**, 🏦 **banco** y 🎰 **casino** para mover el dinero
+- ✈️ **Viajar** de Nueva York a Chicago, Las Vegas, La Habana y Palermo
 
-Las barras son las del original: ⚡ **Energía**, ✊ **Voluntad**, 💪 **Valor**, ❤️ **Salud** y ⭐ **XP**. El valor es para la calle (crímenes, peleas, guerras) y la voluntad, para la disciplina (gimnasio, escuela, hospital, negocios). Cada botón muestra con esos mismos iconos lo que cuesta, avisa si te falta algo y cuenta el tiempo que queda para repetir; el resto de efectos los tendrás que descubrir jugando. En el móvil la navegación va abajo; en pantallas anchas hay una columna lateral con estadísticas y menú, como en el juego de la época. La estética es *noir*, con iconos de línea, y al recargar vuelves a la misma sección.
+Lo demás, lo descubres jugando.
 
-Los rangos van de **Ratero** a **Matón**, **Hombre de honor**, **Capo**, **Consigliere** y **Don**.
+<p align="center">
+  <img src="docs/screenshots/desktop.jpg" width="700" alt="Versión de escritorio">
+</p>
 
-## 💾 Partidas
+## 📱 Instalar
 
-La partida se guarda en el navegador (`localStorage`) y se puede exportar, importar o borrar desde **Explorar → Partida**. Las partidas antiguas se adaptan solas al abrir el juego.
-
-## 📱 Instalar como app
-
-Es una PWA: abre la [web](https://daniert.github.io/mafia-life/) en el móvil y elige **«Añadir a pantalla de inicio»**. Funciona sin conexión.
+Abre la [web](https://daniert.github.io/mafia-life/) en el móvil y elige **«Añadir a pantalla de inicio»**. Funciona sin conexión y la partida se guarda en tu navegador.
 
 ## 🛠️ Desarrollo
 
-No hay build ni dependencias. Sirve la carpeta con cualquier servidor estático:
+Sin build ni dependencias: todo el juego está en `index.html`. Para probarlo en local:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Y abre http://localhost:8000.
-
-```
-index.html             juego completo (HTML + CSS + JS)
-manifest.webmanifest   metadatos de la PWA
-sw.js                  service worker (caché offline)
-icons/                 iconos de la app
-```
-
-## 🚀 Despliegue
-
-Cada push a `main` se publica automáticamente en GitHub Pages.
+Cada push a `main` se publica en GitHub Pages.
