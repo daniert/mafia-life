@@ -582,7 +582,7 @@ const VIEWS={
  gang(){let h=back()+status()+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+' a tu nivel. Sube de nivel para reclutar más.':fmt(recruitCost())+' · máximo '+gangCap()+' a tu nivel',b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
   if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros.</p>';
-  RIVALS.forEach((r,i)=>{const pc=warPct(i)*100;h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · botín '+fmt(warLoot(i))+' + '+pc+' % de tu efectivo · si pierdes, −'+pc+' % · gema '+Math.min(100,r.s)+' %'+' · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
+  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
  game(){let h=back()+'<h2>Partida</h2><p class="hint">Se guarda sola en este navegador. Exporta una copia para pasarla a otro dispositivo.</p>';
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
