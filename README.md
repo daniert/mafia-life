@@ -29,7 +29,7 @@ Empiezas con $500 y un trabajo de poca monta. Comete crímenes, entrena en el gi
 | | |
 |---|---|
 | 💼 **Crímenes** | Gastan energía y valor. Los pequeños se repiten enseguida; los grandes golpes tardan en volver a estar a tiro. Los más violentos pueden herirte aunque salgan bien. Nuevos crímenes al subir de nivel |
-| 🚔 **Crímenes de cárcel** y fuga | Mientras estás dentro: poco dinero, buena experiencia y bastante riesgo. O juégatelo todo a una fuga |
+| 🚔 **Crímenes de cárcel** y fuga | Mientras estás dentro: poco dinero, buena experiencia y bastante riesgo; si salen mal, los guardias pueden alargarte la condena. O juégatelo todo a una fuga |
 | 🏋️ **Gimnasio** | Entrena Fuerza, Agilidad o Guardia; cada sesión gasta energía, voluntad y una cuota, y después toca descansar |
 | 🥊 **Peleas** | Rivales de tu zona; gastan energía y valor, y te juegas salud y dinero |
 | 👥 **Tu banda** y ⚔️ **guerras** | Recluta matones con apodo propio, que ganan experiencia y nivel en cada guerra contra las bandas rivales |
@@ -45,7 +45,7 @@ Empiezas con $500 y un trabajo de poca monta. Comete crímenes, entrena en el gi
 | 📈 **Habilidades** | Cada punto de nivel sube 1 el máximo de una barra |
 | 📜 **Eventos** | Historial de lo que te ha pasado |
 
-Las barras son las del original: ⚡ **Energía**, ✊ **Voluntad**, 💪 **Valor**, ❤️ **Salud** y ⭐ **XP**. El valor es para la calle (crímenes, peleas, guerras) y la voluntad, para la disciplina (gimnasio, escuela, hospital, negocios). Cada acción indica con esos mismos iconos lo que cuesta; el resto de efectos los tendrás que descubrir jugando. En el móvil la navegación va abajo; en pantallas anchas hay una columna lateral con estadísticas y menú, como en el juego de la época.
+Las barras son las del original: ⚡ **Energía**, ✊ **Voluntad**, 💪 **Valor**, ❤️ **Salud** y ⭐ **XP**. El valor es para la calle (crímenes, peleas, guerras) y la voluntad, para la disciplina (gimnasio, escuela, hospital, negocios). Cada botón muestra con esos mismos iconos lo que cuesta, avisa si te falta algo y cuenta el tiempo que queda para repetir; el resto de efectos los tendrás que descubrir jugando. En el móvil la navegación va abajo; en pantallas anchas hay una columna lateral con estadísticas y menú, como en el juego de la época. La estética es *noir*, con iconos de línea, y al recargar vuelves a la misma sección.
 
 Los rangos van de **Ratero** a **Matón**, **Hombre de honor**, **Capo**, **Consigliere** y **Don**.
 
