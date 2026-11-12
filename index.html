@@ -689,7 +689,7 @@ const VIEWS={
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
    ['Dinero',[['bank','🏦','Banco',fmt(S.bank)],['biz','🏢','Negocios',fmt(income())+'/min'],['travel','✈️','Agencia de viajes',city().n]]],
-   ['Mercado',[['shop','🛒','Tiendas','Armas, vehículos y objetos'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0),'objeto')]]],
+   ['Mercado',[['shop','🛒','Tiendas','Armas, vehículos y objetos'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+S.jw.length+S.veh.length,'objeto')]]],
    ['Lado oscuro',[['gang','🔫','Tu banda',pl(S.g,'miembro')],['casino','🃏','Casino','Tragaperras, ruleta, cajas'],['temple','💍','Joyería',pl(S.cry,'gema')]]],
    ['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['events','📜','Eventos','Historial'],['game','💾','Partida','Guardar y cargar']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
