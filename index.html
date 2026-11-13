@@ -147,9 +147,10 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .sgrid small{display:block;color:var(--mute);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
 .sgrid b{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
 .sgrid .tot b{color:var(--gold)}
-.stat{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums}
+.stat{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid var(--hair);font-variant-numeric:tabular-nums}
+.stat span{flex:none}
 .stat:last-child{border-bottom:0}
-.stat b{font-weight:600}
+.stat b{font-weight:600;text-align:right;min-width:0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
 .tile{background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--hair);border-radius:6px;padding:12px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;min-width:0;transition:border-color .15s,background .15s}
 .tile:hover{border-color:color-mix(in srgb,var(--brass) 50%,transparent);background:var(--panel)}
