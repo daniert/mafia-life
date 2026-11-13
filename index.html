@@ -474,7 +474,7 @@ const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid d
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
 // Crew shares the load of crimes: diminishing relief on energy and health damage, capped at 50%
 const relief=()=>.5*(S.g-1)/(S.g-1+8), crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
-const crEn=c=>crw(c.br+1), crHp=c=>crw(CR_VIO[CRIMES.indexOf(c)]), fBr=f=>1+Math.floor(f.l/3);
+const crEn=c=>crw(c.br+1), crWl=c=>Math.floor(c.br/2), crHp=c=>crw(CR_VIO[CRIMES.indexOf(c)]), fBr=f=>1+Math.floor(f.l/3);
 // Each extra member needs ever more intelligence to manage
 const iqNeed=n=>n<=2?0:Math.round(2*Math.pow(n-2,1.6)), gangCap=()=>{let n=2;while(n<2+S.lvl*3&&S.iq>=iqNeed(n+1))n++;return n};
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
@@ -503,15 +503,15 @@ const ACT={
  escape(){if(!inJail()||inHosp()||S.en<escEn()||S.st<escSt())return;S.en-=escEn();S.st-=escSt();
   const hurt=Math.random()<.7,d=hurt?hd(rnd(15,35)):0;S.hp-=d;const dm=d?' Pierdes '+d+' de salud.':'';
   if(Math.random()<Math.min(.4,(.2+agiT()*.002))*wlF()){S.jail=0;msg('¡Te fugas de la cárcel! +'+2*S.lvl+' XP.'+dm+hospital(),'ok');gain(2*S.lvl)}
-  else{const m=rnd(3,8);S.jail+=m*60000;msg('Te pillan intentando fugarte: +'+m+' min de cárcel.'+dm+hospital(),'bad')}},
+  else{const m=rnd(3,8);S.jail+=m*60000;S.wl=Math.max(0,S.wl-1);msg('Te pillan intentando fugarte: +'+m+' min de cárcel.'+dm+hospital(),'bad')}},
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(c.xp*S.lvl)}
-  else{const d=hd(c.dm+rnd(0,8));S.hp-=d;const x=Math.random()<.5?rnd(1,3):0;if(x)S.jail+=x*60000;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+(x?' Los guardias te pillan: +'+x+' min de cárcel.':'')+hospital(),'bad')}},
- crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c))return;S.en-=crEn(c);const v=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
+  else{const d=hd(c.dm+rnd(0,8));S.hp-=d;S.wl=Math.max(0,S.wl-1);const x=Math.random()<.5?rnd(1,3):0;if(x)S.jail+=x*60000;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+(x?' Los guardias te pillan: +'+x+' min de cárcel.':'')+hospital(),'bad')}},
+ crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<c.br||S.en<crEn(c)||S.wl<crWl(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.wl-=crWl(c);const v=crHp(c);S.st-=c.br;S.crc[i]=now()+crCd(c);
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;const h1=v?rnd(0,v):0;S.hp-=h1;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.'+(h1?' Pierdes '+h1+' de salud.':''),'ok');gain(c.xp)}
-  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.wl=Math.max(0,S.wl-2);const h1=v?rnd(1,v):0;S.hp-=h1;const ll=Math.round(S.lab*.2*10)/10,fj=S.job>=0?JOBS[S.job].n.toLowerCase():'';S.lab-=ll;S.job=-1;msg(c.n+': te detiene la policía.'+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.'+(fj?' Te despiden de '+fj+'.':'')+(ll?' Pierdes '+f1(ll)+' de Trabajo.':''),'bad')}
-  else{const d=crw(hd(c.dm+rnd(0,5)));S.hp-=d;msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
+  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.wl=Math.max(0,S.wl-3);const h1=v?rnd(1,v):0;S.hp-=h1;const ll=Math.round(S.lab*.2*10)/10,fj=S.job>=0?JOBS[S.job].n.toLowerCase():'';S.lab-=ll;S.job=-1;msg(c.n+': te detiene la policía.'+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.'+(fj?' Te despiden de '+fj+'.':'')+(ll?' Pierdes '+f1(ll)+' de Trabajo.':''),'bad')}
+  else{const d=crw(hd(c.dm+rnd(0,5)));S.hp-=d;S.wl=Math.max(0,S.wl-1);msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
  train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
@@ -519,7 +519,7 @@ const ACT={
   S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;gain(1);msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.','ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.'+(d?' Recibes '+d+' de daño.':'')+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
-  else{const d=hd(Math.max(5,(rnd(10,18)+f.l)*fS(f).hit-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05*fS(f).steal);S.cash-=l;msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
+  else{const d=hd(Math.max(5,(rnd(10,18)+f.l)*fS(f).hit-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05*fS(f).steal);S.cash-=l;S.wl=Math.max(0,S.wl-1);msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
   genFoes()},
  refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;
   genFoes();msg('Recorres las calles buscando rivales.','info',0)},
@@ -644,9 +644,9 @@ function todo(){const L=[];
   Object.keys(UNL).forEach(s=>{const f=fresh(s);if(f.length)L.push({hot:1,ic:'✨',t:'Novedad en '+SECN[s],d:f.map(x=>x[1]).slice(0,3).join(', ')+(f.length>3?' y '+(f.length-3)+' más':''),tab:s,go:'Ver'})});
   if(S.sp)L.push({hot:1,ic:'📈',t:'Tienes '+pl(S.sp,'punto')+' de habilidad',d:'Sube tu energía, valor, salud o voluntad máximas',tab:'me',go:'Gastar'});
   if(locked())return L;
-  const cs=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&!crOn(i)).sort((x,y)=>y[0].l-x[0].l),ok=cs.find(([c])=>S.st>=c.br&&S.en>=crEn(c)&&S.hp>crHp(c))||cs[0];
-  if(ok){const [c,i]=ok,can=S.st>=c.br&&S.en>=crEn(c)&&S.hp>crHp(c),m=city().m*(1+S.terr/100);
-    L.push({a:'crime',i,dis:!can,ic:'💼',t:c.n,d:'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*m)+' a '+fmt(c.b*m),go:can?'Hacer':'Sin fuerzas'})}
+  const cs=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&!crOn(i)).sort((x,y)=>y[0].l-x[0].l),ok=cs.find(([c])=>S.st>=c.br&&S.en>=crEn(c)&&S.wl>=crWl(c)&&S.hp>crHp(c))||cs[0];
+  if(ok){const [c,i]=ok,can=S.st>=c.br&&S.en>=crEn(c)&&S.wl>=crWl(c)&&S.hp>crHp(c),m=city().m*(1+S.terr/100);
+    L.push({a:'crime',i,dis:!can,ic:'💼',t:c.n,d:'⚡'+crEn(c)+' · 💪'+c.br+(crWl(c)?' · ✊'+crWl(c):'')+' · '+fmt(c.a*m)+' a '+fmt(c.b*m),go:can?'Hacer':'Sin fuerzas'})}
   const jb=JOBS.reduce((m,j,i)=>i>S.job&&S.lab>=j.lab&&S.iq>=j.iq?i:m,-1);
   if(jb>=0){const j=JOBS[jb];L.push({a:'job',i:jb,ic:'👔',t:S.job>=0?'Mejor empleo: '+j.n:'Trabajar de '+j.n.toLowerCase(),d:fmt(j.pay)+'/min'+(S.job>=0?' (ahora '+fmt(JOBS[S.job].pay)+'/min)':'')+' · cobras aunque no juegues',go:'Aceptar'})}
   const ct=CITIES.reduce((m,c,i)=>S.lvl>=c.l&&c.m>(m<0?city().m:CITIES[m].m)&&S.cash>=c.c&&S.en>=5?i:m,-1);
@@ -686,7 +686,7 @@ const VIEWS={
   JCRIMES.forEach((c,i)=>{const on=crOn('j'+i);h+=row(c.n,'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),b('jcrime',i,on?'⏱️'+cd(S.crc['j'+i]):'Hacer',on||inHosp()||S.en<c.en||S.hp<=hd(c.dm)))});return h}
   let h=status()+'<h2>Crímenes</h2><p class="hint">Si salen mal, puedes acabar herido o en la cárcel.</p>';
   CRIMES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{if(!shown(c,CRIMES))return;const lk=crLk(c),on=crOn(i);
-   h+=row(c.n+(lk?'':newTag('crime','c'+i)),lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):'⚡'+crEn(c)+' · 💪'+c.br+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,on&&!lk?'⏱️'+cd(S.crc[i]):'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.hp<=crHp(c)),lk)});return h},
+   h+=row(c.n+(lk?'':newTag('crime','c'+i)),lk?'Requiere nivel '+c.l+(c.iq?' e inteligencia '+c.iq:'')+(c.bz!==undefined?' y tener '+BIZ[c.bz].n.toLowerCase():''):'⚡'+crEn(c)+' · 💪'+c.br+(crWl(c)?' · ✊'+crWl(c):'')+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,on&&!lk?'⏱️'+cd(S.crc[i]):'Hacer',lk||on||locked()||S.st<c.br||S.en<crEn(c)||S.wl<crWl(c)||S.hp<=crHp(c)),lk)});return h},
  gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, descansas 30 s antes de volver a entrenar.</p>';
   STATS.slice(0,3).forEach(s=>{const cl=S.cool.gym>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0])),b('train',s[0],cl?'⏱️'+cd(S.cool.gym):'Entrenar',d||S.cash<gymFee(s[0])))});
   return h},
