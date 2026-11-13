@@ -480,8 +480,8 @@ const iqNeed=n=>n<=2?0:Math.round(2*Math.pow(n-2,1.6)), gangCap=()=>{let n=2;whi
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
 const healCost=()=>Math.ceil((maxHp()-S.hp)*5*(1+S.lvl*.5));
 const inHosp=()=>S.hosp>now(), inJail=()=>S.jail>now(), locked=()=>inHosp()||inJail();
-// Sleep: 10 min of triple energy/health regen; costs half your current willpower and courage, once every 4 h
-const SLEEP_MIN=10, SLEEP_CD=4*3600000, SLEEP_X=3, asleep=()=>S.sleep>now();
+// Sleep: 3 min of triple energy/health regen; costs half your current willpower and courage, once every 4 h
+const SLEEP_MIN=3, SLEEP_CD=4*3600000, SLEEP_X=3, asleep=()=>S.sleep>now();
 const slWl=()=>Math.ceil(S.wl*.5), slSt=()=>Math.ceil(S.st*.5), canSleep=()=>!locked()&&!asleep()&&!(S.cool.sleep>now())&&S.wl>=1&&S.st>=1;
 const outCash=ts=>minsLeft(ts)*(80+S.lvl*30);
 const boxCost=()=>500+S.lvl*50, today=()=>new Date().toDateString(), boxesLeft=()=>5-(S.lb.d===today()?S.lb.n:0);
@@ -655,7 +655,7 @@ function todo(){const L=[];
   L.push({a:'train',i:k,dis:cl||S.en<gEn(k)||S.wl<gWl()||S.cash<gymFee(k),ic:'🏋️',t:'Entrenar '+nm.toLowerCase(),d:'Tu punto débil: '+f1(S[k])+' · ⚡'+gEn(k)+' · ✊'+gWl()+' · '+fmt(gymFee(k)),go:cl?cd(S.cool.gym):'Entrenar'});
   const fi=S.foes.reduce((m,f,i)=>f.l<S.foes[m].l?i:m,0),f=S.foes[fi];
   if(f)L.push({a:'fight',i:fi,dis:S.en<2||S.hp<=2||S.st<fBr(f),ic:'🥊',t:'Atacar a '+f.n,d:'El rival más flojo · nivel '+f.l+' · ⚡2 · 💪'+fBr(f),go:'Atacar'});
-  if(!locked()){const cl=S.cool.sleep>now();L.push({a:'sleep',i:0,dis:!canSleep(),ic:'😴',t:'Dormir',d:asleep()?'Ya estás durmiendo':SLEEP_MIN+' min · energía y salud x'+SLEEP_X+' · ✊'+slWl()+' · 💪'+slSt(),go:cl&&!asleep()?cd(S.cool.sleep):'Dormir'})}
+  if(!locked()){const cl=S.cool.sleep>now();L.push({a:'sleep',i:0,dis:!canSleep(),ic:'😴',t:'Dormir',d:asleep()?'Ya estás durmiendo':SLEEP_MIN+' min · recuperas energía y salud '+SLEEP_X+' veces más rápido · ✊'+slWl()+' · 💪'+slSt(),go:cl&&!asleep()?cd(S.cool.sleep):'Dormir'})}
   if(S.hp<maxHp()*.5)L.push({a:'heal',i:0,dis:locked()||S.cash<healCost()||S.en<3||S.wl<healWl(),ic:'🏥',t:'Estás herido',d:'Salud '+Math.floor(S.hp)+'/'+maxHp()+' · curarte: ⚡3 · ✊'+healWl()+' · '+fmt(healCost()),go:'Curar'});
   else if(!locked()&&!S.edu&&COURSES.some((c,i)=>avail(c)&&!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
@@ -770,7 +770,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){if(t.dataset.tab!==tab)history.pushState(null,'','#'+t.dataset.tab);tab=t.dataset.tab;view();window.scrollTo(0,0);return}
   const bt=e.target.closest('button[data-a]');if(!bt||bt.disabled)return;
   const a=bt.dataset.a,i=bt.dataset.i;
-  if(asleep()&&a!=='wake'&&a!=='bet'){msg('Estás durmiendo. Despierta primero.','info',0);return}
+  if(asleep()&&!['wake','bet','exp','imp','reset'].includes(a)){msg('Estás durmiendo. Despierta primero.','info',0);return}
   if(locked()&&STREET.has(a)){msg('No puedes hacer eso mientras estás en '+where()+'.','info',0);return}
   if(a==='buy'){const p=i.split('|');ACT.buy(p[0],+p[1])}
   else if(a==='train'){const p=i.split('|');ACT.train(p[0])}
