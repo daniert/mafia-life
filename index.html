@@ -774,8 +774,8 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
   if(B.children.length!==L.length)B.innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'"></b></div><div class="track"><div class="lag"></div><div class="fill" style="background:var('+x[3]+')"></div></div></div>').join('');
   L.forEach((x,k)=>{const r=B.children[k],f=r.querySelector('.fill'),g=r.querySelector('.lag'),p=Math.max(0,Math.min(100,x[1]/x[2]*100)),o=parseFloat(f.style.width);
     r.querySelector('b').textContent=Math.floor(x[1])+(innerWidth<860?'':'/'+x[2]);
-    if(isNaN(o)||Math.abs(p-o)<2){f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
-    if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow')}
+    if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
+    if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
 function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
@@ -815,11 +815,15 @@ const FX=(()=>{
     study:['Matriculado'],job:['Contratado'],skill:['Mejorado'],repay:['Saldado'],loan:['Concedido'],term:['Invertido'],fund:['Invertido'],out:['Libre']};
   // ---- counting numbers in the header
   const NUM={cash:[()=>S.cash,fmt],bank:[()=>S.bank,fmt],cry:[()=>S.cry,String],lvl:[()=>S.lvl,String]},cnt={};
-  function count(id,from,to){const el=$('#'+id),f=NUM[id][1],d=to-from;if(!el||!d)return;
+  const shown=id=>{const c=cnt[id];return c?Math.round(c.from+(c.to-c.from)*(1-Math.pow(1-Math.min(1,(performance.now()-c.t0)/c.dur),3))):null};
+  function count(id,from,to){const el=$('#'+id),f=NUM[id][1];if(!el||!el.offsetParent)return;const sh=shown(id);if(sh!==null)from=sh;const d=to-from;if(!d)return;
+    el.parentNode.querySelectorAll('.dlt').forEach(x=>x.remove());
+    // Measure with the widest of both values so the chip never sits on top of the counting number
+    const w=f(Math.abs(from)>Math.abs(to)?from:to);el.textContent=w;
     const chip=document.createElement('span');chip.className='dlt '+(d>0?'up':'dn');chip.textContent=(d>0?'+':'−')+f(Math.abs(d));el.parentNode.appendChild(chip);chip.style.top=el.offsetTop+(el.offsetHeight-chip.offsetHeight)/2+'px';
     if(el.offsetLeft>el.parentNode.clientWidth/2)chip.style.right=el.parentNode.clientWidth-el.offsetLeft+6+'px';else chip.style.left=el.offsetLeft+el.offsetWidth+6+'px';
-    el.parentNode.classList.remove('hit-up','hit-dn');void el.offsetWidth;el.parentNode.classList.add(d>0?'hit-up':'hit-dn');
-    if(!run()){setTimeout(()=>chip.remove(),1500);return}
+    const pn=el.parentNode;pn.classList.remove('hit-up','hit-dn');void el.offsetWidth;pn.classList.add(d>0?'hit-up':'hit-dn');pn.addEventListener('animationend',()=>pn.classList.remove('hit-up','hit-dn'),{once:true});
+    if(!run()){el.textContent=f(to);setTimeout(()=>chip.remove(),1500);return}
     chip.animate([{transform:'translateY(4px)',opacity:0},{transform:'none',opacity:1,offset:.15},{transform:'none',opacity:1,offset:.75},{transform:'translateY(-8px)',opacity:0}],{duration:1600}).onfinish=()=>chip.remove();
     cnt[id]={from,to,t0:performance.now(),dur:Math.min(900,350+Math.log10(Math.abs(d)+1)*120)};requestAnimationFrame(step)}
   function step(){let more=0;for(const id in cnt){const c=cnt[id],k=Math.min(1,(performance.now()-c.t0)/c.dur),e=1-Math.pow(1-k,3);
@@ -831,14 +835,19 @@ const FX=(()=>{
       :[{transform:'translateX(0)',backgroundColor:'color-mix(in srgb,var(--bad) 24%,transparent)'},{transform:'translateX(-7px)'},{transform:'translateX(6px)'},{transform:'translateX(-4px)'},{transform:'translateX(2px)'},{transform:'none',backgroundColor:'transparent'}],
       {duration:ok?900:480,easing:'ease-out'});
     const b=u.matches('button')?u:u.querySelector('.btn');if(b)b.animate(ok?[{transform:'scale(.92)'},{transform:'scale(1.06)'},{transform:'none'}]:[{filter:'saturate(0) brightness(.8)'},{filter:'none'}],{duration:ok?380:600})}
-  function leave(snap,ok,stamp){if(!run())return;const g=snap.el.cloneNode(true),r=snap.r;g.classList.add('ghost');g.removeAttribute('data-a');g.querySelectorAll('[data-a],[data-tab]').forEach(x=>{x.removeAttribute('data-a');x.removeAttribute('data-tab')});
+  function leave(snap,ok,stamp){if(!run())return;const g=snap.el.cloneNode(true),r=snap.r;g.classList.add('ghost');let bgN=snap.node;while(bgN&&bgN.nodeType===1){const c=getComputedStyle(bgN).backgroundColor;if(c&&!/rgba\(.*,\s*0\)|transparent/.test(c)){g.style.backgroundColor=c;break}bgN=bgN.parentElement}if(!bgN||bgN.nodeType!==1)g.style.backgroundColor=getComputedStyle(document.body).backgroundColor;g.removeAttribute('data-a');g.querySelectorAll('[data-a],[data-tab]').forEach(x=>{x.removeAttribute('data-a');x.removeAttribute('data-tab')});
     Object.assign(g.style,{left:r.left+scrollX+'px',top:r.top+scrollY+'px',width:r.width+'px',height:r.height+'px'});
     if(stamp){const s=document.createElement('span');s.className='stamp '+(ok?'ok':'bad');s.textContent=stamp;g.appendChild(s);
       s.animate([{transform:'translate(-50%,-50%) rotate(-12deg) scale(2.4)',opacity:0},{transform:'translate(-50%,-50%) rotate(-12deg) scale(1)',opacity:1,offset:.6}],{duration:260,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'})}
     document.body.appendChild(g);
-    g.animate([{opacity:1,transform:'none'},{opacity:1,transform:'none',offset:stamp?.55:.1},{opacity:0,transform:stamp?'scale(.96)':ok?'translateX(-24px)':'translateX(24px)'}],{duration:stamp?1100:420,easing:'ease-in'}).onfinish=()=>g.remove();
+    g.animate([{opacity:1,clipPath:'inset(0 0 0 0)'},{opacity:1,clipPath:'inset(0 0 0 0)',offset:stamp?.6:.1},{opacity:1,clipPath:'inset(50% 0 50% 0)'}],{duration:stamp?1000:420,easing:'ease-in'}).onfinish=()=>g.remove();
 }
-  function enter(u,i){if(run())u.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:380,delay:120+i*60,easing:'ease-out',fill:'backwards'})}
+  // Count a number inside a row from its old text to its new one, keeping prefix/suffix (e.g. "$9.500", "2,9")
+  function tween(e,a,b){const P=t=>{const m=t.match(/^(\D*)([\d.,]+)(.*)$/);if(!m)return null;const dec=/,\d+$/.test(m[2])?(m[2].split(',')[1].length):0;return{pre:m[1],post:m[3],dec,v:parseFloat(m[2].replace(/\./g,'').replace(',','.'))}};
+    const x=P(a),y=P(b);if(!x||!y||x.pre!==y.pre||x.post!==y.post||isNaN(x.v)||isNaN(y.v))return;const t0=performance.now(),D=600,up=y.v>x.v;
+    e.animate([{color:up?'var(--ok)':'var(--bad)'},{}],{duration:900});
+    const st=()=>{const k=Math.min(1,(performance.now()-t0)/D),v=x.v+(y.v-x.v)*(1-Math.pow(1-k,3));e.textContent=x.pre+(y.dec?v.toFixed(y.dec).replace('.',','):String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'))+x.post;if(k<1&&e.isConnected)requestAnimationFrame(st);else e.textContent=b};st()}
+  function enter(u,i,late){if(run())u.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:380,delay:(late?750:120)+i*60,easing:'ease-out',fill:'backwards'})}
   function glide(u,dy){if(run()&&Math.abs(dy)>1)u.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:'cubic-bezier(.2,.8,.3,1)'})}
   function drop(e){if(run())e.animate([{transform:'translateY(-14px) scale(.96)',opacity:0},{transform:'translateY(2px)',opacity:1,offset:.7},{transform:'none'}],{duration:420,easing:'ease-out'})}
   function spin(el,final,ok){if(!run())return;const R=['🍒','🍋','🔔','💎','7️⃣'],f=final.split(' ');el.innerHTML=f.map(()=>'<span class="reel"></span>').join(' ');
@@ -846,34 +855,36 @@ const FX=(()=>{
       setTimeout(()=>{clearInterval(iv);s.textContent=f[k];s.animate([{transform:'translateY(-10px)'},{transform:'translateY(3px)'},{transform:'none'}],{duration:220});
         if(k===f.length-1)el.animate(ok?[{boxShadow:'0 0 0 1px var(--ok),0 0 22px color-mix(in srgb,var(--ok) 55%,transparent)'},{boxShadow:'none'}]:[{boxShadow:'0 0 0 1px var(--bad)'},{boxShadow:'none'}],{duration:900})},380+k*260)})}
   // ---- hook into the click handler: snapshot before the action runs, compare after the view re-renders
-  let pre=null,last=null;
-  const _msg=msg;msg=function(t,k,l){last={t,k:k||'info'};return _msg(t,k,l)};
-  document.addEventListener('click',e=>{pre=null;last=null;const b=e.target.closest('button[data-a]');if(!b||b.disabled||!b.closest('#view'))return;
+  let pre=null,last=null;until=0;
+  let hold=0;const _msg=msg;msg=function(t,k,l){last={t,k:k||'info'};if(hold&&run()){setTimeout(()=>_msg(t,k,0),hold);if(l!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}return}return _msg(t,k,l)};
+  document.addEventListener('click',e=>{pre=null;last=null;hold=0;const b=e.target.closest('button[data-a]');if(!b||b.disabled||!b.closest('#view'))return;if(b.dataset.a==='slot'&&!locked())hold=950;
     const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));
     const cu=b.closest(UNIT);
     pre={a:b.dataset.a,tab,lock:locked(),units:m,ck:cu?keyOf(cu):null,v:{cash:S.cash,bank:S.bank,cry:S.cry,lvl:S.lvl},xp:S.xp/need(),
-      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels}},true);
-  document.addEventListener('click',()=>{if(!pre)return;const p=pre;pre=null;if(['bet','exp','imp'].includes(p.a))return;
+      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels,nums:cu?[...cu.querySelectorAll('b,.cur,.stat b')].map(x=>x.textContent):[]};until=performance.now()+1100},true);
+  document.addEventListener('click',()=>{if(!pre)return;const p=pre;pre=null;const h=hold;hold=0;if(['bet','exp','imp'].includes(p.a))return;
     const ok=last?last.k!=='bad':true;
-    for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()));
+    const doCount=()=>{for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()))};if(h&&run())setTimeout(doCount,h);else doCount();
     if(tab!==p.tab)return;
     // Arrested or hospitalised: the whole screen changes, so it slams shut instead of rows moving
-    if(locked()&&!p.lock){if(run())$('#view').animate([{transform:'translateY(-24px)',opacity:0,filter:'sepia(1) hue-rotate(-30deg) saturate(3)'},{transform:'translateY(3px)',opacity:1,offset:.6},{transform:'none',filter:'none'}],{duration:650,easing:'ease-out'});
-      document.querySelectorAll('#view .alert, #where .pill').forEach(drop);return}
+    if(locked()&&!p.lock){if(run())$('#view').animate([{transform:'scale(.97)',opacity:0,filter:'brightness(.4) saturate(.3)'},{transform:'scale(1.005)',opacity:1,offset:.6},{transform:'none',filter:'none'}],{duration:600,easing:'ease-out'});
+      document.querySelectorAll('#where .pill').forEach(drop);return}
     const now=units();let ni=0;
     // Same button whose label changed (e.g. "Botiquín ×3" → "×2") is the same row, unless the action replaces it (a defeated rival)
-    const pfx=k=>k.split('|').slice(0,2).join('|'),seen=new Set();let ck=p.ck;
+    const pfx=k=>k.split('|').slice(0,2).join('|'),seen=new Set();let ck=p.ck,late=false;
     p.units.forEach((s,k)=>{let u=now.get(k),k2=k;
       if(!u&&!STAMP[p.a]&&k.includes('|'))for(const[n,v]of now)if(!p.units.has(n)&&!seen.has(n)&&pfx(n)===pfx(k)){u=v;k2=n;if(k===ck)ck=n;break}
       if(u){seen.add(k2);glide(u,s.r.top-u.getBoundingClientRect().top)}
-      else if(k===p.ck)leave(s,ok,(STAMP[p.a]||[])[ok?0:1]||(STAMP[p.a]||[])[0])});
-    if(p.units.size)now.forEach((u,k)=>{if(!p.units.has(k)&&!seen.has(k))enter(u,ni++)});
-    const cu=ck&&now.get(ck);if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu)react(cu,ok);
+      else if(k===p.ck){const st=(STAMP[p.a]||[])[ok?0:1]||(STAMP[p.a]||[])[0];leave(s,ok,st);late=st?s.r.top:false}});
+    if(p.units.size)now.forEach((u,k)=>{if(!p.units.has(k)&&!seen.has(k))enter(u,ni++,late!==false&&Math.abs(u.getBoundingClientRect().top-late)<20)});
+    const cu=ck&&now.get(ck);if(cu&&run()){const N=[...cu.querySelectorAll('b,.cur,.stat b')];if(N.length===p.nums.length)N.forEach((e,k)=>{if(e.textContent!==p.nums[k])tween(e,p.nums[k],e.textContent)})}
+    if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu)react(cu,ok);
     if(p.a==='slot'){const r=$('#view .reels');if(r)spin(r,reels,last&&last.k!=='bad')}
     document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(x.textContent))drop(x)});
     const xb=$('#view .xpbar i');if(xb&&run()){const to=S.xp/need()*100,fr=p.xp*100;if(S.lvl>p.v.lvl)xb.animate([{width:fr+'%'},{width:'100%',offset:.5},{width:'0%',offset:.51},{width:to+'%'}],{duration:1100});else if(Math.abs(to-fr)>.1)xb.animate([{width:fr+'%'},{width:to+'%'}],{duration:600,easing:'ease-out'})}
     if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>e.animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
-  return {count,react,spin}})();
+  return {count,react,spin,busy:()=>performance.now()<until}})();
+var until=0;
 
 // Import: hidden file input, replaces the current game after confirmation
 const impf=Object.assign(document.createElement('input'),{type:'file',accept:'.json,application/json',id:'impf',hidden:true});
@@ -909,7 +920,7 @@ const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
-  if(s!==sig){sig=s;view()}},1000);
+  if(s!==sig&&!FX.busy()){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 view();save();
