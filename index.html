@@ -97,7 +97,7 @@ aside>*{max-width:560px;margin-left:auto;margin-right:auto}
 .stamp{position:absolute;left:50%;top:50%;padding:4px 14px;border:3px solid;border-radius:6px;font:900 22px/1 "Playfair Display",Georgia,serif;letter-spacing:.06em;text-transform:uppercase;background:color-mix(in srgb,var(--bg) 70%,transparent)}
 .stamp.ok{color:var(--ok)}.stamp.bad{color:var(--bad)}
 .reel{display:inline-block}
-@media (prefers-reduced-motion:reduce){.lag.dn,.fill.slow{transition:none}.hit-up>span,.hit-dn>span{animation:none}}
+@media (prefers-reduced-motion:reduce){.lag.dn,.fill.slow{transition:none}.hit-up>span:not(.dlt),.hit-dn>span:not(.dlt){animation:none}}
 #msg{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;z-index:6;
   padding:12px 16px;background:color-mix(in srgb,var(--deep) 94%,#fff);border:1px solid var(--hair);border-left:3px solid var(--brass);border-radius:4px;font-size:15px;
   box-shadow:0 12px 32px rgba(0,0,0,.55);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s}
@@ -855,16 +855,16 @@ const FX=(()=>{
       setTimeout(()=>{clearInterval(iv);s.textContent=f[k];s.animate([{transform:'translateY(-10px)'},{transform:'translateY(3px)'},{transform:'none'}],{duration:220});
         if(k===f.length-1)el.animate(ok?[{boxShadow:'0 0 0 1px var(--ok),0 0 22px color-mix(in srgb,var(--ok) 55%,transparent)'},{boxShadow:'none'}]:[{boxShadow:'0 0 0 1px var(--bad)'},{boxShadow:'none'}],{duration:900})},380+k*260)})}
   // ---- hook into the click handler: snapshot before the action runs, compare after the view re-renders
-  let pre=null,last=null;until=0;
-  let hold=0;const _msg=msg;msg=function(t,k,l){last={t,k:k||'info'};if(hold&&run()){setTimeout(()=>_msg(t,k,0),hold);if(l!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}return}return _msg(t,k,l)};
-  document.addEventListener('click',e=>{pre=null;last=null;hold=0;const b=e.target.closest('button[data-a]');if(!b||b.disabled||!b.closest('#view'))return;if(b.dataset.a==='slot'&&!locked())hold=950;
+  let pre=null,last=null,until=0,hT=[];
+  let hold=0;const _msg=msg;msg=function(t,k,l){last={t,k:k||'info'};if(hold&&run()){hT.push(setTimeout(()=>_msg(t,k,0),hold));if(l!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}return}return _msg(t,k,l)};
+  document.addEventListener('click',e=>{pre=null;last=null;hold=0;hT.forEach(clearTimeout);hT=[];const b=e.target.closest('button[data-a]');if(!b||b.disabled||!b.closest('#view'))return;if(b.dataset.a==='slot'&&!locked())hold=950;
     const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));
     const cu=b.closest(UNIT);
     pre={a:b.dataset.a,tab,lock:locked(),units:m,ck:cu?keyOf(cu):null,v:{cash:S.cash,bank:S.bank,cry:S.cry,lvl:S.lvl},xp:S.xp/need(),
-      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels,nums:cu?[...cu.querySelectorAll('b,.cur,.stat b')].map(x=>x.textContent):[]};until=performance.now()+1100},true);
+      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels,nums:cu?[...cu.querySelectorAll('b,.cur,.stat b')].map(x=>x.textContent):[]};until=performance.now()+1400},true);
   document.addEventListener('click',()=>{if(!pre)return;const p=pre;pre=null;const h=hold;hold=0;if(['bet','exp','imp'].includes(p.a))return;
     const ok=last?last.k!=='bad':true;
-    const doCount=()=>{for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()))};if(h&&run())setTimeout(doCount,h);else doCount();
+    const doCount=()=>{for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()))};if(h&&run()){for(const id in NUM){const v=Math.floor(p.v[id]);cnt[id]={from:v,to:v,t0:performance.now(),dur:h+100}}head();hT.push(setTimeout(doCount,h))}else doCount();
     if(tab!==p.tab)return;
     // Arrested or hospitalised: the whole screen changes, so it slams shut instead of rows moving
     if(locked()&&!p.lock){if(run())$('#view').animate([{transform:'scale(.97)',opacity:0,filter:'brightness(.4) saturate(.3)'},{transform:'scale(1.005)',opacity:1,offset:.6},{transform:'none',filter:'none'}],{duration:600,easing:'ease-out'});
@@ -878,13 +878,12 @@ const FX=(()=>{
       else if(k===p.ck){const st=(STAMP[p.a]||[])[ok?0:1]||(STAMP[p.a]||[])[0];leave(s,ok,st);late=st?s.r.top:false}});
     if(p.units.size)now.forEach((u,k)=>{if(!p.units.has(k)&&!seen.has(k))enter(u,ni++,late!==false&&Math.abs(u.getBoundingClientRect().top-late)<20)});
     const cu=ck&&now.get(ck);if(cu&&run()){const N=[...cu.querySelectorAll('b,.cur,.stat b')];if(N.length===p.nums.length)N.forEach((e,k)=>{if(e.textContent!==p.nums[k])tween(e,p.nums[k],e.textContent)})}
-    if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu)react(cu,ok);
+    if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu&&p.a!=='slot')react(cu,ok);
     if(p.a==='slot'){const r=$('#view .reels');if(r)spin(r,reels,last&&last.k!=='bad')}
     document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(x.textContent))drop(x)});
     const xb=$('#view .xpbar i');if(xb&&run()){const to=S.xp/need()*100,fr=p.xp*100;if(S.lvl>p.v.lvl)xb.animate([{width:fr+'%'},{width:'100%',offset:.5},{width:'0%',offset:.51},{width:to+'%'}],{duration:1100});else if(Math.abs(to-fr)>.1)xb.animate([{width:fr+'%'},{width:to+'%'}],{duration:600,easing:'ease-out'})}
     if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>e.animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
   return {count,react,spin,busy:()=>performance.now()<until}})();
-var until=0;
 
 // Import: hidden file input, replaces the current game after confirmation
 const impf=Object.assign(document.createElement('input'),{type:'file',accept:'.json,application/json',id:'impf',hidden:true});
