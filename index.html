@@ -84,6 +84,20 @@ aside>*{max-width:560px;margin-left:auto;margin-right:auto}
 @media (prefers-reduced-motion:reduce){.fill,#msg{transition:none}}
 .pill{display:inline-block;padding:1px 8px;border-radius:3px;font-size:12px;font-weight:600;background:var(--bad);color:#fff;margin-left:6px}
 .side{display:none}
+.track{position:relative}.track .fill{position:relative}
+.lag{position:absolute;left:0;top:0;bottom:0;border-radius:2px}
+.lag.dn{background:var(--bad);transition:width .55s .45s ease-in}.lag.up{background:#fff;opacity:.7;transition:none}.fill.slow{transition:width .6s .25s ease-out}
+.money>div{position:relative}
+.dlt{position:absolute;font-size:12px;font-weight:700;white-space:nowrap;pointer-events:none}.dlt.up{color:var(--ok)}.dlt.dn{color:var(--bad)}
+.hit-up>span:not(.dlt){animation:hitUp .7s}.hit-dn>span:not(.dlt){animation:hitDn .5s}
+@keyframes hitUp{30%{color:var(--ok);text-shadow:0 0 10px color-mix(in srgb,var(--ok) 60%,transparent)}}
+@keyframes hitDn{20%{color:var(--bad);transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:none}}
+.hit-dn>span:not(.dlt){display:inline-block}
+.ghost{position:absolute;z-index:5;margin:0;pointer-events:none;background:var(--bg);box-sizing:border-box;overflow:hidden}
+.stamp{position:absolute;left:50%;top:50%;padding:4px 14px;border:3px solid;border-radius:6px;font:900 22px/1 "Playfair Display",Georgia,serif;letter-spacing:.06em;text-transform:uppercase;background:color-mix(in srgb,var(--bg) 70%,transparent)}
+.stamp.ok{color:var(--ok)}.stamp.bad{color:var(--bad)}
+.reel{display:inline-block}
+@media (prefers-reduced-motion:reduce){.lag.dn,.fill.slow{transition:none}.hit-up>span,.hit-dn>span{animation:none}}
 #msg{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:528px;margin:0 auto;z-index:6;
   padding:12px 16px;background:color-mix(in srgb,var(--deep) 94%,#fff);border:1px solid var(--hair);border-left:3px solid var(--brass);border-radius:4px;font-size:15px;
   box-shadow:0 12px 32px rgba(0,0,0,.55);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s}
@@ -755,8 +769,14 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
 };
 const topTab=t=>NAV.some(n=>n[0]===t)?t:'explore';
 
-function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl,maxWl(),'--wl','✊'],['Valor',S.st,maxSt(),'--st','💪'],['Salud',S.hp,maxHp(),'--hp','❤️'],['XP',S.xp,need(),'--xp','⭐']];
-  $('#bars').innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'">'+Math.floor(x[1])+(innerWidth<860?'':'/'+x[2])+'</b></div><div class="track"><div class="fill" style="width:'+Math.max(0,Math.min(100,x[1]/x[2]*100))+'%;background:var('+x[3]+')"></div></div></div>').join('')}
+function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl,maxWl(),'--wl','✊'],['Valor',S.st,maxSt(),'--st','💪'],['Salud',S.hp,maxHp(),'--hp','❤️'],['XP',S.xp,need(),'--xp','⭐']],B=$('#bars');
+  // Updated in place so widths transition; a lagging segment shows what was just lost (red) or gained (bright)
+  if(B.children.length!==L.length)B.innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'"></b></div><div class="track"><div class="lag"></div><div class="fill" style="background:var('+x[3]+')"></div></div></div>').join('');
+  L.forEach((x,k)=>{const r=B.children[k],f=r.querySelector('.fill'),g=r.querySelector('.lag'),p=Math.max(0,Math.min(100,x[1]/x[2]*100)),o=parseFloat(f.style.width);
+    r.querySelector('b').textContent=Math.floor(x[1])+(innerWidth<860?'':'/'+x[2]);
+    if(isNaN(o)||Math.abs(p-o)<2){f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
+    if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow')}
+    f.style.width=g.style.width=p+'%'})}
 function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
@@ -778,6 +798,82 @@ document.addEventListener('click',e=>{
   else if(a==='out'){const p=i.split('|');ACT.out(p[0],p[1])}
   else ACT[a](i);
   save();view()});
+
+// FX: each action animates the parts of the UI it actually changes
+//  · numbers in the header count to their new value and show the delta
+//  · stat bars drain with a lagging "damage" segment, or fill behind a bright marker
+//  · the row you used reacts (success glow / failure shake); rows that leave get a stamp and fold away,
+//    new rows slide in, the rest glide to their new place; new alerts and pills drop in; slot reels spin
+const FX=(()=>{
+  const RM=matchMedia('(prefers-reduced-motion:reduce)'),run=()=>!RM.matches;
+  const UNIT='.row, button.act, .reels';
+  const keyOf=u=>{if(u.classList.contains('reels'))return'reels';const b=u.matches('button')?u:u.querySelector('button[data-a]'),t=(u.querySelector('.t, b')||u).textContent.trim();
+    return(b?b.dataset.a+'|'+(b.dataset.i??'')+'|':'')+t};
+  const units=()=>{const m=new Map();document.querySelectorAll('#view '+UNIT.split(', ').join(', #view ')).forEach(u=>m.set(keyOf(u),u));return m};
+  // Stamp text for a row that disappears, per action and outcome
+  const STAMP={fight:['K.O.','Paliza'],buy:['Comprado'],veh:['Comprado'],item:['Comprado'],biz:['Comprado'],temple:['Comprado'],
+    study:['Matriculado'],job:['Contratado'],skill:['Mejorado'],repay:['Saldado'],loan:['Concedido'],term:['Invertido'],fund:['Invertido'],out:['Libre']};
+  // ---- counting numbers in the header
+  const NUM={cash:[()=>S.cash,fmt],bank:[()=>S.bank,fmt],cry:[()=>S.cry,String],lvl:[()=>S.lvl,String]},cnt={};
+  function count(id,from,to){const el=$('#'+id),f=NUM[id][1],d=to-from;if(!el||!d)return;
+    const chip=document.createElement('span');chip.className='dlt '+(d>0?'up':'dn');chip.textContent=(d>0?'+':'−')+f(Math.abs(d));el.parentNode.appendChild(chip);chip.style.top=el.offsetTop+(el.offsetHeight-chip.offsetHeight)/2+'px';
+    if(el.offsetLeft>el.parentNode.clientWidth/2)chip.style.right=el.parentNode.clientWidth-el.offsetLeft+6+'px';else chip.style.left=el.offsetLeft+el.offsetWidth+6+'px';
+    el.parentNode.classList.remove('hit-up','hit-dn');void el.offsetWidth;el.parentNode.classList.add(d>0?'hit-up':'hit-dn');
+    if(!run()){setTimeout(()=>chip.remove(),1500);return}
+    chip.animate([{transform:'translateY(4px)',opacity:0},{transform:'none',opacity:1,offset:.15},{transform:'none',opacity:1,offset:.75},{transform:'translateY(-8px)',opacity:0}],{duration:1600}).onfinish=()=>chip.remove();
+    cnt[id]={from,to,t0:performance.now(),dur:Math.min(900,350+Math.log10(Math.abs(d)+1)*120)};requestAnimationFrame(step)}
+  function step(){let more=0;for(const id in cnt){const c=cnt[id],k=Math.min(1,(performance.now()-c.t0)/c.dur),e=1-Math.pow(1-k,3);
+    $('#'+id).textContent=NUM[id][1](Math.round(c.from+(c.to-c.from)*e));if(k<1)more=1;else delete cnt[id]}if(more)requestAnimationFrame(step)}
+  const _head=head;head=function(){_head();for(const id in cnt){const c=cnt[id],k=Math.min(1,(performance.now()-c.t0)/c.dur);$('#'+id).textContent=NUM[id][1](Math.round(c.from+(c.to-c.from)*(1-Math.pow(1-k,3))))}};
+  // ---- row reactions
+  function react(u,ok){if(!u||!run())return;
+    u.animate(ok?[{boxShadow:'inset 3px 0 0 var(--ok)',backgroundColor:'color-mix(in srgb,var(--ok) 22%,transparent)'},{boxShadow:'inset 3px 0 0 var(--ok)',backgroundColor:'color-mix(in srgb,var(--ok) 10%,transparent)',offset:.4},{boxShadow:'inset 0 0 0 transparent',backgroundColor:'transparent'}]
+      :[{transform:'translateX(0)',backgroundColor:'color-mix(in srgb,var(--bad) 24%,transparent)'},{transform:'translateX(-7px)'},{transform:'translateX(6px)'},{transform:'translateX(-4px)'},{transform:'translateX(2px)'},{transform:'none',backgroundColor:'transparent'}],
+      {duration:ok?900:480,easing:'ease-out'});
+    const b=u.matches('button')?u:u.querySelector('.btn');if(b)b.animate(ok?[{transform:'scale(.92)'},{transform:'scale(1.06)'},{transform:'none'}]:[{filter:'saturate(0) brightness(.8)'},{filter:'none'}],{duration:ok?380:600})}
+  function leave(snap,ok,stamp){if(!run())return;const g=snap.el.cloneNode(true),r=snap.r;g.classList.add('ghost');g.removeAttribute('data-a');g.querySelectorAll('[data-a],[data-tab]').forEach(x=>{x.removeAttribute('data-a');x.removeAttribute('data-tab')});
+    Object.assign(g.style,{left:r.left+scrollX+'px',top:r.top+scrollY+'px',width:r.width+'px',height:r.height+'px'});
+    if(stamp){const s=document.createElement('span');s.className='stamp '+(ok?'ok':'bad');s.textContent=stamp;g.appendChild(s);
+      s.animate([{transform:'translate(-50%,-50%) rotate(-12deg) scale(2.4)',opacity:0},{transform:'translate(-50%,-50%) rotate(-12deg) scale(1)',opacity:1,offset:.6}],{duration:260,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'})}
+    document.body.appendChild(g);
+    g.animate([{opacity:1,transform:'none'},{opacity:1,transform:'none',offset:stamp?.55:.1},{opacity:0,transform:stamp?'scale(.96)':ok?'translateX(-24px)':'translateX(24px)'}],{duration:stamp?1100:420,easing:'ease-in'}).onfinish=()=>g.remove();
+}
+  function enter(u,i){if(run())u.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:380,delay:120+i*60,easing:'ease-out',fill:'backwards'})}
+  function glide(u,dy){if(run()&&Math.abs(dy)>1)u.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:'cubic-bezier(.2,.8,.3,1)'})}
+  function drop(e){if(run())e.animate([{transform:'translateY(-14px) scale(.96)',opacity:0},{transform:'translateY(2px)',opacity:1,offset:.7},{transform:'none'}],{duration:420,easing:'ease-out'})}
+  function spin(el,final,ok){if(!run())return;const R=['🍒','🍋','🔔','💎','7️⃣'],f=final.split(' ');el.innerHTML=f.map(()=>'<span class="reel"></span>').join(' ');
+    [...el.children].forEach((s,k)=>{let n=0;const iv=setInterval(()=>{s.textContent=R[n++%5]},55);s.animate([{transform:'translateY(-6px)',filter:'blur(1.5px)'},{transform:'translateY(6px)',filter:'blur(1.5px)'}],{duration:110,iterations:Math.ceil((380+k*260)/110)});
+      setTimeout(()=>{clearInterval(iv);s.textContent=f[k];s.animate([{transform:'translateY(-10px)'},{transform:'translateY(3px)'},{transform:'none'}],{duration:220});
+        if(k===f.length-1)el.animate(ok?[{boxShadow:'0 0 0 1px var(--ok),0 0 22px color-mix(in srgb,var(--ok) 55%,transparent)'},{boxShadow:'none'}]:[{boxShadow:'0 0 0 1px var(--bad)'},{boxShadow:'none'}],{duration:900})},380+k*260)})}
+  // ---- hook into the click handler: snapshot before the action runs, compare after the view re-renders
+  let pre=null,last=null;
+  const _msg=msg;msg=function(t,k,l){last={t,k:k||'info'};return _msg(t,k,l)};
+  document.addEventListener('click',e=>{pre=null;last=null;const b=e.target.closest('button[data-a]');if(!b||b.disabled||!b.closest('#view'))return;
+    const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));
+    const cu=b.closest(UNIT);
+    pre={a:b.dataset.a,tab,lock:locked(),units:m,ck:cu?keyOf(cu):null,v:{cash:S.cash,bank:S.bank,cry:S.cry,lvl:S.lvl},xp:S.xp/need(),
+      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels}},true);
+  document.addEventListener('click',()=>{if(!pre)return;const p=pre;pre=null;if(['bet','exp','imp'].includes(p.a))return;
+    const ok=last?last.k!=='bad':true;
+    for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()));
+    if(tab!==p.tab)return;
+    // Arrested or hospitalised: the whole screen changes, so it slams shut instead of rows moving
+    if(locked()&&!p.lock){if(run())$('#view').animate([{transform:'translateY(-24px)',opacity:0,filter:'sepia(1) hue-rotate(-30deg) saturate(3)'},{transform:'translateY(3px)',opacity:1,offset:.6},{transform:'none',filter:'none'}],{duration:650,easing:'ease-out'});
+      document.querySelectorAll('#view .alert, #where .pill').forEach(drop);return}
+    const now=units();let ni=0;
+    // Same button whose label changed (e.g. "Botiquín ×3" → "×2") is the same row, unless the action replaces it (a defeated rival)
+    const pfx=k=>k.split('|').slice(0,2).join('|'),seen=new Set();let ck=p.ck;
+    p.units.forEach((s,k)=>{let u=now.get(k),k2=k;
+      if(!u&&!STAMP[p.a]&&k.includes('|'))for(const[n,v]of now)if(!p.units.has(n)&&!seen.has(n)&&pfx(n)===pfx(k)){u=v;k2=n;if(k===ck)ck=n;break}
+      if(u){seen.add(k2);glide(u,s.r.top-u.getBoundingClientRect().top)}
+      else if(k===p.ck)leave(s,ok,(STAMP[p.a]||[])[ok?0:1]||(STAMP[p.a]||[])[0])});
+    if(p.units.size)now.forEach((u,k)=>{if(!p.units.has(k)&&!seen.has(k))enter(u,ni++)});
+    const cu=ck&&now.get(ck);if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu)react(cu,ok);
+    if(p.a==='slot'){const r=$('#view .reels');if(r)spin(r,reels,last&&last.k!=='bad')}
+    document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(x.textContent))drop(x)});
+    const xb=$('#view .xpbar i');if(xb&&run()){const to=S.xp/need()*100,fr=p.xp*100;if(S.lvl>p.v.lvl)xb.animate([{width:fr+'%'},{width:'100%',offset:.5},{width:'0%',offset:.51},{width:to+'%'}],{duration:1100});else if(Math.abs(to-fr)>.1)xb.animate([{width:fr+'%'},{width:to+'%'}],{duration:600,easing:'ease-out'})}
+    if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>e.animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
+  return {count,react,spin}})();
 
 // Import: hidden file input, replaces the current game after confirmation
 const impf=Object.assign(document.createElement('input'),{type:'file',accept:'.json,application/json',id:'impf',hidden:true});
