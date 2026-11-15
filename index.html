@@ -373,7 +373,8 @@ const warPct=i=>[.05,.1,.15,.2,.25][i], WAR_CD=24*3600000;
 const gangPow=()=>1+S.crew.reduce((t,m)=>t+m.l,0), rivalPow=r=>r.s*r.l;
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
-const lvOk=it=>!it.l||S.lvl>=it.l, nextLv=L=>Math.min(...L.filter(it=>!lvOk(it)).map(it=>it.l)), shown=(it,L)=>lvOk(it)||it.l===nextLv(L);
+// Gear from level 6 up also needs intelligence (2 per level) unless it sets its own iq.
+const itIq=it=>it.iq??(it.l>=6?it.l*2:0), lvOk=it=>(!it.l||S.lvl>=it.l)&&S.iq>=itIq(it), lvReq=it=>'Requiere '+[S.lvl<it.l&&'nivel '+it.l,S.iq<itIq(it)&&'inteligencia '+itIq(it)].filter(Boolean).join(' e '), nextLv=L=>Math.min(...L.filter(it=>!lvOk(it)).map(it=>it.l)), shown=(it,L)=>lvOk(it)||it.l===nextLv(L);
 const excl=it=>it.at&&it.at.length===1?' (solo aquí)':'';
 const rivalName=i=>CITIES[S.city].r[i];
 const JOBS=[{n:'Repartidor',lab:0,iq:0,pay:5},{n:'Camarero del club',lab:25,iq:0,pay:15},{n:'Chófer del jefe',lab:80,iq:20,pay:40},
@@ -847,9 +848,9 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
    if(n>=UPM)return row('Mejorar '+it.n,'Mejora máxima ('+UPM+'/'+UPM+')',b('up',k,'Al máximo',true),true);
    const c=upCost(it,n);return row('Mejorar '+it.n,'+'+upStep(it)+' '+st+' · nivel '+n+'/'+UPM+' · '+fmt(c),b('up',k,'Mejorar',locked()||S.cash<c))};
   let h=back()+lockAlert('No puedes ir de compras')+'<h2>Armas</h2>';
-  const WL=WEAPONS.filter(avail);h+=upRow('w',WEAPONS,'fuerza');byV(WEAPONS).forEach(([w,i])=>{const own=S.w>=0&&WEAPONS[S.w].v>=w.v;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),'Requiere nivel '+w.l,b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','w'+i)),'+'+w.v+' fuerza · '+fmt(w.p),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Protección</h2>';const AL=ARMOR.filter(avail);h+=upRow('a',ARMOR,'guardia');byV(ARMOR).forEach(([w,i])=>{const own=S.a>=0&&ARMOR[S.a].v>=w.v;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),'Requiere nivel '+w.l,b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','a'+i)),'+'+w.v+' guardia · '+fmt(w.p),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
-  h+='<h2>Vehículos</h2>'+upRow('v',VEHICLES,'agilidad');const VL=VEHICLES.filter(avail);byV(VEHICLES).forEach(([v,i])=>{const own=S.veh.includes(i),low=vehBest()>=0&&v.v<VEHICLES[vehBest()].v;if(!avail(v)||!own&&!shown(v,VL))return;if(!own&&!lvOk(v))return h+=row(v.n+excl(v),'Requiere nivel '+v.l,b('veh',i,'Comprar',true),true);h+=row(v.n+excl(v)+(own?'':newTag('shop','v'+i)),'+'+v.v+' agilidad · '+fmt(v.p),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<v.p))});
+  const WL=WEAPONS.filter(avail);h+=upRow('w',WEAPONS,'fuerza');byV(WEAPONS).forEach(([w,i])=>{const own=S.w>=0&&WEAPONS[S.w].v>=w.v;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','w'+i)),'+'+w.v+' fuerza · '+fmt(w.p),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Protección</h2>';const AL=ARMOR.filter(avail);h+=upRow('a',ARMOR,'guardia');byV(ARMOR).forEach(([w,i])=>{const own=S.a>=0&&ARMOR[S.a].v>=w.v;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','a'+i)),'+'+w.v+' guardia · '+fmt(w.p),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
+  h+='<h2>Vehículos</h2>'+upRow('v',VEHICLES,'agilidad');const VL=VEHICLES.filter(avail);byV(VEHICLES).forEach(([v,i])=>{const own=S.veh.includes(i),low=vehBest()>=0&&v.v<VEHICLES[vehBest()].v;if(!avail(v)||!own&&!shown(v,VL))return;if(!own&&!lvOk(v))return h+=row(v.n+excl(v),lvReq(v),b('veh',i,'Comprar',true),true);h+=row(v.n+excl(v)+(own?'':newTag('shop','v'+i)),'+'+v.v+' agilidad · '+fmt(v.p),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<v.p))});
   h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
  inv(){const KN={hp:'Salud',en:'Energía',st:'Valor',wl:'Voluntad'},full=k=>S[k]>=MAX[k]();
   let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3>'+
