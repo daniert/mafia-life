@@ -626,7 +626,7 @@ const ACT={
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp()||S[it.k]>=MAX[it.k]())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p||S.iq<BIZ[i].iq||S.wl<bizWl(i))return;S.cash-=p;S.wl-=bizWl(i);S.biz[i]++;msg('Compras: '+BIZ[i].n+'.','ok')},
- skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp++;if(k==='wlB')S.wl++;msg('Habilidad mejorada.','ok',0)},
+ skill(k){if(S.sp<1)return;S.sp--;S[k]++;S[k.slice(0,2)]++;msg('Habilidad mejorada.','ok',0)},
  sleep(){if(!canSleep())return;S.sleep=now()+SLEEP_MIN*60000;S.cool.sleep=now()+SLEEP_CD;msg('Te encierras en casa a dormir '+SLEEP_MIN+' min. Recuperas energía, salud y valor mucho más rápido.','info')},
  wake(){if(!asleep())return;S.sleep=0;msg('Te levantas antes de tiempo.','info',0)},
  heal(){const c=healCost();if(inHosp()||S.hp>=maxHp()||S.cash<c||S.en<3||S.wl<healWl())return;S.cash-=c;S.en-=3;S.wl-=healWl();S.hp=maxHp();msg('El médico te deja como nuevo por '+fmt(c)+'.','ok',0)},
