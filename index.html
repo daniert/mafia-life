@@ -353,7 +353,7 @@ const CREW_A=['«Dos Dedos»','«el Tostadas»','«Pocapena»','«Rodillas»','�
 const crewName=(s=S)=>{const used=new Set(s.crew.map(m=>m.n));for(let k=0;k<50;k++){const n=CREW_N[rnd(0,CREW_N.length-1)]+' '+CREW_A[rnd(0,CREW_A.length-1)];if(!used.has(n))return n}return 'Recluta nº '+(S.crew.length+1)};
 const crewNeed=m=>m.l*3;
 function crewSync(s=S){while(s.crew.length<s.g-1)s.crew.push({n:crewName(s),l:1,x:0});if(s.crew.length>s.g-1)s.crew.length=Math.max(0,s.g-1)}
-const warPct=i=>[.05,.1,.15,.2,.25][i], warLoot=i=>Math.floor(RIVALS[i].s*150*city().m);
+const warPct=i=>[.05,.1,.15,.2,.25][i], warCd=i=>[2,3,4,6,8][i]*3600000, warOn=i=>crOn('w'+i), warLoot=i=>Math.floor(RIVALS[i].s*150*city().m);
 const gangPow=()=>1+S.crew.reduce((t,m)=>t+m.l,0), rivalPow=r=>r.s*r.l;
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
@@ -617,7 +617,7 @@ const ACT={
  refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;
   genFoes();msg('Recorres las calles buscando rivales.','info',0)},
  recruit(){const c=recruitCost();if(S.cash<c||S.g>=gangCap())return;S.cash-=c;S.g++;crewSync();msg(S.crew[S.crew.length-1].n+' se une a la banda.','ok')},
- war(i){const r={n:rivalName(i),s:RIVALS[i].s};let ups=[];const train=()=>{S.crew.forEach(m=>{m.x+=won?2:1;if(m.x>=crewNeed(m)){m.x-=crewNeed(m);m.l++;ups.push(m.n)}})};if(locked()||S.st<3||S.en<3||S.hp<=2)return;S.st-=3;S.en-=3;const won=Math.random()<Math.min(.95,gangPow()/(gangPow()+rivalPow(RIVALS[i]))*wlF()+(jw(2)?.05:0)),pc=warPct(i),d=hd(Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4))));S.hp-=d;const hs=' Recibes '+d+' de daño.';
+ war(i){const r={n:rivalName(i),s:RIVALS[i].s};let ups=[];const train=()=>{S.crew.forEach(m=>{m.x+=won?2:1;if(m.x>=crewNeed(m)){m.x-=crewNeed(m);m.l++;ups.push(m.n)}})};if(locked()||warOn(i)||S.st<3||S.en<3||S.hp<=2)return;S.st-=3;S.en-=3;S.crc['w'+i]=now()+warCd(i);const won=Math.random()<Math.min(.95,gangPow()/(gangPow()+rivalPow(RIVALS[i]))*wlF()+(jw(2)?.05:0)),pc=warPct(i),d=hd(Math.max(won?2:5,rnd(won?3:10,won?10:20)+Math.floor(r.s/(won?10:5))-Math.floor(defT()/(won?6:4))));S.hp-=d;const hs=' Recibes '+d+' de daño.';
   if(won){const g=warLoot(i)+Math.floor(S.cash*pc),gem=Math.random()<Math.min(1,r.s/100);S.cash+=g;if(gem)S.cry++;S.fear=now()+600000;train();msg('Tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+(gem?' y 1 gema':'')+'.'+(ups.length?' Suben de nivel: '+ups.join(', ')+'.':'')+hs+hospital(),'ok');gain(Math.ceil(r.s/2)+5)}
   else{const lost=Math.floor(S.cash*pc);S.cash-=lost;const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.1))));const gone=[];for(let k=0;k<l;k++)gone.push(S.crew.splice(rnd(0,S.crew.length-1),1)[0].n);S.g-=l;S.wl=Math.max(0,S.wl-2);train();msg(r.n+' os aplasta. Pierdes '+fmt(lost)+'.'+(gone.length?' Caen '+gone.join(', ')+'.':'')+(ups.length?' Suben de nivel: '+ups.join(', ')+'.':'')+hs+hospital(),'bad')}},
  travel(i){const c=CITIES[i];if(locked()||i==S.city||S.lvl<c.l||S.cash<c.c||S.en<5)return;S.cash-=c.c;S.en-=5;S.city=+i;genFoes();if(!S.vis.includes(+i)){S.vis.push(+i);const x=Math.ceil(need()*.15);msg('Llegas a '+c.n+' por primera vez: +'+x+' XP.','ok');gain(x)}else msg('Llegas a '+c.n+'.','info')},
@@ -789,8 +789,8 @@ const VIEWS={
   return h},
  gang(){let h=back()+status()+lockAlert('No puedes reclutar')+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra y cargan con parte del trabajo: los crímenes te cuestan un '+Math.round(relief()*100)+'% menos de energía y de salud.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+'. '+(gangCap()<2+S.lvl*3?'Necesitas inteligencia '+iqNeed(gangCap()+1)+' para dirigir a uno más.':'Sube de nivel para reclutar más.'):fmt(recruitCost())+' · máximo '+gangCap(),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
   if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
-  h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros.</p>';
-  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2))});return h},
+  h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros. Tras cada guerra, esa banda rival tarda horas en volver a estar a tiro.</p>';
+  RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3 · ⏱️'+(warCd(i)/3600000)+' h',(warOn(i)?b('war',i,'⏱️'+cd(S.crc['w'+i]),true):b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2)))});return h},
  game(){let h=back()+'<h2>Partida</h2><p class="hint">Se guarda sola en este navegador. Exporta una copia para pasarla a otro dispositivo.</p>';
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
