@@ -303,7 +303,7 @@ const CRIMES=[
 // at = city indices where it is sold (missing = everywhere). Indices are saved: only append, keep power order.
 const WEAPONS=[{n:'Navaja',p:300,l:1,v:3},{n:'Pistola',p:1500,l:3,v:8},{n:'Escopeta recortada',p:6000,l:6,v:18,at:[1,2,3,4]},
  {n:'Ametralladora Thompson',p:25000,l:10,v:40,at:[1,4]},{n:'Lupara siciliana',p:60000,l:15,v:70,at:[4]}];
-// Vehicles: each owned one adds its agility bonus
+// Vehicles: only the best owned one (the one you drive) adds its agility bonus
 const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:2},{n:'Sedán robado',p:5000,l:4,v:5},{n:'Moto de gran cilindrada',p:15000,l:7,v:10},
  {n:'Furgoneta blindada',p:40000,l:10,v:16},{n:'Deportivo italiano',p:120000,l:15,v:28},{n:'Lancha rápida',p:400000,l:20,v:45}];
 const ARMOR=[{n:'Chaleco de cuero',p:800,l:1,v:3},{n:'Abrigo reforzado',p:4000,l:4,v:10,at:[0,1]},{n:'Blindaje ligero',p:20000,l:8,v:30,at:[2,4]},
@@ -456,7 +456,7 @@ const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
 const atkT=()=>Math.floor(S.atk)+(S.w>=0?WEAPONS[S.w].v:0)+Math.floor(S.g*.5);
 // Gym fee per energy point grows with the stat level.
 const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
-const agiT=()=>S.agi+S.veh.reduce((t,i)=>t+VEHICLES[i].v,0);
+const vehBest=()=>S.veh.length?Math.max(...S.veh):-1, agiT=()=>S.agi+(vehBest()>=0?VEHICLES[vehBest()].v:0);
 // Effective stat: base plus weapon/armor/vehicles/gang
 const statV=k=>k==='atk'?atkT():k==='def'?defT():k==='agi'?agiT():S[k];
 const defT=()=>Math.floor(S.def)+(S.a>=0?ARMOR[S.a].v:0)+Math.floor(S.g*.5);
@@ -758,8 +758,8 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3>'+
    '<div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n+' · +'+WEAPONS[S.w].v+' fuerza':'Ninguna')+'</b></div>'+
    '<div class="stat"><span>Protección</span><b>'+(S.a>=0?ARMOR[S.a].n+' · +'+ARMOR[S.a].v+' guardia':'Ninguna')+'</b></div>'+
-   '<div class="stat"><span>Vehículos</span><b>'+(S.veh.length?pl(S.veh.length,'vehículo')+' · +'+S.veh.reduce((t,i)=>t+VEHICLES[i].v,0)+' agilidad':'Ninguno')+'</b></div></div>';
-  if(S.veh.length)h+='<h2>Garaje</h2>'+S.veh.slice().sort((x,y)=>x-y).map(i=>row(VEHICLES[i].n,'+'+VEHICLES[i].v+' agilidad','')).join('');
+   '<div class="stat"><span>Vehículo</span><b>'+(vehBest()>=0?VEHICLES[vehBest()].n+' · +'+VEHICLES[vehBest()].v+' agilidad':'Ninguno')+'</b></div></div>';
+  if(S.veh.length)h+='<h2>Garaje</h2>'+S.veh.slice().sort((x,y)=>x-y).map(i=>row(VEHICLES[i].n+(i===vehBest()?' <span class="hint">· en uso</span>':''),'+'+VEHICLES[i].v+' agilidad'+(i===vehBest()?'':' · sin usar'),'')).join('');
   if(S.jw.length)h+='<h2>Joyas</h2>'+S.jw.map(i=>row(JEWELS[i].n,'«'+JEWELS[i].d+'»','')).join('');
   h+='<h2>Objetos</h2>';const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
   if(!own.length)return h+'<p class="hint">No tienes objetos. Cómpralos en <button class="back" data-tab="shop">Tiendas</button>.</p>';
