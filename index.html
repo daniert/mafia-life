@@ -254,6 +254,7 @@ nav.bottom button .new{position:absolute;top:5px;left:calc(50% + 8px)}
   main{margin:0;padding-top:12px}
   #msg{bottom:24px;left:296px}
 }
+.rt{font-style:normal;font-size:.8em;margin-left:4px;font-weight:600}
 </style>
 </head>
 <body>
@@ -879,9 +880,10 @@ const topTab=t=>NAV.some(n=>n[0]===t)?t:'explore';
 
 function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl,maxWl(),'--wl','✊'],['Valor',S.st,maxSt(),'--st','💪'],['Salud',S.hp,maxHp(),'--hp','❤️'],['XP',S.xp,need(),'--xp','⭐']],B=$('#bars');
   // Updated in place so widths transition; a lagging segment shows what was just lost (red) or gained (bright)
-  if(B.children.length!==L.length)B.innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span></span><b aria-label="'+x[0]+'"></b></div><div class="track"><div class="lag"></div><div class="fill" style="background:var('+x[3]+')"></div></div></div>').join('');
+  if(B.children.length!==L.length)B.innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span><i class="rt"></i></span><b aria-label="'+x[0]+'"></b></div><div class="track"><div class="lag"></div><div class="fill" style="background:var('+x[3]+')"></div></div></div>').join('');
   L.forEach((x,k)=>{const r=B.children[k],f=r.querySelector('.fill'),g=r.querySelector('.lag'),p=Math.max(0,Math.min(100,x[1]/x[2]*100)),o=parseFloat(f.style.width);
     r.querySelector('b').textContent=Math.floor(x[1])+(innerWidth<860?'':'/'+x[2]);
+    if(k===2){const t=r.querySelector('.rt'),q=Math.round((stR()-1)*100),bd=Math.round(Math.min(.6,(S.g||0)*.03)*100);t.textContent=q?(q>0?' +':' −')+Math.abs(q)+'%':'';t.style.color=q>0?'var(--ok,#5c5)':'var(--bad,#e55)';t.title=q?'Recuperación de valor: banda +'+bd+'%'+(S.shk>now()?', temple tocado tras la cárcel −50% (hasta las '+new Date(S.shk).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+')':''):''}
     if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
     if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
