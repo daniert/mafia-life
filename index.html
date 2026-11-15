@@ -27,6 +27,12 @@
 :root[data-city="1"]{--bg:#121a22;--deep:#0b1016;--panel:#1b2631;--panel2:#22303d;--line:#34485a;--ink:#e6ecf0;--mute:#93a6b5;--brass:#c9b37a}
 :root[data-city="2"]{--bg:#1d0d2b;--deep:#12071c;--panel:#2a1340;--panel2:#341850;--line:#55306f;--ink:#f6e9ff;--mute:#b79cc9;--brass:#ff5fb4}
 :root[data-city="3"]{--bg:#0c2626;--deep:#071a1a;--panel:#123636;--panel2:#174242;--line:#2b6060;--ink:#f4ecd8;--mute:#9fbfb5;--brass:#f08a5d}
+:root[data-city="5"]{--bg:#1a1426;--deep:#100c19;--panel:#251d35;--panel2:#2d2440;--line:#4a3b63;--ink:#f1eadb;--mute:#ab9fbe;--brass:#7fc96b}
+:root[data-city="6"]{--bg:#10202e;--deep:#0a151f;--panel:#172c3e;--panel2:#1c3549;--line:#2f5170;--ink:#f2ead9;--mute:#9cb1c2;--brass:#e8a24a}
+:root[data-city="7"]{--bg:#0b1d22;--deep:#061317;--panel:#102a30;--panel2:#14333a;--line:#22525a;--ink:#e9f6f4;--mute:#8fb5b2;--brass:#ff4a5a}
+:root[data-city="8"]{--bg:#0e1630;--deep:#080d1f;--panel:#161f40;--panel2:#1b264d;--line:#2f3d70;--ink:#f6f1e4;--mute:#a4abc6;--brass:#e6c36a}
+:root[data-city="jail"]{--bg:#1c1f22;--deep:#111315;--panel:#25292d;--panel2:#2c3136;--line:#41484f;--ink:#dfe3e6;--mute:#8d969e;--brass:#e0a030}
+:root[data-city="jail"] body{background-image:repeating-linear-gradient(90deg,transparent 0 58px,rgba(0,0,0,.22) 58px 64px,rgba(255,255,255,.03) 64px 65px),radial-gradient(ellipse 60% 40% at 50% -5%,#3a4148 0%,var(--bg) 45%,var(--deep) 100%)}
 :root[data-city="4"]{--bg:#26210f;--deep:#1a1609;--panel:#352e16;--panel2:#40381b;--line:#5d522c;--ink:#f3ead0;--mute:#bcae86;--brass:#e0b341}
 body{transition:background-color .4s}
 /* ---------- Base ---------- */
@@ -63,6 +69,16 @@ aside>*{max-width:560px;margin-left:auto;margin-right:auto}
 :root[data-city="3"] .brand img{filter:sepia(.3) hue-rotate(-15deg) saturate(1.4);box-shadow:0 0 0 2px #fff4d6,0 0 0 4px #f08a5d}
 :root[data-city="3"] .brand h1{color:#fff4d6;text-shadow:2px 2px 0 #f08a5d,4px 4px 0 #1f6f8b}
 :root[data-city="4"] .brand img{filter:sepia(.55) saturate(1.2);border-radius:50%;box-shadow:0 0 0 2px #e0b341,0 0 0 4px #6b2a1a}
+:root[data-city="5"] .brand img{filter:saturate(1.3) hue-rotate(-20deg);box-shadow:0 0 0 2px #7fc96b,0 0 0 4px #9b5fc0}
+:root[data-city="5"] .brand h1{color:#f6e27a;text-shadow:2px 2px 0 #6b3f8f,3px 3px 0 #000;font-style:italic}
+:root[data-city="6"] .brand img{filter:sepia(.25) saturate(1.2);box-shadow:0 0 0 2px #f2ead9,0 0 0 4px #2f6fa0}
+:root[data-city="6"] .brand h1{color:#f2ead9;text-shadow:2px 2px 0 #2f6fa0,3px 3px 0 #000;letter-spacing:2px}
+:root[data-city="7"] .brand img{filter:saturate(1.6) contrast(1.1);box-shadow:0 0 0 2px #ff4a5a,0 0 10px 2px #3ff0d0}
+:root[data-city="7"] .brand h1{color:#fff;text-shadow:0 0 4px #ff4a5a,0 0 10px #ff4a5a,2px 2px 0 #0b3a40}
+:root[data-city="8"] .brand img{filter:contrast(1.05);border-radius:50%;box-shadow:0 0 0 2px #e6c36a,0 0 0 4px #fff}
+:root[data-city="8"] .brand h1{color:#fff;text-shadow:1px 1px 0 #e6c36a,3px 3px 0 #000;letter-spacing:4px;font-weight:400}
+:root[data-city="jail"] .brand img{filter:grayscale(1) contrast(1.2);box-shadow:0 0 0 2px #6b737a,3px 3px 0 2px #000}
+:root[data-city="jail"] .brand h1{color:#cfd4d8;text-shadow:2px 2px 0 #000;letter-spacing:3px;font-family:ui-monospace,monospace;text-transform:uppercase}
 :root[data-city="4"] .brand h1{color:#fff1c2;text-shadow:2px 2px 0 #8a3a1e,3px 3px 0 #000;font-style:italic}
 .brand h1{display:none;font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:22px;margin:0;letter-spacing:.04em;color:var(--ink);text-shadow:0 1px 2px rgba(0,0,0,.7)}
 @media (max-width:859px){.brand{flex-basis:100%}.brand h1{display:block;font-size:18px}}
@@ -280,7 +296,20 @@ const CITIES=[
   r:['Los del Malecón','Clan Valdés','Banda del Puerto','Los Guajiros','La Mano de Tropicana']},
  {n:'Palermo',m:3.6,c:25000,l:15,
   fn:['Salvatore','Totò','Bernardo','Gaetano','Calogero','Vito','Matteo','Rosario'],sn:['Riina','Provenzano','Badalamenti','Inzerillo','Messina','Bontade'],
-  r:['Clan Bellavista','Hermanos Ferrante','La Cosca Nera','Los Corleonesi','La Cúpula']}];
+  r:['Clan Bellavista','Hermanos Ferrante','La Cosca Nera','Los Corleonesi','La Cúpula']},
+ // Append only: saves store the city index
+ {n:'Nueva Orleans',m:2.2,c:4000,l:8,
+  fn:['Silvestro','Carlos','Joe','Antoine','Lucien','Remy','Big Sam','Jules'],sn:['Marcello','Matranga','Provenza','Boudreaux','Thibodeaux','LeBlanc'],
+  r:['Los del Barrio Francés','Banda del Bayou','Los Muelles del Misisipi','Hermanos Matranga','La Familia Marcello']},
+ {n:'Marsella',m:4.8,c:80000,l:20,
+  fn:['Paul','Antoine','Marcel','Jean','Gaëtan','Lucien','François','Mémé'],sn:['Carbone','Spirito','Guérini','Venturi','Zampa','Orsini'],
+  r:['Los del Panier','Clan Guérini','Banda del Vieux-Port','Los Corsos','La French Connection']},
+ {n:'Hong Kong',m:6.3,c:200000,l:25,
+  fn:['Wai','Kin','Ming','Chun','Lok','Fai','Hung','Tak'],sn:['Ng','Chan','Lee','Wong','Lau','Cheung'],
+  r:['Los de Kowloon','Banda de Wan Chai','Los Dragones del Puerto','Sociedad 14K','La Tríada Sun Yee On']},
+ {n:'Montecarlo',m:8,c:500000,l:30,
+  fn:['Raoul','Henri','Stavros','Dmitri','Enzo','Philippe','Viktor','Lorenzo'],sn:['Grimaldi','Leclerc','Onassis','Volkov','Albertini','De Ruyter'],
+  r:['Los Croupiers del Casino','Banda del Puerto Hércules','Los Navieros Griegos','Sindicato de Mónaco','La Mesa Alta']}];
 // Crimes cost Brave ("valor"). Indices are part of saves (mastery): only append.
 // Jail-only crimes: for fun, XP-focused, little cash, high health risk
 const JCRIMES=[
@@ -337,7 +366,9 @@ const COURSES=[{n:'Clases nocturnas',min:5,c:500,iq:2},{n:'Contabilidad básica'
  {n:'Química',min:60,c:20000,iq:18},{n:'Economía internacional',min:120,c:60000,iq:35},
  // City-exclusive courses (append only: saves store indexes in S.done / S.edu.i)
  {n:'Contabilidad creativa',min:20,c:4000,iq:4,lab:6,at:[1]},{n:'Contar cartas',min:45,c:15000,iq:12,at:[2]},
- {n:'Comercio del tabaco',min:90,c:40000,iq:12,lab:15,at:[3]},{n:'Código de honor',min:180,c:120000,iq:40,at:[4]}];
+ {n:'Comercio del tabaco',min:90,c:40000,iq:12,lab:15,at:[3]},{n:'Código de honor',min:180,c:120000,iq:40,at:[4]},
+ {n:'Jazz y contrabando',min:40,c:10000,iq:8,lab:8,at:[5]},{n:'Química clandestina',min:240,c:250000,iq:55,at:[6]},
+ {n:'Finanzas offshore',min:300,c:500000,iq:70,lab:25,at:[7]},{n:'Etiqueta de alta sociedad',min:360,c:1200000,iq:80,lab:30,at:[8]}];
 // School costs: longer courses tire more
 const scEn=c=>Math.min(10,2+Math.floor(c.min/15)),scWl=c=>2+Math.floor(c.min/10);
 const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:500,k:'en',v:.5,d:'Recupera la mitad de la energía'},
@@ -347,7 +378,12 @@ const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'}
  {n:'Ficha de la suerte',p:1200,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2]},
  {n:'Café cubano',p:600,k:'en',v:.75,d:'Recupera tres cuartos de la energía',at:[3]},
  {n:'Ron añejo',p:1500,k:'st',v:1,d:'Recupera todo el valor',at:[3,4]},
- {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]}];
+ {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]},
+ {n:'Gumbo criollo',p:800,k:'hp',v:.75,d:'Recupera tres cuartos de la salud',at:[5]},
+ {n:'Amuleto vudú',p:1400,k:'wl',v:1,d:'Recupera toda la voluntad',at:[5]},
+ {n:'Pastís de Marsella',p:1600,k:'st',v:1,d:'Recupera todo el valor',at:[6]},
+ {n:'Té de ginseng',p:2000,k:'en',v:1,d:'Recupera toda la energía',at:[7]},
+ {n:'Champán de la Riviera',p:5000,k:'hp',v:1,d:'Recupera toda la salud',at:[8,6]}];
 // Jewels: one-time lucky charms bought with gems. Effects are hidden (superstition); see jw() uses.
 const JEWELS=[{n:'Reloj de oro',d:'El tiempo es dinero',c:10},{n:'Gemelos de diamante',d:'Un caballero nunca pisa el calabozo',c:15},
  {n:'Anillo de sello',d:'Todos besan la mano del jefe',c:25},{n:'Medalla de la Virgen',d:'Que te proteja',c:30},{n:'Pitillera de plata',d:'Un hombre de recursos',c:40}];
@@ -397,7 +433,7 @@ const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
 // 96x24 pixel-art city scenes drawn behind the brand
 function cityScene(i,W=96){
   // the 96-wide composition stays centred; ox extends it to fill wider banners
-  W=Math.max(96,Math.ceil(W/2)*2);const H=24,ox=(W-96)/2;let o='',seed=11+i*97;
+  W=Math.max(96,Math.ceil(W/2)*2);const H=24,ox=(W-96)/2;let o='',seed=11+(i==='jail'?999:i)*97;
   const rnd=()=>(seed=seed*16807%2147483647)/2147483647;
   const r=(x,y,w,h,c,k)=>{o+='<rect x="'+(x+ox)+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+c+'"'+(k?' class="'+k+'"':'')+'/>'};
   const sky=cs=>cs.forEach((c,j)=>r(-ox,j*H/cs.length,W,H/cs.length+.5,c));
@@ -407,7 +443,17 @@ function cityScene(i,W=96){
   const row=(x0,x1,hMin,hMax,base,col,win,p,blink)=>{for(let x=x0;x<x1;){const w=3+Math.floor(rnd()*5),h=hMin+Math.floor(rnd()*(hMax-hMin));bld(x,w,h,base,typeof col=='function'?col():col,win,p,blink);x+=w+(rnd()<.3?1:0)}};
   const hill=(cx,top,base,c)=>{for(let y=top;y<base;y++){const w=(y-top)*3+2;r(cx-w/2,y,w,1,c)}};
   const palm=x=>{r(x,10,1,9,'#5a3a1e');r(x-3,9,7,1,'#2f9e4a');r(x-2,8,5,1,'#3fbf5a');r(x-4,10,2,1,'#2f9e4a');r(x+3,10,2,1,'#2f9e4a');r(x-5,11,1,1,'#2f9e4a');r(x+5,11,1,1,'#2f9e4a')};
-  if(i==0){ // New York: night skyline, Empire State, Liberty over the harbour
+  if(i==='jail'){ // Jail: concrete cell, barred window with moonlight, bunk and bars in front
+    sky(['#2a2f34','#30363c','#363d44','#2c3238']);
+    for(let y=1;y<20;y+=3)for(let x=-ox+((y/3)%2?0:3);x<W-ox;x+=6)r(x,y,5,2,rnd()<.5?'#3b4249':'#343a40');
+    r(40,3,16,10,'#0e1a2c');r(50,4,3,3,'#dfe6f0');r(41,4,1,1,'#cfd8e3','tw');r(45,8,1,1,'#cfd8e3','tw');
+    for(let x=42;x<56;x+=3)r(x,3,1,10,'#7a838c');r(40,3,16,1,'#59626b');r(40,12,16,1,'#59626b');
+    r(38,13,20,11,'#a8b4c0','beam');
+    r(6,15,24,2,'#5a4a3a');r(6,17,24,1,'#3a2e24');r(6,14,6,1,'#c8c2b0');r(7,18,1,6,'#3a2e24');r(28,18,1,6,'#3a2e24');
+    r(72,16,6,4,'#c8ccd0');r(73,15,4,1,'#c8ccd0');r(74,20,2,4,'#9aa0a6');r(84,6,4,1,'#1a1d20');r(85,7,2,2,'#ffd34d','bl');
+    r(-ox,20,W,4,'#24292e');
+    for(let x=2-ox;x<W-ox;x+=7){r(x,0,1,24,'#121416');r(x+1,0,1,24,'#4a5158')}r(-ox,0,W,1,'#121416');r(-ox,10,W,1,'#121416');
+  }else if(i==0){ // New York: night skyline, Empire State, Liberty over the harbour
     sky(['#0b1530','#13224a','#1c3060','#27407a']);stars(22,12,'#dfe8ff');r(84,3,3,3,'#f4f1c9');r(85,2,1,1,'#f4f1c9');
     row(18,96+ox,5,13,24,'#070b14','#ffd96b',.45);
     r(52,7,7,17,'#0d1424');r(53,5,5,2,'#0d1424');r(54,3,3,2,'#0d1424');r(55,0,1,3,'#cfd8e3');r(55,0,1,1,'#ff3b3b','bl');
@@ -438,6 +484,35 @@ function cityScene(i,W=96){
     palm(12);palm(58);palm(88);
     r(-ox,18,W,1,'#4a4a4a');r(36,15,10,2,'#e0245e');r(38,14,6,1,'#e0245e');r(39,14,4,1,'#9ee7ff');r(36,16,10,1,'#fff4d6');r(37,17,2,1,'#111');r(43,17,2,1,'#111');
     r(-ox,19,W,1,'#e8dcc0');r(-ox,20,W,4,'#1f6f8b');for(let k=0;k<10;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,k%3?'#4fa6c4':'#ffd34d','tw');
+  }else if(i==5){ // New Orleans: violet night, Mississippi riverboat, French Quarter iron balconies, gas lamps
+    sky(['#1a1030','#2a1a48','#3b2660','#4b3270']);stars(16,10,'#f6e6ff');r(14,3,4,4,'#f6e27a');r(15,2,2,1,'#f6e27a');
+    for(let x=-ox;x<62;){const w=6+Math.floor(rnd()*4),h=8+Math.floor(rnd()*4),c=['#7a4a8a','#3f8a5a','#c27a4a','#8a6a3a'][Math.floor(rnd()*4)];
+      bld(x,w,h,20,c,'#ffd36b',.4);r(x,20-h,w,1,'#2a1a2a');r(x,24-h/1.5-4,w,1,'#1a1018');for(let xx=x;xx<x+w;xx+=2)r(xx,24-h/1.5-3,1,2,'#1a1018');x+=w+1}
+    r(-ox,20,W,4,'#2a3a4a');for(let k=0;k<8;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,'#5a7a9a','tw');
+    r(66,14,24,4,'#f2ead9');r(68,11,18,3,'#e0d4bc');r(70,9,12,2,'#f2ead9');r(72,4,2,5,'#1a1018');r(78,4,2,5,'#1a1018');r(72,3,2,1,'#ff7a3a','bl');r(78,3,2,1,'#ff7a3a','bl2');
+    for(let x=69;x<86;x+=3)r(x,12,1,1,'#ffd36b');r(64,15,3,5,'#9a2a2a');r(66,18,24,1,'#9a2a2a');
+    for(const x of [20,44])r(x,13,1,7,'#1a1018'),r(x-1,12,3,1,'#ffd36b','tw');
+  }else if(i==6){ // Marseille: blue dusk, Notre-Dame de la Garde on the hill, ochre houses, Vieux-Port masts
+    sky(['#20406a','#3a5a8a','#c88a6a','#f0a85a']);
+    hill(70,6,20,'#4a5a3a');r(66,4,8,4,'#e8dcc0');r(68,1,4,3,'#e8dcc0');r(69,-1,2,2,'#ffd34d');r(69,0,2,1,'#ffd34d','tw');
+    row(-ox,58,3,8,20,()=>['#e8b878','#d99a5a','#f2d0a0','#c98a4a'][Math.floor(rnd()*4)],'#3a2a1a',.3);
+    r(-ox,20,W,4,'#1a4a7a');for(let k=0;k<8;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,'#6ab0e0','tw');
+    for(const x of [8,20,34,48,86])r(x,10,1,10,'#2a1a10'),r(x-3,18,7,2,'#f2ead9'),r(x+1,12,3,5,'#f2ead9');
+  }else if(i==7){ // Hong Kong: dense neon towers, triangular bank tower, junk boat with red sail
+    sky(['#04121a','#082028','#0c2e36','#103a42']);stars(10,6,'#bff');
+    row(-ox,96+ox,8,18,20,()=>['#0a1a20','#0e2228','#081418'][Math.floor(rnd()*3)],['#3ff0d0','#ff4a5a','#ffd34d','#fff'],.55,true);
+    r(56,1,8,19,'#0a1418');for(let y=2;y<19;y+=4){r(56,y,8,1,'#8fb5b2');for(let k=0;k<4;k++)r(56+k*2+(y%8?1:0),y+k%4,1,1,'#8fb5b2')}r(59,0,1,1,'#ff3b3b','bl');
+    for(let x=6;x<40;x+=6)r(x,8+Math.floor(rnd()*4),3,1,['#ff4a5a','#3ff0d0'][x%2],'bl');
+    r(-ox,20,W,4,'#06262c');for(let k=0;k<10;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,['#ff4a5a','#3ff0d0','#ffd34d'][k%3],'tw');
+    r(74,18,16,2,'#5a3a1e');r(76,17,12,1,'#5a3a1e');r(80,8,1,9,'#2a1a10');r(77,9,7,7,'#c0303a');for(let y=10;y<16;y+=2)r(77,y,7,1,'#8a2028');
+  }else if(i==8){ // Monte Carlo: navy evening, rocky cliffs, belle-époque casino, yachts and palms
+    sky(['#0a1030','#141c48','#22306a','#3a4a8a']);stars(20,10,'#fff6d8');r(10,3,3,3,'#fff6d8');
+    hill(84,6,20,'#3a3448');r(-ox,12,ox+12,8,'#3a3448');
+    row(-ox,30,4,9,18,()=>['#f2e6d0','#e8d0b0','#f6c8a8'][Math.floor(rnd()*3)],'#ffd36b',.35);
+    r(34,10,30,8,'#f2e6d0');r(34,10,30,1,'#e6c36a');for(let x=36;x<62;x+=3)r(x,12,1,5,'#ffd36b');r(46,6,6,4,'#6aa08a');r(48,4,2,2,'#6aa08a');r(36,7,3,3,'#6aa08a');r(59,7,3,3,'#6aa08a');r(48,3,2,1,'#e6c36a','tw');
+    palm(30);palm(68);r(-ox,18,W,2,'#4a4a5a');
+    r(-ox,20,W,4,'#14306a');for(let k=0;k<8;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,'#e6c36a','tw');
+    for(const x of [8,40,72]){r(x,19,12,2,'#fff');r(x+2,17,7,2,'#e8e8f0');r(x+3,18,5,1,'#3a4a8a');r(x+8,19,1,1,'#ffd36b','bl')}
   }else{ // Palermo: golden afternoon, Monte Pellegrino, cathedral dome, lemon tree, sea
     sky(['#f7e3a8','#f2cf7e','#e8b45a','#d9984a']);
     hill(20,5,20,'#8a6a4a');hill(20,8,20,'#7a5a3e');r(-ox,14,ox+6,6,'#7a5a3e');
@@ -449,7 +524,8 @@ function cityScene(i,W=96){
     r(-ox,20,W,4,'#2a7fa8');for(let k=0;k<8;k++)r(Math.floor(rnd()*90),21+Math.floor(rnd()*3),3,1,'#7fd0f0','tw');
   }
   return [W,o]}
-const drawScene=()=>{const sv=$('#cityScene'),b=sv.getBoundingClientRect(),[w,o]=cityScene(S.city,b.height?24*b.width/b.height:96);sv.setAttribute('viewBox','0 0 '+w+' 24');sv.innerHTML=o};
+const sceneKey=()=>inJail()?'jail':S.city;
+const drawScene=()=>{const sv=$('#cityScene'),b=sv.getBoundingClientRect(),[w,o]=cityScene(sceneKey(),b.height?24*b.width/b.height:96);sv.setAttribute('viewBox','0 0 '+w+' 24');sv.innerHTML=o};
 addEventListener('resize',()=>drawScene());
 const city=()=>CITIES[S.city];
 const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
@@ -748,7 +824,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  biz(){let h=back()+lockAlert('No puedes comprar negocios')+'<h2>Negocios</h2><p class="hint">Dan dinero cada minuto, aunque no juegues. Ahora ingresas '+fmt(income())+'/min (sueldo incluido).</p>';
   BIZ.map((w,i)=>[w,i]).sort((x,y)=>x[0].p-y[0].p).forEach(([w,i])=>{const lk=S.iq<w.iq;h+=row(w.n+' ×'+S.biz[i]+(lk?'':newTag('biz','b'+i)),lk?'Requiere inteligencia '+w.iq:'+'+fmt(w.v*bizMul())+'/min · ✊'+bizWl(i)+' · '+fmt(bizPrice(i)),b('biz',i,'Comprar',lk||S.cash<bizPrice(i)||S.wl<bizWl(i)),lk)});return h},
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2>';
-  CITIES.forEach((c,i)=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':lk?'':newTag('travel','t'+i)),lk?'Requiere nivel '+c.l:'⚡5 · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<c.c||S.en<5),lk)});return h},
+  CITIES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':lk?'':newTag('travel','t'+i)),lk?'Requiere nivel '+c.l:'⚡5 · billete '+fmt(c.c),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<c.c||S.en<5),lk)});return h},
  shop(){let h=back()+lockAlert('No puedes ir de compras')+'<h2>Armas</h2>';
   const WL=WEAPONS.filter(avail);WEAPONS.forEach((w,i)=>{const own=S.w>=i;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),'Requiere nivel '+w.l,b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','w'+i)),'+'+w.v+' fuerza · '+fmt(w.p),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
   h+='<h2>Protección</h2>';const AL=ARMOR.filter(avail);ARMOR.forEach((w,i)=>{const own=S.a>=i;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),'Requiere nivel '+w.l,b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','a'+i)),'+'+w.v+' guardia · '+fmt(w.p),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
@@ -787,7 +863,7 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
     if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
     if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
-function head(){const de=document.documentElement;if(de.dataset.city!=String(S.city)){de.dataset.city=S.city;drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
+function head(){const de=document.documentElement;if(de.dataset.city!=String(sceneKey())){de.dataset.city=sceneKey();drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
 let curTab=null;
