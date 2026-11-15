@@ -548,7 +548,7 @@ const ACT={
  veh(i){i=+i;const v=VEHICLES[i];if(!v||!lvOk(v)||S.cash<v.p||S.veh.includes(i)||i<Math.max(-1,...S.veh))return;S.cash-=v.p;S.veh.push(i);msg('Compras: '+v.n+'.','ok',0)},
  buy(k,i){const L=k==='w'?WEAPONS:ARMOR,it=L[i];if(S.cash<it.p||S[k]>=i||!avail(it)||!lvOk(it))return;S.cash-=it.p;S[k]=i;msg('Compras: '+it.n+'.','ok',0)},
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
- use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
+ use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp()||S[it.k]>=MAX[it.k]())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p||S.iq<BIZ[i].iq||S.wl<bizWl(i))return;S.cash-=p;S.wl-=bizWl(i);S.biz[i]++;msg('Compras: '+BIZ[i].n+'.','ok')},
  skill(k){if(S.sp<1)return;S.sp--;S[k]++;if(k==='hpB')S.hp++;if(k==='wlB')S.wl++;msg('Habilidad mejorada.','ok',0)},
  sleep(){if(!canSleep())return;S.sleep=now()+SLEEP_MIN*60000;S.cool.sleep=now()+SLEEP_CD;msg('Te encierras en casa a dormir '+SLEEP_MIN+' min. Recuperas energía, salud y valor mucho más rápido.','info')},
@@ -754,9 +754,17 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   h+='<h2>Protección</h2>';const AL=ARMOR.filter(avail);ARMOR.forEach((w,i)=>{const own=S.a>=i;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),'Requiere nivel '+w.l,b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','a'+i)),'+'+w.v+' guardia · '+fmt(w.p),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<w.p))});
   h+='<h2>Vehículos</h2>';VEHICLES.forEach((v,i)=>{const own=S.veh.includes(i),low=i<Math.max(-1,...S.veh);if(!own&&!shown(v,VEHICLES))return;if(!own&&!lvOk(v))return h+=row(v.n,'Requiere nivel '+v.l,b('veh',i,'Comprar',true),true);h+=row(v.n+(own?'':newTag('shop','v'+i)),'+'+v.v+' agilidad · '+fmt(v.p),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<v.p))});
   h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
- inv(){let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3><div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n:'Ninguna')+'</b></div><div class="stat"><span>Protección</span><b>'+(S.a>=0?ARMOR[S.a].n:'Ninguna')+'</b></div><div class="stat"><span>Joyas</span><b>'+(S.jw.length?S.jw.map(i=>JEWELS[i].n).join(', '):'Ninguna')+'</b></div><div class="stat"><span>Vehículos</span><b>'+(S.veh.length?S.veh.map(i=>VEHICLES[i].n).join(', '):'Ninguno')+'</b></div></div><h2>Objetos</h2>';
-  const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
-  return h+(own.length?own.map(([it,i])=>row(it.n+' ×'+S.inv[i],it.d,b('use',i,'Usar',inHosp()))).join(''):'<p class="hint">No tienes objetos. Cómpralos en <button class="back" data-tab="shop">Tiendas</button>.</p>')},
+ inv(){const KN={hp:'Salud',en:'Energía',st:'Valor',wl:'Voluntad'},full=k=>S[k]>=MAX[k]();
+  let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3>'+
+   '<div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n+' · +'+WEAPONS[S.w].v+' fuerza':'Ninguna')+'</b></div>'+
+   '<div class="stat"><span>Protección</span><b>'+(S.a>=0?ARMOR[S.a].n+' · +'+ARMOR[S.a].v+' guardia':'Ninguna')+'</b></div>'+
+   '<div class="stat"><span>Vehículos</span><b>'+(S.veh.length?pl(S.veh.length,'vehículo')+' · +'+S.veh.reduce((t,i)=>t+VEHICLES[i].v,0)+' agilidad':'Ninguno')+'</b></div></div>';
+  if(S.veh.length)h+='<h2>Garaje</h2>'+S.veh.slice().sort((x,y)=>x-y).map(i=>row(VEHICLES[i].n,'+'+VEHICLES[i].v+' agilidad','')).join('');
+  if(S.jw.length)h+='<h2>Joyas</h2>'+S.jw.map(i=>row(JEWELS[i].n,'«'+JEWELS[i].d+'»','')).join('');
+  h+='<h2>Objetos</h2>';const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
+  if(!own.length)return h+'<p class="hint">No tienes objetos. Cómpralos en <button class="back" data-tab="shop">Tiendas</button>.</p>';
+  return h+Object.keys(KN).map(k=>{const g=own.filter(([it])=>it.k===k);if(!g.length)return'';
+   return '<h3>'+KN[k]+' <span class="hint">'+Math.floor(S[k])+'/'+Math.floor(MAX[k]())+'</span></h3>'+g.map(([it,i])=>row(it.n+' ×'+S.inv[i],it.d,b('use',i,full(k)?'Lleno':'Usar',inHosp()||full(k)))).join('')}).join('')},
  casino(){let h=back()+status()+'<h2>Casino</h2><p class="hint">Elige tu apuesta.</p>'+stake();
   h+='<h2>Tragaperras</h2><div class="reels" aria-hidden="true">'+reels+'</div><p class="hint">Tres iguales: de ×5 (🍒) a ×25 (7️⃣). Dos iguales: recuperas la apuesta.</p><div class="btns">'+b('slot',undefined,'Tirar',locked()||S.cash<bet)+'</div>';
   h+='<h2>Ruleta</h2><p class="hint">Rojo o negro pagan ×2. El 0 verde paga ×36.</p><div class="btns">'+b('roul','r','Rojo',locked()||S.cash<bet)+b('roul','n','Negro',locked()||S.cash<bet,'alt')+b('roul','z','0 verde',locked()||S.cash<bet,'alt')+'</div>';
