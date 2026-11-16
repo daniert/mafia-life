@@ -635,7 +635,9 @@ const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));re
 const stakeMin=()=>nice(Math.max(1000,income()*30)), amtOf=(k,i=stk[k])=>i==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[i][0])), depAmt=()=>amtOf('d'), stakeAmt=k=>{const a=amtOf(k);return a>=stakeMin()?a:0}, stkPick=k=>'<div class="seg">'+STAKES.map((x,i)=>b('stk',k+'|'+i,x[1]+'<br>'+fmt(amtOf(k,i)),false,i==stk[k]?'on sm':'alt sm')).join('')+'</div>', noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
-const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
+// Crew locked up with you help the escape: cheaper and likelier, and they break out with you
+const mates=()=>Math.min(3,S.crew.filter(crewIn).length),escF=()=>1-.15*mates();
+const escEn=()=>Math.max(1,Math.round(Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))*escF())),escSt=()=>Math.max(1,Math.round(Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75))*escF()));
 // Crew shares the load of crimes: diminishing relief on energy and health damage, capped at 50%
 const gFree=()=>S.g-S.crew.filter(crewIn).length, relief=()=>{const n=gFree()-1;return .5*n/(n+8)}, crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
 // Experience (level) lowers Brave costs with diminishing returns: up to -40% (lvl 30 → -20%)
@@ -651,6 +653,7 @@ const inHosp=()=>S.hosp>now(), inJail=()=>S.jail>now(), locked=()=>inHosp()||inJ
 // Sleep: 3 min of triple energy/health/brave regen, free, once every hour
 const SLEEP_MIN=3, SLEEP_CD=3600000, SLEEP_X=3, asleep=()=>S.sleep>now();
 const canSleep=()=>!locked()&&!asleep()&&!(S.cool.sleep>now());
+const escP=()=>Math.min(.4+.1*mates(),(.2+agiT()*.002+.07*mates())*wlF());
 const outCash=ts=>minsLeft(ts)*(80+S.lvl*30);
 const boxCost=()=>500+S.lvl*50, today=()=>new Date().toDateString(), boxesLeft=()=>5-(S.lb.d===today()?S.lb.n:0);
 
@@ -668,9 +671,10 @@ function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){cons
  const a=Math.round((l*4+l*l*.8+rnd(0,l*3))*t[1]);S.foes.push({n:C.fn[rnd(0,C.fn.length-1)]+' '+C.sn[rnd(0,C.sn.length-1)],l,a,t:t[0],m:t[2],s:'xbtq'[rnd(0,3)]})}}
 
 const ACT={
+ cbail(i){const m=S.crew[+i];if(!m||!crewIn(m)||S.cash<outCash(m.j))return;S.cash-=outCash(m.j);m.j=0;delete m.c;msg('Pagas la fianza de '+m.n+'.','info')},
  escape(){if(!inJail()||inHosp()||S.en<escEn()||S.st<escSt())return;S.en-=escEn();S.st-=escSt();
   const hurt=Math.random()<.7,d=hurt?hd(rnd(15,35)):0;S.hp-=d;const dm=d?' Pierdes '+d+' de salud.':'';
-  if(Math.random()<Math.min(.4,(.2+agiT()*.002))*wlF()){S.jail=0;msg('¡Te fugas de la cárcel! +5 XP.'+dm+hospital(),'ok');gain(5)}
+  if(Math.random()<escP()){S.jail=0;const L=S.crew.filter(crewIn);L.forEach(m=>{m.j=0;delete m.c});msg('¡Te fugas de la cárcel!'+(L.length?' Contigo escapan '+L.map(m=>m.n).join(', ')+'.':'')+' +5 XP.'+dm+hospital(),'ok');gain(5)}
   else{const m=rnd(3,8);S.jail+=m*60000;S.wl=Math.max(0,S.wl-wlLoss(1));msg('Te pillan intentando fugarte: +'+m+' min de cárcel.'+dm+hospital(),'bad')}},
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(jXp(c))}
@@ -955,7 +959,7 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
     if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
     if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
-const jailMates=()=>{const L=S.crew.filter(crewIn);return L.length?'<h2>Tu banda entre rejas</h2><p class="hint">No cuentan para las guerras hasta que salgan.</p><div class="card">'+L.map(m=>'<div class="stat"><span>'+m.n+' <small style="opacity:.6">'+m.c+'</small></span><b>'+cd(m.j)+'</b></div>').join('')+'</div>':''};
+const jailMates=()=>{const L=S.crew.filter(crewIn);return L.length?'<h2>Tu banda entre rejas</h2><p class="hint">No te ayudan hasta que salgan. Puedes pagar su fianza y, si estás dentro con ellos, la fuga es más barata y más fácil, y se escapan contigo.</p><div class="card">'+L.map(m=>'<div class="stat"><span>'+m.n+' <small style="opacity:.6">'+m.c+'</small></span><b>'+cd(m.j)+' '+b('cbail',S.crew.indexOf(m),'Fianza '+fmt(outCash(m.j)),S.cash<outCash(m.j),'sm alt')+'</b></div>').join('')+'</div>':''};
 function head(){const de=document.documentElement;if(de.dataset.city!=String(sceneKey())){de.dataset.city=sceneKey();drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
