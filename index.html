@@ -394,7 +394,12 @@ const crewName=(s=S)=>{const used=new Set(s.crew.map(m=>m.n));for(let k=0;k<50;k
 const crewNeed=m=>m.l*3;
 function crewSync(s=S){while(s.crew.length<s.g-1)s.crew.push({n:crewName(s),l:1,x:0});if(s.crew.length>s.g-1)s.crew.length=Math.max(0,s.g-1)}
 const warPct=i=>[.02,.04,.06,.08,.1][i], WAR_CD=4*3600000;
-const gangPow=()=>1+S.crew.reduce((t,m)=>t+m.l,0), rivalPow=r=>r.s*r.l;
+// Crew caught with you: each gets a random charge near yours and a sentence of similar length
+const crewIn=m=>m.j>now();
+function crewBust(c){const free=S.crew.filter(x=>!crewIn(x));if(!free.length)return '';const k=Math.min(free.length,rnd(0,Math.min(3,1+Math.floor(c.br/2))));const got=[];
+  for(let q=0;q<k;q++){const x=free.splice(rnd(0,free.length-1),1)[0],near=CRIMES.filter(y=>Math.abs(y.br-c.br)<=1),ch=near[rnd(0,near.length-1)],mm=Math.max(1,Math.round((ch.br+1)*(.7+Math.random()*.6)));x.j=now()+mm*60000;x.c=ch.n;got.push(x.n+' ('+mm+' min)')}
+  return got.length?' También caen '+got.join(', ')+'.':''}
+const gangPow=()=>1+S.crew.reduce((t,m)=>t+(crewIn(m)?0:m.l),0), rivalPow=r=>r.s*r.l;
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
 // Gear from level 6 up also needs intelligence (2 per level) unless it sets its own iq.
@@ -673,7 +678,7 @@ const ACT={
  crime(i){i=+i;const c=CRIMES[i];if(locked()||crLk(c)||crOn(i)||S.st<crBr(c)||S.en<crEn(c)||S.wl<crWl(c)||S.hp<=crHp(c))return;S.en-=crEn(c);S.wl-=crWl(c);const v=crHp(c);S.st-=crBr(c);S.crc[i]=now()+crCd(c);
   if(Math.random()<crimeP(c,i)){const g=Math.floor(rnd(c.a,c.b)*city().m*(1+S.terr/100)*(1+.3*iqQ()));S.cash+=g;S.mast[i]=(S.mast[i]||0)+1;
    const cr=Math.random()<c.br/60?1:0;S.cry+=cr;const h1=v?Math.round(rnd(0,v)*(1-.3*iqQ())):0;S.hp-=h1;const vb=Math.min(maxSt()-S.st,Math.max(1,Math.round(crBr(c)*(.3+Math.random()*.2))));S.st+=vb;msg(c.n+': ganas '+fmt(g)+(cr?' y 1 gema':'')+'.'+(vb>0?' El éxito te envalentona: +'+Math.floor(vb)+' de valor.':'')+(h1?' Pierdes '+h1+' de salud.':''),'ok');gain(Math.ceil(c.xp*(1+.25*iqQ())))}
-  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.shk=S.jail+10*60000;S.wl=Math.max(0,S.wl-wlLoss(3));const h1=v?rnd(1,v):0;S.hp-=h1;const ll=Math.min(S.lab,rnd(1,3)),fj=S.job>=0?JOBS[S.job].n.toLowerCase():'';S.lab-=ll;S.job=-1;msg(c.n+': te detiene la policía.'+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.'+(fj?' Te despiden de '+fj+'.':'')+(ll?' Pierdes '+f1(ll)+' de Trabajo.':'')+' Sales con el temple tocado: recuperas valor a la mitad hasta 10 min después de salir.','bad')}
+  else if(Math.random()<jailP()){const m=c.br+1;S.jail=now()+m*60000;S.shk=S.jail+10*60000;S.wl=Math.max(0,S.wl-wlLoss(3));const h1=v?rnd(1,v):0;S.hp-=h1;const ll=Math.min(S.lab,rnd(1,3)),fj=S.job>=0?JOBS[S.job].n.toLowerCase():'';S.lab-=ll;S.job=-1;const cb=crewBust(c);msg(c.n+': te detiene la policía.'+cb+(h1?' Pierdes '+h1+' de salud y pasas ':' Pasas ')+m+' min en la cárcel.'+(fj?' Te despiden de '+fj+'.':'')+(ll?' Pierdes '+f1(ll)+' de Trabajo.':'')+' Sales con el temple tocado: recuperas valor a la mitad hasta 10 min después de salir.','bad')}
   else{const d=crw(hd(Math.round((c.dm+rnd(0,5))*(1-.3*iqQ()))));S.hp-=d;S.wl=Math.max(0,S.wl-wlLoss(1));msg(c.n+': sale mal. Pierdes '+d+' de salud.'+hospital(),'bad')}},
  train(k){const e=gEn(k);if(inHosp()||S.en<e||S.wl<gWl()||k==='lab'||S.cool.gym>now())return;const nm=STATS.find(s=>s[0]===k)[1],fee=gymFee(k);
   if(S.cash<fee){msg('No te llega para la cuota del gimnasio ('+fmt(fee)+').','bad',0);return}
@@ -869,7 +874,7 @@ const VIEWS={
   h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (⚡1 · 💪1)',locked()||S.st<1||S.en<1,'alt')+'</div>';
   return h},
  gang(){let h=back()+status()+lockAlert('No puedes reclutar')+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra y cargan con parte del trabajo: los crímenes te cuestan un '+Math.round(relief()*100)+'% menos de energía y de salud.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+'. '+(gangCap()<2+S.lvl*3?'Necesitas inteligencia '+iqNeed(gangCap()+1)+' para dirigir a uno más.':'Sube de nivel para reclutar más.'):fmt(recruitCost())+' · máximo '+gangCap(),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
-  if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
+  if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+(crewIn(m)?' 🚔':'')+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros. Una guerra dura 4 h y solo puedes librar una a la vez. Al declararla apartas parte de tu dinero como fondo de guerra: si ganáis, lo recuperas junto a un gran botín, gemas, experiencia y 2 h de miedo en las calles; si perdéis, el fondo se pierde.</p>';
   RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',(S.war?b('war',i,S.war.i==i?'⏱️'+cd(S.war.end):'Guerra',true):b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2)))});return h},
  game(){let h=back()+'<h2>Partida</h2><p class="hint">Se guarda sola en este navegador. Exporta una copia para pasarla a otro dispositivo.</p>';
@@ -892,8 +897,8 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   if(inHosp())return h+'<p class="hint">Te recuperas mientras pasa el tiempo. Puedes pagar para salir antes.</p><div class="btns">'+b('out','hosp|m','Pagar '+fmt(outCash(S.hosp)),S.cash<outCash(S.hosp))+'</div>';
   return h+row('Curarte del todo',S.hp>=maxHp()?'Ya estás al máximo':'⚡3 · ✊'+healWl()+' · '+fmt(healCost()),b('heal',undefined,'Curar',S.hp>=maxHp()||S.cash<healCost()||S.en<3||S.wl<healWl()))},
  jail(){let h=back()+status()+'<h2>Cárcel</h2>';
-  if(inJail())return h+'<p class="hint">Mientras estés dentro solo puedes hacer <button class="back" data-tab="crime">crímenes de cárcel</button>. No puedes pelear, trabajar, viajar ni apostar. Puedes pagar la fianza para salir antes.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+'</div>'+row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()));
-  return h+'<p class="hint">Estás libre. Si un crimen sale mal, la policía puede encerrarte unos minutos.</p>'},
+  if(inJail())return h+'<p class="hint">Mientras estés dentro solo puedes hacer <button class="back" data-tab="crime">crímenes de cárcel</button>. No puedes pelear, trabajar, viajar ni apostar. Puedes pagar la fianza para salir antes.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+'</div>'+row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()))+jailMates();
+  return h+'<p class="hint">Estás libre. Si un crimen sale mal, la policía puede encerrarte unos minutos, y a veces caen contigo miembros de tu banda.</p>'+jailMates()},
  bank(){let h=back()+lockAlert('No puedes ir al banco')+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p>';
   h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><p class="hint">Cantidad a depositar:</p>'+stkPick('d');
   h+='<div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
@@ -950,6 +955,7 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
     if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
     if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
+const jailMates=()=>{const L=S.crew.filter(crewIn);return L.length?'<h2>Tu banda entre rejas</h2><p class="hint">No cuentan para las guerras hasta que salgan.</p><div class="card">'+L.map(m=>'<div class="stat"><span>'+m.n+' <small style="opacity:.6">'+m.c+'</small></span><b>'+cd(m.j)+'</b></div>').join('')+'</div>':''};
 function head(){const de=document.documentElement;if(de.dataset.city!=String(sceneKey())){de.dataset.city=sceneKey();drawScene();document.querySelector('meta[name=theme-color]').content=getComputedStyle(de).getPropertyValue('--deep').trim()}$('#where').innerHTML=rank()+' · '+city().n+(income()?' · +'+fmt(income())+'/min':'')+(inHosp()?'<span class="pill">Hospital</span>':'')+(inJail()?'<span class="pill">Cárcel</span>':'');
   $('#cash').textContent=fmt(S.cash);$('#bank').textContent=fmt(S.bank);$('#lvl').textContent=S.lvl;$('#cry').textContent=S.cry;bars();
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
@@ -1098,6 +1104,7 @@ function tick(dt){achCheck();
     S.cash-=fromCash;S.bank-=fromBank;S.hp=Math.max(1,S.hp-d);
     if(left>0){S.loan={a:Math.ceil(left*(1+LOAN_R)),end:L.end+LOAN_MIN*60000,v};msg('Los cobradores te visitan: se llevan '+fmt(fromCash+fromBank)+' y pierdes '+d+' de salud. Aún debes '+fmt(S.loan.a)+'.','bad')}
     else{S.loan=null;msg('Los cobradores te visitan: se llevan '+fmt(fromCash+fromBank)+' y pierdes '+d+' de salud. Deuda saldada.','bad')}}
+  S.crew.forEach(m=>{if(m.j&&n>=m.j){m.j=0;delete m.c;msg(m.n+' sale de la cárcel.','info')}});
   if(S.jail&&n>=S.jail){S.jail=0;msg('Sales de la cárcel tras cumplir condena: +'+S.lvl+' XP.','info');gain(S.lvl)}
   if(S.war&&n>=S.war.end)warEnd();
   if(S.edu&&n>=S.edu.end){const c=COURSES[S.edu.i];S.iq+=c.iq;if(c.lab)S.lab+=c.lab;S.done.push(S.edu.i);S.edu=null;S.cry++;const x=Math.ceil(c.min/3);msg('Terminas «'+c.n+'»: ganas 1 gema y '+x+' XP.','ok');gain(x)}}
