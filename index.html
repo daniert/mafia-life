@@ -442,6 +442,9 @@ const jw=i=>S.jw.includes(i), GEM_SELL=10;
 const GYM_WIN=30*60000,gymRecent=()=>(S.gymL||[]).filter(t=>t>now()-GYM_WIN).length;
 const healWl=()=>3,gWl=()=>4+gymRecent();
 const GYM_EN={atk:4,agi:3,def:5},gEn=k=>GYM_EN[k];
+// Yoga: no willpower cost; restores a bit and every few sessions raises max willpower (each step needs more sessions)
+// Light on energy but pricey: at least 5 min of income, else ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
+const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round(Math.max(100+3*Math.max(...['atk','agi','def'].map(gymFee)),5*income())*(1+.5*(S.ygL||0)));
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
 const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
 const REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
@@ -660,6 +663,8 @@ const boxCost=()=>500+S.lvl*50, today=()=>new Date().toDateString(), boxesLeft=(
 let msgT;
 function msg(t,k,log){const m=$('#msg');m.textContent=t;m.className=(k||'info')+' show';clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),Math.max(3500,t.length*60));
   if(log!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}}
+// Rule: any raise of a bar's max also adds the same amount to the current value. Always use raiseMax.
+function raiseMax(k,n=1){S[k+'B']+=n;S[k]+=n}
 function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.cry+=2;S.en=maxEn();S.st=maxSt();S.hp=maxHp();S.wl=maxWl();
   msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 gemas.','ok')}}
 function hospital(){if(S.hp>0)return '';const l=Math.max(0,Math.floor(S.cash)),m=Math.min(30,2+Math.floor(S.lvl/3));
@@ -689,6 +694,11 @@ const ACT={
   // Diminishing returns: the higher the stat, the less each session gives. Costlier sessions give a bit more.
   const g=(.6+S.lvl*.05)*(.5+.5*S.wl/maxWl())*(.8+Math.random()*.4)*15/(15+S[k])*e*.7;S.wl-=gWl();
   S.en-=e;S.cash-=fee;S[k]+=g;S.cool.gym=now()+30000;S.gymL=(S.gymL||[]).filter(t=>t>now()-GYM_WIN).concat(now());const vb=S.st<maxSt()&&Math.random()<.25;if(vb)S.st++;gain(1);msg('Entrenas '+nm.toLowerCase()+': −'+fmt(fee)+'.'+(vb?' Te crees invencible: +1 valor.':''),'ok',0)},
+ yoga(){const e=YOGA_EN;if(inHosp()||yogaDone()||S.en<e||S.cool.gym>now())return;const fee=yogaFee();
+  if(S.cash<fee){msg('No te llega para la clase de yoga ('+fmt(fee)+').','bad',0);return}
+  S.en-=e;S.cash-=fee;S.cool.gym=now()+30000;S.yg=(S.yg||0)+1;let up='';
+  if(S.yg>=yogaNeed()){S.yg=0;S.ygL=(S.ygL||0)+1;raiseMax('wl');up=' Tu mente se endurece: +1 voluntad máxima.'}
+  gain(1);msg('Clase de yoga: −'+fmt(fee)+'.'+up,'ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;const rb=f.t==='Veterano'||f.t==='Sicario'?fBr(f):1;S.st=Math.min(maxSt(),S.st+rb);S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.'+(d?' Recibes '+d+' de daño.':'')+' Recuperas '+rb+' de valor.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
   else{const d=hd(Math.max(5,(rnd(10,18)+f.l)*fS(f).hit-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05*fS(f).steal);S.cash-=l;S.wl=Math.max(0,S.wl-wlLoss(1));msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'.'+hospital(),'bad')}
@@ -704,7 +714,7 @@ const ACT={
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp()||S[it.k]>=MAX[it.k]())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p||S.iq<BIZ[i].iq||S.wl<bizWl(i))return;S.cash-=p;S.wl-=bizWl(i);S.biz[i]++;msg('Compras: '+BIZ[i].n+'.','ok')},
- skill(k){if(S.sp<1)return;S.sp--;S[k]++;S[k.slice(0,2)]++;msg('Habilidad mejorada.','ok',0)},
+ skill(k){if(S.sp<1)return;S.sp--;raiseMax(k.slice(0,2));msg('Habilidad mejorada.','ok',0)},
  sleep(){if(!canSleep())return;S.sleep=now()+SLEEP_MIN*60000;S.cool.sleep=now()+SLEEP_CD;msg('Te encierras en casa a dormir '+SLEEP_MIN+' min. Recuperas energía, salud y valor mucho más rápido.','info')},
  wake(){if(!asleep())return;S.sleep=0;msg('Te levantas antes de tiempo.','info',0)},
  heal(){const c=healCost();if(inHosp()||S.hp>=maxHp()||S.cash<c||S.en<3||S.wl<healWl())return;S.cash-=c;S.en-=3;S.wl-=healWl();S.hp=maxHp();msg('El médico te deja como nuevo por '+fmt(c)+'.','ok',0)},
@@ -872,6 +882,8 @@ const VIEWS={
    h+=row(c.n+(lk?'':newTag('crime','c'+i)),lk?crReq(c):'⚡'+crEn(c)+' · 💪'+c.br+(crWl(c)?' · ✊'+crWl(c):'')+' · '+fmt(c.a*city().m*(1+S.terr/100))+' a '+fmt(c.b*city().m*(1+S.terr/100)),b('crime',i,on&&!lk?'⏱️'+cd(S.crc[i]):'Hacer',lk||on||locked()||S.st<crBr(c)||S.en<crEn(c)||S.wl<crWl(c)||S.hp<=crHp(c)),lk)});return h},
  gym(){let h=status()+'<h2>Gimnasio</h2><p class="hint">Cada sesión cuesta una cuota. Después, descansas 30 s antes de volver a entrenar. Cada sesión en los últimos 30 min encarece la voluntad en +1'+(gymRecent()?' (ahora +'+gymRecent()+')':'')+'.</p>';
   STATS.slice(0,3).forEach(s=>{const cl=S.cool.gym>now(),d=inHosp()||S.en<gEn(s[0])||S.wl<gWl()||cl;h+=row(s[1],'Actual: '+f1(S[s[0]])+' · '+'⚡'+gEn(s[0])+' · ✊'+gWl()+' · cuota '+fmt(gymFee(s[0])),b('train',s[0],cl?'⏱️'+cd(S.cool.gym):'Entrenar',d||S.cash<gymFee(s[0])))});
+
+  {const cl=S.cool.gym>now();h+=row('Yoga 🧘',yogaDone()?'Has alcanzado tu máximo: +'+YOGA_MAX+' ✊ máx':'Entrena la voluntad · sesión '+(S.yg||0)+'/'+yogaNeed()+' para +1 ✊ máx · ⚡'+YOGA_EN+' · cuota '+fmt(yogaFee()),b('yoga',0,cl&&!yogaDone()?'⏱️'+cd(S.cool.gym):'Practicar',yogaDone()||inHosp()||cl||S.en<YOGA_EN||S.cash<yogaFee()))}
   return h},
  fight(){let h=status()+'<h2>Pelea</h2><p class="hint">Con 2 de salud o menos no puedes pelear.</p>';
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
