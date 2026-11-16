@@ -483,7 +483,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),p=n=>String(n).padStart(2,'0');return h?h+':'+p(m)+':'+p(s%60):m+':'+p(s%60)};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.g||0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>30*S.lvl;
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>30*S.lvl;
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5*(S.jw&&S.jw.includes(3)?.85:1)));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -586,13 +586,13 @@ const drawScene=()=>{const sv=$('#cityScene'),b=sv.getBoundingClientRect(),[w,o]
 addEventListener('resize',()=>drawScene());
 const city=()=>CITIES[S.city];
 const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
-const atkT=()=>Math.floor(S.atk)+eqV(WEAPONS,S.w,S.wu)+Math.floor(S.g*.5);
+const atkT=()=>Math.floor(S.atk)+eqV(WEAPONS,S.w,S.wu)+Math.floor(gFree()*.5);
 // Gym fee per energy point grows with the stat level.
 const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
 const vehBest=()=>S.veh.reduce((m,i)=>m<0||VEHICLES[i].v>VEHICLES[m].v?i:m,-1), agiT=()=>S.agi+eqV(VEHICLES,vehBest(),S.vu);
 // Effective stat: base plus weapon/armor/vehicles/gang
 const statV=k=>k==='atk'?atkT():k==='def'?defT():k==='agi'?agiT():S[k];
-const defT=()=>Math.floor(S.def)+eqV(ARMOR,S.a,S.au)+Math.floor(S.g*.5);
+const defT=()=>Math.floor(S.def)+eqV(ARMOR,S.a,S.au)+Math.floor(gFree()*.5);
 // Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
 const wlF=()=>.75+.25*S.wl/maxWl();
 // Hidden foe styles: weight of your atk/agi/def in the odds, damage dealt and cash stolen when they win.
@@ -951,7 +951,7 @@ function bars(){const L=[['Energía',S.en,maxEn(),'--en','⚡'],['Voluntad',S.wl
   if(B.children.length!==L.length)B.innerHTML=L.map(x=>'<div class="bar" title="'+x[0]+'"><div class="lab"><span>'+icons(x[4])+'<span class="nm">'+x[0]+'</span><i class="rt"></i></span><b aria-label="'+x[0]+'"></b></div><div class="track"><div class="lag"></div><div class="fill" style="background:var('+x[3]+')"></div></div></div>').join('');
   L.forEach((x,k)=>{const r=B.children[k],f=r.querySelector('.fill'),g=r.querySelector('.lag'),p=Math.max(0,Math.min(100,x[1]/x[2]*100)),o=parseFloat(f.style.width);
     r.querySelector('b').textContent=Math.floor(x[1])+(innerWidth<860?'':'/'+x[2]);
-    if(k===2){const t=r.querySelector('.rt'),q=Math.round((stR()-1)*100),bd=Math.round(Math.min(.6,(S.g||0)*.03)*100);t.textContent=q?(q>0?' +':' −')+Math.abs(q)+'%':'';t.style.color=q>0?'var(--ok,#5c5)':'var(--bad,#e55)';t.title=q?'Recuperación de valor: banda +'+bd+'%'+(S.shk>now()?', temple tocado tras la cárcel −50% (hasta las '+new Date(S.shk).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+')':''):''}
+    if(k===2){const t=r.querySelector('.rt'),q=Math.round((stR()-1)*100),bd=Math.round(Math.min(.6,(S.crew?gFree():0)*.03)*100);t.textContent=q?(q>0?' +':' −')+Math.abs(q)+'%':'';t.style.color=q>0?'var(--ok,#5c5)':'var(--bad,#e55)';t.title=q?'Recuperación de valor: banda +'+bd+'%'+(S.shk>now()?', temple tocado tras la cárcel −50% (hasta las '+new Date(S.shk).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+')':''):''}
     if(isNaN(o)||Math.abs(p-o)<2){if(!(f._t>performance.now()))f.classList.remove('slow');f.style.width=g.style.width=p+'%';return}
     if(p<o){g.className='lag dn';f.classList.remove('slow')}else{g.className='lag up';f.classList.add('slow');f._t=performance.now()+900}
     f.style.width=g.style.width=p+'%'})}
