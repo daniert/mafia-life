@@ -653,6 +653,8 @@ const boxCost=()=>500+S.lvl*50, today=()=>new Date().toDateString(), boxesLeft=(
 let msgT;
 function msg(t,k,log){const m=$('#msg');m.textContent=t;m.className=(k||'info')+' show';clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),Math.max(3500,t.length*60));
   if(log!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}}
+// Rule: any raise of a bar's max also adds the same amount to the current value. Always use raiseMax.
+function raiseMax(k,n=1){S[k+'B']+=n;S[k]+=n}
 function gain(x){S.xp+=x;while(S.xp>=need()){S.xp-=need();S.lvl++;S.sp+=3;S.cry+=2;S.en=maxEn();S.st=maxSt();S.hp=maxHp();S.wl=maxWl();
   msg('¡Subes al nivel '+S.lvl+'! Ganas 3 puntos de habilidad y 2 gemas.','ok')}}
 function hospital(){if(S.hp>0)return '';const l=Math.max(0,Math.floor(S.cash)),m=Math.min(30,2+Math.floor(S.lvl/3));
@@ -684,7 +686,7 @@ const ACT={
  yoga(){const e=YOGA_EN;if(inHosp()||yogaDone()||S.en<e||S.cool.gym>now())return;const fee=yogaFee();
   if(S.cash<fee){msg('No te llega para la clase de yoga ('+fmt(fee)+').','bad',0);return}
   S.en-=e;S.cash-=fee;S.cool.gym=now()+30000;S.yg=(S.yg||0)+1;let up='';
-  if(S.yg>=yogaNeed()){S.yg=0;S.ygL=(S.ygL||0)+1;S.wlB++;up=' Tu mente se endurece: +1 voluntad máxima.'}
+  if(S.yg>=yogaNeed()){S.yg=0;S.ygL=(S.ygL||0)+1;raiseMax('wl');up=' Tu mente se endurece: +1 voluntad máxima.'}
   gain(1);msg('Clase de yoga: −'+fmt(fee)+'.'+up,'ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
   if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;const rb=f.t==='Veterano'||f.t==='Sicario'?fBr(f):1;S.st=Math.min(maxSt(),S.st+rb);S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'.'+(d?' Recibes '+d+' de daño.':'')+' Recuperas '+rb+' de valor.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(Math.round((f.l+2)*(f.m||1)))}
@@ -701,7 +703,7 @@ const ACT={
  item(i){const p=itemPrice(i);if(S.cash<p||!avail(ITEMS[i]))return;S.cash-=p;S.inv[i]=(S.inv[i]||0)+1;msg('Compras: '+ITEMS[i].n+'. Lo tienes en el inventario.','ok',0)},
  use(i){const it=ITEMS[i];if(!S.inv[i]||inHosp()||S[it.k]>=MAX[it.k]())return;S.inv[i]--;S[it.k]=Math.min(MAX[it.k](),S[it.k]+MAX[it.k]()*it.v);msg('Usas: '+it.n+'.','ok',0)},
  biz(i){const p=bizPrice(i);if(S.cash<p||S.iq<BIZ[i].iq||S.wl<bizWl(i))return;S.cash-=p;S.wl-=bizWl(i);S.biz[i]++;msg('Compras: '+BIZ[i].n+'.','ok')},
- skill(k){if(S.sp<1)return;S.sp--;S[k]++;S[k.slice(0,2)]++;msg('Habilidad mejorada.','ok',0)},
+ skill(k){if(S.sp<1)return;S.sp--;raiseMax(k.slice(0,2));msg('Habilidad mejorada.','ok',0)},
  sleep(){if(!canSleep())return;S.sleep=now()+SLEEP_MIN*60000;S.cool.sleep=now()+SLEEP_CD;msg('Te encierras en casa a dormir '+SLEEP_MIN+' min. Recuperas energía, salud y valor mucho más rápido.','info')},
  wake(){if(!asleep())return;S.sleep=0;msg('Te levantas antes de tiempo.','info',0)},
  heal(){const c=healCost();if(inHosp()||S.hp>=maxHp()||S.cash<c||S.en<3||S.wl<healWl())return;S.cash-=c;S.en-=3;S.wl-=healWl();S.hp=maxHp();msg('El médico te deja como nuevo por '+fmt(c)+'.','ok',0)},
