@@ -623,7 +623,7 @@ function genFoes(){S.foes=[];const C=city(),n=rnd(3,5);for(let i=0;i<n;i++){cons
 const ACT={
  escape(){if(!inJail()||inHosp()||S.en<escEn()||S.st<escSt())return;S.en-=escEn();S.st-=escSt();
   const hurt=Math.random()<.7,d=hurt?hd(rnd(15,35)):0;S.hp-=d;const dm=d?' Pierdes '+d+' de salud.':'';
-  if(Math.random()<Math.min(.4,(.2+agiT()*.002))*wlF()){S.jail=0;msg('¡Te fugas de la cárcel! +'+2*S.lvl+' XP.'+dm+hospital(),'ok');gain(2*S.lvl)}
+  if(Math.random()<Math.min(.4,(.2+agiT()*.002))*wlF()){S.jail=0;msg('¡Te fugas de la cárcel! +5 XP.'+dm+hospital(),'ok');gain(5)}
   else{const m=rnd(3,8);S.jail+=m*60000;S.wl=Math.max(0,S.wl-wlLoss(1));msg('Te pillan intentando fugarte: +'+m+' min de cárcel.'+dm+hospital(),'bad')}},
  jcrime(i){const c=JCRIMES[+i];if(!inJail()||inHosp()||crOn('j'+i)||S.en<c.en||S.hp<=hd(c.dm))return;S.en-=c.en;S.crc['j'+i]=now()+c.en*20000;
   if(Math.random()<c.p*wlF()){const g=rnd(c.a,c.b)*S.lvl,v=Math.ceil(c.en/2);S.cash+=g;S.st=Math.min(maxSt(),S.st+v);msg(c.n+': ganas '+fmt(g)+' y '+v+' de valor.','ok');gain(jXp(c))}
