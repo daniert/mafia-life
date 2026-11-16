@@ -438,8 +438,8 @@ const GYM_WIN=30*60000,gymRecent=()=>(S.gymL||[]).filter(t=>t>now()-GYM_WIN).len
 const healWl=()=>3,gWl=()=>4+gymRecent();
 const GYM_EN={atk:4,agi:3,def:5},gEn=k=>GYM_EN[k];
 // Yoga: no willpower cost; restores a bit and every few sessions raises max willpower (each step needs more sessions)
-// Light on energy but pricey: ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
-const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round((100+3*Math.max(...['atk','agi','def'].map(gymFee)))*(1+.5*(S.ygL||0)));
+// Light on energy but pricey: at least 5 min of income, else ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
+const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round(Math.max(100+3*Math.max(...['atk','agi','def'].map(gymFee)),5*income())*(1+.5*(S.ygL||0)));
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
 const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
 const REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
