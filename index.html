@@ -161,6 +161,7 @@ nav.bottom button[aria-current="true"] .i{opacity:1}
 .btn:hover:not(:disabled){filter:brightness(1.1)}
 .btn:active:not(:disabled){transform:translateY(1px)}
 .btn.sm{min-width:60px;padding:10px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 12px}.seg .btn{min-width:0;padding:8px 2px;font-size:11px;letter-spacing:0;line-height:1.25}
 .btn:disabled{background:transparent;color:color-mix(in srgb,var(--mute) 70%,transparent);border-color:var(--hair);cursor:not-allowed}
 .btn.alt{background:transparent;color:var(--gold);border-color:color-mix(in srgb,var(--brass) 55%,transparent)}
 .btn.alt:hover:not(:disabled){background:color-mix(in srgb,var(--brass) 10%,transparent);filter:none}
@@ -595,9 +596,9 @@ const TERMS=[{n:'Plazo corto',min:30,r:.03},{n:'Plazo medio',min:120,r:.1},{n:'P
 const FUNDS=[{n:'Bonos del puerto',min:60,lo:-.05,hi:.2},{n:'Acciones de la naviera',min:120,lo:-.25,hi:.6},{n:'Especular con el casino',min:180,lo:-.6,hi:1.5}];
 // Deposits/investments take a fixed share of cash; they can't overlap with a loan (no borrow-to-invest arbitrage)
 // Stake = chosen fraction of cash, rounded down to one significant digit; below ~30 min of income it isn't worth it
-const STAKES=[[.25,'¼'],[.5,'½'],[.75,'¾'],[1,'Todo']];let stk=1;
+const STAKES=[[.25,'¼'],[.5,'½'],[.75,'¾'],[1,'Todo']];let stk={d:1,t:1,f:1};
 const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));return Math.floor(v/p)*p};
-const stakeMin=()=>nice(Math.max(1000,income()*30)), depAmt=()=>stk==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[stk][0])), stakeAmt=()=>{const a=depAmt();return a>=stakeMin()?a:0}, noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
+const stakeMin=()=>nice(Math.max(1000,income()*30)), amtOf=(k,i=stk[k])=>i==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[i][0])), depAmt=()=>amtOf('d'), stakeAmt=k=>{const a=amtOf(k);return a>=stakeMin()?a:0}, stkPick=k=>'<div class="seg">'+STAKES.map((x,i)=>b('stk',k+'|'+i,x[1]+'<br>'+fmt(amtOf(k,i)),false,i==stk[k]?'on sm':'alt sm')).join('')+'</div>', noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
@@ -689,9 +690,9 @@ const ACT={
   else if(r<.85){const x=Math.ceil(need()*.1);msg('Caja de la suerte: '+x+' XP.','ok');gain(x)}
   else msg('Caja de la suerte: vacía. Mala suerte.','bad',0)},
  dep(){const a=depAmt();if(a<1)return;const fee=Math.ceil(a*.05);S.cash-=a;S.bank+=a-fee;msg('Depositas '+fmt(a-fee)+' (comisión '+fmt(fee)+').','info',0)},
- stk(i){stk=+i},
- term(i){const t=TERMS[+i],a=stakeAmt();if(S.term||noInvest()||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
- fund(i){const f=FUNDS[+i],a=stakeAmt();if(S.fund||noInvest()||a<1)return;S.cash-=a;S.fund={i:+i,a,end:now()+f.min*60000};msg('Inviertes '+fmt(a)+' en '+f.n.toLowerCase()+'.','info',0)},
+ stk(a){const[k,i]=a.split('|');stk[k]=+i},
+ term(i){const t=TERMS[+i],a=stakeAmt('t');if(S.term||noInvest()||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
+ fund(i){const f=FUNDS[+i],a=stakeAmt('f');if(S.fund||noInvest()||a<1)return;S.cash-=a;S.fund={i:+i,a,end:now()+f.min*60000};msg('Inviertes '+fmt(a)+' en '+f.n.toLowerCase()+'.','info',0)},
  loan(){if(S.loan||noLoan()||locked())return;const a=loanMax();S.cash+=a;S.loan={a:Math.ceil(a*(1+LOAN_R)),end:now()+LOAN_MIN*60000};msg('Te prestan '+fmt(a)+'. Debes devolver '+fmt(S.loan.a)+'.','info',0)},
  repay(){if(!S.loan||S.cash<S.loan.a)return;S.cash-=S.loan.a;const x=!S.loan.v&&now()>=S.loan.end-(LOAN_MIN-60)*60000?2*S.lvl:0;S.loan=null;msg('Devuelves el préstamo.'+(x?' +'+x+' XP.':''),'ok',0);if(x)gain(x)},
  wd(){S.cash+=S.bank;S.bank=0;msg('Retiras todo tu dinero del banco.','info',0)},
@@ -855,14 +856,14 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   if(inJail())return h+'<p class="hint">Mientras estés dentro solo puedes hacer <button class="back" data-tab="crime">crímenes de cárcel</button>. No puedes pelear, trabajar, viajar ni apostar. Puedes pagar la fianza para salir antes.</p><div class="btns">'+b('out','jail|m','Fianza '+fmt(outCash(S.jail)),S.cash<outCash(S.jail))+'</div>'+row('Intentar la fuga','⚡'+escEn()+' · 💪'+escSt(),b('escape',undefined,'Fugarse',inHosp()||S.en<escEn()||S.st<escSt()));
   return h+'<p class="hint">Estás libre. Si un crimen sale mal, la policía puede encerrarte unos minutos.</p>'},
  bank(){let h=back()+lockAlert('No puedes ir al banco')+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p>';
-  h+='<h2>Cantidad</h2><p class="hint">Elige qué parte de tu efectivo depositar o invertir. Se redondea a una cifra fija; depósitos a plazo e inversiones piden un mínimo de '+fmt(stakeMin())+' (media hora de tus ingresos).</p><div class="btns">'+STAKES.map((x,i)=>{const a=i==3?Math.floor(S.cash):nice(Math.floor(S.cash*x[0]));return b('stk',i,x[1]+' · '+fmt(a),false,i==stk?'':'alt')}).join('')+'</div>';
-  h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
-  h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza '+(stakeAmt()?fmt(stakeAmt()):'la cantidad elegida')+' y recupéralo con intereses en el banco al vencer. Uno cada vez y nunca con un préstamo pendiente.</p>';
+  h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><p class="hint">Cantidad a depositar:</p>'+stkPick('d');
+  h+='<div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
+  h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza la cantidad elegida y recupérala con intereses en el banco al vencer. Mínimo '+fmt(stakeMin())+'. Uno cada vez y nunca con un préstamo pendiente.</p>'+stkPick('t');
   if(S.term)h+='<div class="alert info">🏦 <span>'+TERMS[S.term.i].n+': '+fmt(S.term.a)+' · vence en '+cd(S.term.end)+'</span></div>';
-  TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt()<1))});
-  h+='<h2>Inversiones</h2><p class="hint">Invierte '+(stakeAmt()?fmt(stakeAmt()):'la cantidad elegida')+'; el resultado llega al banco. Puedes ganar mucho o perder parte. Una cada vez y nunca con un préstamo pendiente.</p>';
+  TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt('t')<1))});
+  h+='<h2>Inversiones</h2><p class="hint">Invierte la cantidad elegida; el resultado llega al banco. Puedes ganar mucho o perder parte. Mínimo '+fmt(stakeMin())+'. Una cada vez y nunca con un préstamo pendiente.</p>'+stkPick('f');
   if(S.fund)h+='<div class="alert info">📈 <span>'+FUNDS[S.fund.i].n+': '+fmt(S.fund.a)+' · termina en '+cd(S.fund.end)+'</span></div>';
-  FUNDS.forEach((f,i)=>{h+=row(f.n,f.min+' min · de '+Math.round(f.lo*100)+'% a +'+Math.round(f.hi*100)+'%',b('fund',i,'Invertir',!!S.fund||noInvest()||stakeAmt()<1))});
+  FUNDS.forEach((f,i)=>{h+=row(f.n,f.min+' min · de '+Math.round(f.lo*100)+'% a +'+Math.round(f.hi*100)+'%',b('fund',i,'Invertir',!!S.fund||noInvest()||stakeAmt('f')<1))});
   h+='<h2>Préstamo</h2><p class="hint">Dinero en mano al momento. No se concede con depósitos o inversiones en curso. Si no lo devuelves a tiempo, los cobradores de la familia vendrán a por él, y volverán mientras debas algo.</p>';
   if(S.loan)return h+row(S.loan.v?'Deuda con los cobradores':'Préstamo pendiente','Debes '+fmt(S.loan.a)+' · '+(S.loan.v?'vuelven en ':'vence en ')+cd(S.loan.end),b('repay',undefined,'Devolver',S.cash<S.loan.a));
   return h+row('Pedir '+fmt(loanMax()),'Devuelves '+fmt(Math.ceil(loanMax()*(1+LOAN_R)))+' en '+LOAN_MIN/60+' h',b('loan',undefined,'Pedir',locked()||noLoan()))},
