@@ -786,8 +786,8 @@ function todo(){const L=[];
   if(jb>=0){const j=JOBS[jb];L.push({a:'job',i:jb,ic:'👔',t:S.job>=0?'Mejor empleo: '+j.n:'Trabajar de '+j.n.toLowerCase(),d:fmt(jobPay(jb))+'/min'+(S.job>=0?' (ahora '+fmt(jobPay(S.job))+'/min)':'')+' · cobras aunque no juegues',go:'Aceptar'})}
   const ct=CITIES.reduce((m,c,i)=>S.lvl>=c.l&&c.m>(m<0?city().m:CITIES[m].m)&&S.cash>=tCost(i)&&S.en>=5?i:m,-1);
   if(ct>=0){const c=CITIES[ct];L.push({a:'travel',i:ct,ic:'✈️',t:'Viajar a '+c.n,d:'Botines x'+c.m+' (ahora x'+city().m+') · ⚡5 · billete '+fmt(tCost(ct)),go:'Viajar'})}
-  const k=['atk','agi','def'].sort((x,y)=>S[x]-S[y])[0],nm=STATS.find(s=>s[0]===k)[1],cl=S.cool.gym>now();
-  L.push({a:'train',i:k,dis:cl||S.en<gEn(k)||S.wl<gWl()||S.cash<gymFee(k),ic:'🏋️',t:'Entrenar '+nm.toLowerCase(),d:'Tu punto débil: '+f1(S[k])+' · ⚡'+gEn(k)+' · ✊'+gWl()+' · '+fmt(gymFee(k)),go:cl?cd(S.cool.gym):'Entrenar'});
+  const k=['atk','agi','def'].sort((x,y)=>statV(x)-statV(y))[0],nm=STATS.find(s=>s[0]===k)[1],cl=S.cool.gym>now();
+  L.push({a:'train',i:k,dis:cl||S.en<gEn(k)||S.wl<gWl()||S.cash<gymFee(k),ic:'🏋️',t:'Entrenar '+nm.toLowerCase(),d:'Tu punto débil: '+f1(statV(k))+' (base '+f1(S[k])+')'+' · ⚡'+gEn(k)+' · ✊'+gWl()+' · '+fmt(gymFee(k)),go:cl?cd(S.cool.gym):'Entrenar'});
   const fi=S.foes.reduce((m,f,i)=>f.l<S.foes[m].l?i:m,0),f=S.foes[fi];
   if(f)L.push({a:'fight',i:fi,dis:S.en<2||S.hp<=2||S.st<fBr(f),ic:'🥊',t:'Atacar a '+f.n,d:'El rival más flojo · nivel '+f.l+' · ⚡2 · 💪'+fBr(f),go:'Atacar'});
   if(!locked()){const cl=S.cool.sleep>now();L.push({a:'sleep',i:0,dis:!canSleep(),ic:'😴',t:'Dormir',d:asleep()?'Ya estás durmiendo':SLEEP_MIN+' min · recuperas energía, salud y valor '+SLEEP_X+' veces más rápido',go:cl&&!asleep()?cd(S.cool.sleep):'Dormir'})}
