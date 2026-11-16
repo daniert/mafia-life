@@ -589,9 +589,11 @@ const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid d
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
 // Crew shares the load of crimes: diminishing relief on energy and health damage, capped at 50%
 const relief=()=>.5*(S.g-1)/(S.g-1+8), crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
+// Experience (level) lowers Brave costs with diminishing returns: up to -40% (lvl 30 → -20%)
+const vetQ=()=>.4*(S.lvl-1)/(S.lvl-1+29), vBr=v=>Math.max(1,Math.round(v*(1-vetQ())));
 // Mastery lowers the Brave cost: -1 at 25 successes, -2 at 100 (min 1)
-const crBr=c=>{const m=S.mast[CRIMES.indexOf(c)]||0;return Math.max(1,c.br-(m>=100?2:m>=25?1:0))};
-const crEn=c=>crw(c.br+1), crWl=c=>Math.floor(c.br/2), crHp=c=>crw(CR_VIO[CRIMES.indexOf(c)]), fBr=f=>1+Math.floor(f.l/3);
+const crBr=c=>{const m=S.mast[CRIMES.indexOf(c)]||0;return vBr(Math.max(1,c.br-(m>=100?2:m>=25?1:0)))};
+const crEn=c=>crw(c.br+1), crWl=c=>Math.floor(c.br/2), crHp=c=>crw(CR_VIO[CRIMES.indexOf(c)]), fBr=f=>vBr(1+Math.floor(f.l/3));
 // Each extra member needs ever more intelligence to manage
 const iqNeed=n=>n<=2?0:Math.round(2*Math.pow(n-2,1.6)), gangCap=()=>{let n=2;while(n<2+S.lvl*3&&S.iq>=iqNeed(n+1))n++;return n};
 const recruitCost=()=>Math.floor(400*Math.pow(S.g,1.5));
