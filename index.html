@@ -637,7 +637,7 @@ const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid d
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
 // Crew shares the load of crimes: diminishing relief on energy and health damage, capped at 50%
-const relief=()=>.5*(S.g-1)/(S.g-1+8), crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
+const gFree=()=>S.g-S.crew.filter(crewIn).length, relief=()=>{const n=gFree()-1;return .5*n/(n+8)}, crw=v=>v?Math.max(1,Math.round(v*(1-relief()))):0;
 // Experience (level) lowers Brave costs with diminishing returns: up to -40% (lvl 30 → -20%)
 const vetQ=()=>.4*(S.lvl-1)/(S.lvl-1+29), vBr=v=>Math.max(1,Math.round(v*(1-vetQ())));
 // Mastery lowers the Brave cost: -1 at 25 successes, -2 at 100 (min 1)
@@ -873,7 +873,7 @@ const VIEWS={
   S.foes.forEach((f,i)=>{h+=row(f.n,(f.t?f.t+' · ':'')+'Nivel '+f.l+' · ⚡2 · 💪'+fBr(f),b('fight',i,'Atacar',locked()||S.en<2||S.hp<=2||S.st<fBr(f)))});
   h+='<div class="btns">'+b('refoes',undefined,'Buscar otros rivales (⚡1 · 💪1)',locked()||S.st<1||S.en<1,'alt')+'</div>';
   return h},
- gang(){let h=back()+status()+lockAlert('No puedes reclutar')+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra y cargan con parte del trabajo: los crímenes te cuestan un '+Math.round(relief()*100)+'% menos de energía y de salud.</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+'. '+(gangCap()<2+S.lvl*3?'Necesitas inteligencia '+iqNeed(gangCap()+1)+' para dirigir a uno más.':'Sube de nivel para reclutar más.'):fmt(recruitCost())+' · máximo '+gangCap(),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
+ gang(){let h=back()+status()+lockAlert('No puedes reclutar')+'<h2>Tu banda</h2><p class="hint">Miembros: <b>'+S.g+'</b> contándote a ti. Ganan experiencia en cada guerra y cargan con parte del trabajo: los crímenes te cuestan un '+Math.round(relief()*100)+'% menos de energía y de salud.'+(gFree()<S.g?' Los que están en la cárcel no ayudan hasta que salgan.':'')+'</p>'+row('Reclutar un matón',S.g>=gangCap()?'Máximo '+gangCap()+'. '+(gangCap()<2+S.lvl*3?'Necesitas inteligencia '+iqNeed(gangCap()+1)+' para dirigir a uno más.':'Sube de nivel para reclutar más.'):fmt(recruitCost())+' · máximo '+gangCap(),b('recruit',undefined,'Reclutar',S.cash<recruitCost()||S.g>=gangCap()),S.g>=gangCap());
   if(S.crew.length)h+='<div class="card">'+S.crew.map(m=>'<div class="stat"><span>'+m.n+(crewIn(m)?' 🚔':'')+'</span><b>Nivel '+m.l+' <small style="opacity:.6">('+m.x+'/'+crewNeed(m)+')</small></b></div>').join('')+'</div>';
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros. Una guerra dura 4 h y solo puedes librar una a la vez. Al declararla apartas parte de tu dinero como fondo de guerra: si ganáis, lo recuperas junto a un gran botín, gemas, experiencia y 2 h de miedo en las calles; si perdéis, el fondo se pierde.</p>';
   RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',(S.war?b('war',i,S.war.i==i?'⏱️'+cd(S.war.end):'Guerra',true):b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2)))});return h},
