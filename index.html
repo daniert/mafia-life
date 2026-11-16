@@ -586,7 +586,7 @@ const FUNDS=[{n:'Bonos del puerto',min:60,lo:-.05,hi:.2},{n:'Acciones de la navi
 // Stake = chosen fraction of cash, rounded down to one significant digit; below ~30 min of income it isn't worth it
 const STAKES=[[.25,'¼'],[.5,'½'],[.75,'¾'],[1,'Todo']];let stk=1;
 const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));return Math.floor(v/p)*p};
-const stakeMin=()=>nice(Math.max(1000,income()*30)), depAmt=()=>stk==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[stk][0])), stakeAmt=()=>{const a=nice(Math.floor(S.cash*STAKES[stk][0]));return a>=stakeMin()?a:0}, noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
+const stakeMin=()=>nice(Math.max(1000,income()*30)), depAmt=()=>stk==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[stk][0])), stakeAmt=()=>{const a=depAmt();return a>=stakeMin()?a:0}, noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 const escEn=()=>Math.max(1,Math.min(Math.ceil(maxEn()*.4),Math.ceil(minsLeft(S.jail)*1.2))),escSt=()=>Math.max(1,Math.min(Math.ceil(maxSt()*.4),Math.ceil(minsLeft(S.jail)*.75)));
