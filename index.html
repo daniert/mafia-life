@@ -460,6 +460,8 @@ function migrate(d){const old=(d.v||1)<VER,o=def();
   if(!Object.hasOwn(d,'px'))o.pxNew=1;
   // The single shop split into several: carry over which novelties were already seen
   if(Array.isArray(o.seen))o.seen=o.seen.map(x=>typeof x==='string'&&x.startsWith('shop:')?{w:'armeria',a:'sastre',v:'motor'}[x[5]]+x.slice(4):x);
+  // Wars used to last 24 h: shorten ones still running to the 4 h duration
+  if(o.war&&o.war.end-Date.now()>WAR_CD)o.war.end=Math.max(Date.now(),o.war.end-(24*3600000-WAR_CD));
   return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
