@@ -781,7 +781,7 @@ const isNew=(s,k)=>!S.seen.includes(s+':'+k);
 const NEW='<span class="new" aria-label="Novedad">✓</span>', TAG='<span class="tag">Nuevo</span>';
 const newTag=(s,k)=>isNew(s,k)?TAG:'';
 // Badge for a tab: its own news (unless you're on it) or, for parents, any child's news
-const PARENT={crime:'crime',armeria:'shop',sastre:'shop',motor:'shop',botica:'shop',shop:'explore',travel:'explore',job:'explore',biz:'explore'};
+const PARENT={crime:'crime',armeria:'explore',sastre:'explore',motor:'explore',botica:'explore',travel:'explore',job:'explore',biz:'explore'};
 const under=(s,t)=>{for(;s;s=PARENT[s]===s?0:PARENT[s])if(s===t)return true;return false};
 const badge=t=>Object.keys(UNL).some(s=>s!==tab&&under(s,t)&&fresh(s).length);
 function markSeen(s){if(UNL[s])unl(s).forEach(x=>{if(!S.seen.includes(x[0]))S.seen.push(x[0])})}
@@ -811,7 +811,7 @@ function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].fi
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
 const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
- shopHead=(k,n,d)=>'<button class="back" data-tab="shop">← Tiendas</button>'+lockAlert('No puedes ir de compras')+'<h2>'+n+'</h2><p class="hint">'+d+'</p>',
+ shopHead=(k,n,d)=>back()+lockAlert('No puedes ir de compras')+'<h2>'+n+'</h2><p class="hint">'+d+'</p>',
  upRow=(k,L,st)=>{const i=k==='v'?vehBest():S[k],n=S[k+'u'];if(i<0)return'';const it=L[i];
   if(n>=UPM)return row('Mejorar '+it.n,'Mejora máxima ('+UPM+'/'+UPM+')',b('up',k,'Al máximo',true),true);
   const c=upCost(it,n,k);return row('Mejorar '+it.n,'+'+upStep(it)+' '+st+' · nivel '+n+'/'+UPM+' · '+fmt(c),b('up',k,'Mejorar',locked()||S.cash<c))};
@@ -855,7 +855,7 @@ const VIEWS={
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
    ['Dinero',[['bank','🏦','Banco',fmt(S.bank)],['biz','🏢','Negocios',fmt(income())+'/min'],['travel','✈️','Agencia de viajes',city().n]]],
-   ['Mercado',[['shop','🛒','Tiendas','Armería, sastrería, concesionario y botica'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+S.jw.length+S.veh.length,'objeto')]]],
+   ['Mercado',[['armeria','🗡️','Armería','Armas y mejoras'],['sastre','🧥','Sastrería','Ropa blindada'],['motor','🚗','Concesionario','Coches y motos'],['botica','💊','Botica','Remedios'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+S.jw.length+S.veh.length,'objeto')]]],
    ['Lado oscuro',[['gang','🔫','Tu banda',pl(S.g,'miembro')],['casino','🃏','Casino','Tragaperras, ruleta, cajas'],['temple','💍','Joyería',pl(S.cry,'gema')]]],
    ['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['events','📜','Eventos','Historial'],['game','💾','Partida','Guardar y cargar']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
@@ -888,8 +888,6 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   BIZ.map((w,i)=>[w,i]).sort((x,y)=>x[0].p-y[0].p).forEach(([w,i])=>{const lk=S.iq<w.iq;h+=row(w.n+' ×'+S.biz[i]+(lk?'':newTag('biz','b'+i)),lk?'Requiere inteligencia '+w.iq:'+'+fmt(w.v*bizMul())+'/min · ✊'+bizWl(i)+' · '+fmt(bizPrice(i)),b('biz',i,'Comprar',lk||S.cash<bizPrice(i)||S.wl<bizWl(i)),lk)});return h},
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2>';
   CITIES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':lk?'':newTag('travel','t'+i)),lk?'Requiere nivel '+c.l:'⚡5 · billete '+fmt(tCost(i))+(S.vis.includes(i)&&c.c?' (destino conocido)':''),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<tCost(i)||S.en<5),lk)});return h},
- shop(){const T=[['armeria','🗡️','Armería','Armas y mejoras'],['sastre','🧥','Sastrería','Ropa blindada'],['motor','🚗','Concesionario','Coches y motos'],['botica','💊','Botica','Remedios']];
-  return back()+lockAlert('No puedes ir de compras')+'<h2>Tiendas</h2><p class="hint">Date una vuelta por el barrio: cada tienda tiene su género y van llegando novedades.</p><div class="tiles">'+T.map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>'},
  armeria(){const W=WEAPONS,WL=W.filter(avail);let h=shopHead('armeria','Armería','El armero te mira de arriba abajo. «Lo que necesites, sin preguntas.»')+upRow('w',W,'fuerza');byV(W).forEach(([w,i])=>{const own=S.w>=0&&W[S.w].v>=w.v;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('armeria','w'+i)),'+'+w.v+' fuerza · '+fmt(shopP('w',i)),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('w',i)))});return h},
  sastre(){const A=ARMOR,AL=A.filter(avail);let h=shopHead('sastre','Sastrería','El sastre toma medidas sin levantar la vista. «Elegante por fuera, blindado por dentro.»')+upRow('a',A,'guardia');byV(A).forEach(([w,i])=>{const own=S.a>=0&&A[S.a].v>=w.v;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('sastre','a'+i)),'+'+w.v+' guardia · '+fmt(shopP('a',i)),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('a',i)))});return h},
  motor(){const VL=VEHICLES.filter(avail);let h=shopHead('motor','Concesionario','Huele a aceite y a dinero negro. «Papeles en regla… más o menos.»')+upRow('v',VEHICLES,'agilidad');byV(VEHICLES).forEach(([v,i])=>{const own=S.veh.includes(i),low=vehBest()>=0&&v.v<VEHICLES[vehBest()].v;if(!avail(v)||!own&&!shown(v,VL))return;if(!own&&!lvOk(v))return h+=row(v.n+excl(v),lvReq(v),b('veh',i,'Comprar',true),true);if(!own&&!hasLic())return h+=row(v.n+excl(v),'Requiere permiso de conducir (escuela) · '+fmt(shopP('v',i)),b('veh',i,'Comprar',true),true);h+=row(v.n+excl(v)+(own?'':newTag('motor','v'+i)),'+'+v.v+' agilidad · '+(own?'':fmt(shopP('v',i))),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<shopP('v',i)))});return h},
@@ -902,7 +900,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   if(S.veh.length)h+='<h2>Garaje</h2>'+S.veh.slice().sort((x,y)=>VEHICLES[x].v-VEHICLES[y].v).map(i=>row(VEHICLES[i].n+(i===vehBest()?' <span class="hint">· en uso</span>':''),'+'+VEHICLES[i].v+' agilidad'+(i===vehBest()?'':' · sin usar'),'')).join('');
   if(S.jw.length)h+='<h2>Joyas</h2>'+S.jw.map(i=>row(JEWELS[i].n,'«'+JEWELS[i].d+'»','')).join('');
   h+='<h2>Objetos</h2>';const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
-  if(!own.length)return h+'<p class="hint">No tienes objetos. Cómpralos en <button class="back" data-tab="shop">Tiendas</button>.</p>';
+  if(!own.length)return h+'<p class="hint">No tienes objetos. Cómpralos en la <button class="back" data-tab="botica">Botica</button>.</p>';
   return h+Object.keys(KN).map(k=>{const g=own.filter(([it])=>it.k===k);if(!g.length)return'';
    return '<h3>'+KN[k]+' <span class="hint">'+Math.floor(S[k])+'/'+Math.floor(MAX[k]())+'</span></h3>'+g.map(([it,i])=>row(it.n+' ×'+S.inv[i],it.d,b('use',i,full(k)?'Lleno':'Usar',inHosp()||full(k)))).join('')}).join('')},
  casino(){let h=back()+status()+'<h2>Casino</h2><p class="hint">Elige tu apuesta.</p>'+stake();
