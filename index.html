@@ -440,6 +440,8 @@ function migrate(d){const old=(d.v||1)<VER,o=def();
   // Driving licence arrived later: players who already own a vehicle get it for free
   if(o.veh.length&&!o.done.includes(LIC))o.done.push(LIC);
   if(!Object.hasOwn(d,'px'))o.pxNew=1;
+  // The single shop split into several: carry over which novelties were already seen
+  if(Array.isArray(o.seen))o.seen=o.seen.map(x=>typeof x==='string'&&x.startsWith('shop:')?{w:'armeria',a:'sastre',v:'motor'}[x[5]]+x.slice(4):x);
   return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
@@ -764,12 +766,14 @@ function evs(L){let g='';return L.map(e=>{const r=rel(e.t),h=r!==g?'<div class="
 // they're marked seen when the player leaves that section. Cooldowns and refills never count.
 const UNL={
  crime:()=>CRIMES.map((c,i)=>!crLk(c)?['c'+i,c.n]:0),
- shop:()=>[...WEAPONS.map((w,i)=>avail(w)&&lvOk(w)?['w'+i,w.n]:0),...ARMOR.map((w,i)=>avail(w)&&lvOk(w)?['a'+i,w.n]:0),...VEHICLES.map((v,i)=>avail(v)&&lvOk(v)?['v'+i,v.n]:0)],
+ armeria:()=>WEAPONS.map((w,i)=>avail(w)&&lvOk(w)?['w'+i,w.n]:0),
+ sastre:()=>ARMOR.map((w,i)=>avail(w)&&lvOk(w)?['a'+i,w.n]:0),
+ motor:()=>VEHICLES.map((v,i)=>avail(v)&&lvOk(v)?['v'+i,v.n]:0),
  travel:()=>CITIES.map((c,i)=>S.lvl>=c.l?['t'+i,c.n]:0),
  job:()=>JOBS.map((j,i)=>S.lab>=j.lab&&S.iq>=j.iq?['j'+i,j.n]:0),
  biz:()=>BIZ.map((w,i)=>S.iq>=w.iq?['b'+i,w.n]:0)};
 const tCost=i=>{const c=CITIES[i].c;return S.vis.includes(+i)?Math.ceil(c*.1):c};
-const SECN={crime:'Crímenes',shop:'Tiendas',travel:'Agencia de viajes',job:'Empleo',biz:'Negocios'};
+const SECN={crime:'Crímenes',armeria:'la Armería',sastre:'la Sastrería',motor:'el Concesionario',travel:'Agencia de viajes',job:'Empleo',biz:'Negocios'};
 const unl=s=>UNL[s]().filter(Boolean).map(x=>[s+':'+x[0],x[1]]);
 const allUnl=()=>Object.keys(UNL).flatMap(unl).map(x=>x[0]);
 const fresh=s=>UNL[s]?unl(s).filter(x=>!S.seen.includes(x[0])):[];
@@ -777,8 +781,9 @@ const isNew=(s,k)=>!S.seen.includes(s+':'+k);
 const NEW='<span class="new" aria-label="Novedad">✓</span>', TAG='<span class="tag">Nuevo</span>';
 const newTag=(s,k)=>isNew(s,k)?TAG:'';
 // Badge for a tab: its own news (unless you're on it) or, for parents, any child's news
-const PARENT={crime:'crime',shop:'explore',travel:'explore',job:'explore',biz:'explore'};
-const badge=t=>Object.keys(UNL).some(s=>s!==tab&&(s===t||PARENT[s]===t)&&fresh(s).length);
+const PARENT={crime:'crime',armeria:'shop',sastre:'shop',motor:'shop',botica:'shop',shop:'explore',travel:'explore',job:'explore',biz:'explore'};
+const under=(s,t)=>{for(;s;s=PARENT[s]===s?0:PARENT[s])if(s===t)return true;return false};
+const badge=t=>Object.keys(UNL).some(s=>s!==tab&&under(s,t)&&fresh(s).length);
 function markSeen(s){if(UNL[s])unl(s).forEach(x=>{if(!S.seen.includes(x[0]))S.seen.push(x[0])})}
 
 // Home suggestions: what you can do right now, one tap away
@@ -805,6 +810,11 @@ const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
+const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
+ shopHead=(k,n,d)=>'<button class="back" data-tab="shop">← Tiendas</button>'+lockAlert('No puedes ir de compras')+'<h2>'+n+'</h2><p class="hint">'+d+'</p>',
+ upRow=(k,L,st)=>{const i=k==='v'?vehBest():S[k],n=S[k+'u'];if(i<0)return'';const it=L[i];
+  if(n>=UPM)return row('Mejorar '+it.n,'Mejora máxima ('+UPM+'/'+UPM+')',b('up',k,'Al máximo',true),true);
+  const c=upCost(it,n,k);return row('Mejorar '+it.n,'+'+upStep(it)+' '+st+' · nivel '+n+'/'+UPM+' · '+fmt(c),b('up',k,'Mejorar',locked()||S.cash<c))};
 const VIEWS={
  home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>';
@@ -845,7 +855,7 @@ const VIEWS={
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
    ['Dinero',[['bank','🏦','Banco',fmt(S.bank)],['biz','🏢','Negocios',fmt(income())+'/min'],['travel','✈️','Agencia de viajes',city().n]]],
-   ['Mercado',[['shop','🛒','Tiendas','Armas, vehículos y objetos'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+S.jw.length+S.veh.length,'objeto')]]],
+   ['Mercado',[['shop','🛒','Tiendas','Armería, sastrería, concesionario y botica'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+S.jw.length+S.veh.length,'objeto')]]],
    ['Lado oscuro',[['gang','🔫','Tu banda',pl(S.g,'miembro')],['casino','🃏','Casino','Tragaperras, ruleta, cajas'],['temple','💍','Joyería',pl(S.cry,'gema')]]],
    ['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['events','📜','Eventos','Historial'],['game','💾','Partida','Guardar y cargar']]]];
   return status()+'<h2>Explorar</h2>'+G.map(g=>'<h3 style="margin-top:14px">'+g[0]+'</h3><div class="tiles">'+g[1].map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>').join('')},
@@ -878,14 +888,12 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   BIZ.map((w,i)=>[w,i]).sort((x,y)=>x[0].p-y[0].p).forEach(([w,i])=>{const lk=S.iq<w.iq;h+=row(w.n+' ×'+S.biz[i]+(lk?'':newTag('biz','b'+i)),lk?'Requiere inteligencia '+w.iq:'+'+fmt(w.v*bizMul())+'/min · ✊'+bizWl(i)+' · '+fmt(bizPrice(i)),b('biz',i,'Comprar',lk||S.cash<bizPrice(i)||S.wl<bizWl(i)),lk)});return h},
  travel(){let h=back()+status()+'<h2>Agencia de viajes</h2>';
   CITIES.map((c,i)=>[c,i]).sort((x,y)=>x[0].l-y[0].l).forEach(([c,i])=>{const here=i===S.city,lk=S.lvl<c.l;h+=row(c.n+(here?' (aquí)':lk?'':newTag('travel','t'+i)),lk?'Requiere nivel '+c.l:'⚡5 · billete '+fmt(tCost(i))+(S.vis.includes(i)&&c.c?' (destino conocido)':''),b('travel',i,here?'Aquí':'Viajar',here||lk||locked()||S.cash<tCost(i)||S.en<5),lk)});return h},
- shop(){const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),upRow=(k,L,st)=>{const i=k==='v'?vehBest():S[k],n=S[k+'u'];if(i<0)return'';const it=L[i];
-   if(n>=UPM)return row('Mejorar '+it.n,'Mejora máxima ('+UPM+'/'+UPM+')',b('up',k,'Al máximo',true),true);
-   const c=upCost(it,n,k);return row('Mejorar '+it.n,'+'+upStep(it)+' '+st+' · nivel '+n+'/'+UPM+' · '+fmt(c),b('up',k,'Mejorar',locked()||S.cash<c))};
-  let h=back()+lockAlert('No puedes ir de compras')+'<h2>Armas</h2>';
-  const WL=WEAPONS.filter(avail);h+=upRow('w',WEAPONS,'fuerza');byV(WEAPONS).forEach(([w,i])=>{const own=S.w>=0&&WEAPONS[S.w].v>=w.v;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','w'+i)),'+'+w.v+' fuerza · '+fmt(shopP('w',i)),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('w',i)))});
-  h+='<h2>Protección</h2>';const AL=ARMOR.filter(avail);h+=upRow('a',ARMOR,'guardia');byV(ARMOR).forEach(([w,i])=>{const own=S.a>=0&&ARMOR[S.a].v>=w.v;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('shop','a'+i)),'+'+w.v+' guardia · '+fmt(shopP('a',i)),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('a',i)))});
-  h+='<h2>Vehículos</h2>'+upRow('v',VEHICLES,'agilidad');const VL=VEHICLES.filter(avail);byV(VEHICLES).forEach(([v,i])=>{const own=S.veh.includes(i),low=vehBest()>=0&&v.v<VEHICLES[vehBest()].v;if(!avail(v)||!own&&!shown(v,VL))return;if(!own&&!lvOk(v))return h+=row(v.n+excl(v),lvReq(v),b('veh',i,'Comprar',true),true);if(!own&&!hasLic())return h+=row(v.n+excl(v),'Requiere permiso de conducir (escuela) · '+fmt(shopP('v',i)),b('veh',i,'Comprar',true),true);h+=row(v.n+excl(v)+(own?'':newTag('shop','v'+i)),'+'+v.v+' agilidad · '+(own?'':fmt(shopP('v',i))),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<shopP('v',i)))});
-  h+='<h2>Objetos</h2>';ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
+ shop(){const T=[['armeria','🗡️','Armería','Armas y mejoras'],['sastre','🧥','Sastrería','Ropa blindada'],['motor','🚗','Concesionario','Coches y motos'],['botica','💊','Botica','Remedios']];
+  return back()+lockAlert('No puedes ir de compras')+'<h2>Tiendas</h2><p class="hint">Date una vuelta por el barrio: cada tienda tiene su género y van llegando novedades.</p><div class="tiles">'+T.map(t=>'<button class="tile" data-tab="'+t[0]+'">'+(badge(t[0])?NEW:'')+'<span class="i">'+t[1]+'</span><span><b>'+t[2]+'</b><small>'+t[3]+'</small></span></button>').join('')+'</div>'},
+ armeria(){const W=WEAPONS,WL=W.filter(avail);let h=shopHead('armeria','Armería','El armero te mira de arriba abajo. «Lo que necesites, sin preguntas.»')+upRow('w',W,'fuerza');byV(W).forEach(([w,i])=>{const own=S.w>=0&&W[S.w].v>=w.v;if(!avail(w)||!own&&!shown(w,WL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','w|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('armeria','w'+i)),'+'+w.v+' fuerza · '+fmt(shopP('w',i)),b('buy','w|'+i,S.w===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('w',i)))});return h},
+ sastre(){const A=ARMOR,AL=A.filter(avail);let h=shopHead('sastre','Sastrería','El sastre toma medidas sin levantar la vista. «Elegante por fuera, blindado por dentro.»')+upRow('a',A,'guardia');byV(A).forEach(([w,i])=>{const own=S.a>=0&&A[S.a].v>=w.v;if(!avail(w)||!own&&!shown(w,AL))return;if(!own&&!lvOk(w))return h+=row(w.n+excl(w),lvReq(w),b('buy','a|'+i,'Comprar',true),true);h+=row(w.n+excl(w)+(own?'':newTag('sastre','a'+i)),'+'+w.v+' guardia · '+fmt(shopP('a',i)),b('buy','a|'+i,S.a===i?'Tienes':own?'Superado':'Comprar',own||S.cash<shopP('a',i)))});return h},
+ motor(){const VL=VEHICLES.filter(avail);let h=shopHead('motor','Concesionario','Huele a aceite y a dinero negro. «Papeles en regla… más o menos.»')+upRow('v',VEHICLES,'agilidad');byV(VEHICLES).forEach(([v,i])=>{const own=S.veh.includes(i),low=vehBest()>=0&&v.v<VEHICLES[vehBest()].v;if(!avail(v)||!own&&!shown(v,VL))return;if(!own&&!lvOk(v))return h+=row(v.n+excl(v),lvReq(v),b('veh',i,'Comprar',true),true);if(!own&&!hasLic())return h+=row(v.n+excl(v),'Requiere permiso de conducir (escuela) · '+fmt(shopP('v',i)),b('veh',i,'Comprar',true),true);h+=row(v.n+excl(v)+(own?'':newTag('motor','v'+i)),'+'+v.v+' agilidad · '+(own?'':fmt(shopP('v',i))),b('veh',i,own?'Tienes':low?'Superado':'Comprar',own||low||S.cash<shopP('v',i)))});return h},
+ botica(){let h=shopHead('botica','Botica','Frascos sin etiqueta en la trastienda. «Para el cuerpo y para los nervios.»');ITEMS.forEach((it,i)=>{if(!avail(it))return;h+=row(it.n+excl(it),it.d+' · '+fmt(itemPrice(i)),b('item',i,'Comprar',S.cash<itemPrice(i)))});return h},
  inv(){const KN={hp:'Salud',en:'Energía',st:'Valor',wl:'Voluntad'},full=k=>S[k]>=MAX[k]();
   let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2><div class="card"><h3>Equipado</h3>'+
    '<div class="stat"><span>Arma</span><b>'+(S.w>=0?WEAPONS[S.w].n+(S.wu?' +'+S.wu:'')+' · +'+eqV(WEAPONS,S.w,S.wu)+' fuerza':'Ninguna')+'</b></div>'+
@@ -1082,7 +1090,7 @@ setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 // Saves from before locked prices keep what the shop showed at update time (old formula); new prices from then on
-if(S.pxNew){legacyP=true;try{VIEWS.shop()}finally{legacyP=false}delete S.pxNew}
+if(S.pxNew){legacyP=true;try{VIEWS.armeria();VIEWS.sastre();VIEWS.motor()}finally{legacyP=false}delete S.pxNew}
 view();save();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
