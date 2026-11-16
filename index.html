@@ -439,6 +439,7 @@ function migrate(d){const old=(d.v||1)<VER,o=def();
   if(!o.vis.includes(o.city))o.vis.push(o.city);
   // Driving licence arrived later: players who already own a vehicle get it for free
   if(o.veh.length&&!o.done.includes(LIC))o.done.push(LIC);
+  if(!Object.hasOwn(d,'px'))o.pxNew=1;
   return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
@@ -581,11 +582,12 @@ const pay=()=>S.job>=0&&!inHosp()?jobPay(S.job):0;
 const bizMul=()=>1+S.iq*.002;
 const income=()=>(S.biz.reduce((t,n,i)=>t+n*BIZ[i].v,0)*bizMul()+pay())*(jw(0)?1.05:1);
 const bizPrice=i=>Math.floor(BIZ[i].p*Math.pow(1.15,S.biz[i]));
-const itemPrice=i=>lockP('i'+i,ITEMS[i].p*(1+S.lvl*.1));
-// Shop prices are fixed the first time they show up, scaled by total wealth (cash, bank, deposits, funds) plus an hour of income; rounded to 2 significant digits
+const itemPrice=i=>Math.floor(ITEMS[i].p*(1+S.lvl*.1));
+// Gear and upgrade prices are fixed the first time they show up, scaled by total wealth (cash, bank, deposits, funds) plus an hour of income; rounded to 2 significant digits. Consumable items keep a variable price.
 const wealth=()=>Math.max(0,S.cash)+S.bank+(S.term?S.term.a:0)+(S.fund?S.fund.a:0)+income()*60;
 const round2=v=>{if(v<10)return Math.max(1,Math.round(v));const p=Math.pow(10,Math.floor(Math.log10(v))-1);return Math.round(v/p)*p};
-const lockP=(k,base)=>{if(!(k in S.px))S.px[k]=round2(base*(1+.5*Math.log10(1+wealth()/base)));return S.px[k]};
+let legacyP=false;
+const lockP=(k,base)=>{if(!(k in S.px))S.px[k]=legacyP?Math.floor(base):round2(base*(1+.5*Math.log10(1+wealth()/base)));return S.px[k]};
 const shopP=(k,i)=>lockP(k+i,(k==='w'?WEAPONS:k==='a'?ARMOR:VEHICLES)[i].p);
 const crLk=c=>S.lvl<c.l||S.iq<(c.iq||0)||(c.bz!==undefined&&!S.biz[c.bz])||(c.car&&!hasLic());
 const crReq=c=>'Requiere '+[S.lvl<c.l&&'nivel '+c.l,S.iq<(c.iq||0)&&'inteligencia '+c.iq,c.bz!==undefined&&!S.biz[c.bz]&&'tener '+BIZ[c.bz].n.toLowerCase(),c.car&&!hasLic()&&'permiso de conducir'].filter(Boolean).join(', ');
@@ -1079,6 +1081,8 @@ setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   if(s!==sig&&!FX.busy()){sig=s;view()}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+// Saves from before locked prices keep what the shop showed at update time (old formula); new prices from then on
+if(S.pxNew){legacyP=true;try{VIEWS.shop()}finally{legacyP=false}delete S.pxNew}
 view();save();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
