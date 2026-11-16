@@ -929,6 +929,8 @@ document.addEventListener('click',e=>{
 const FX=(()=>{
   const RM=matchMedia('(prefers-reduced-motion:reduce)'),run=()=>!RM.matches;
   const UNIT='.row, button.act, .reels';
+  // An alert is the same alert while only its countdown changes
+  const alK=x=>x.textContent.replace(/\d+/g,'#');
   const keyOf=u=>{if(u.classList.contains('reels'))return'reels';const b=u.matches('button')?u:u.querySelector('button[data-a]'),t=(u.querySelector('.t, b')||u).textContent.trim();
     return(b?b.dataset.a+'|'+(b.dataset.i??'')+'|':'')+t};
   const units=()=>{const m=new Map();document.querySelectorAll('#view '+UNIT.split(', ').join(', #view ')).forEach(u=>m.set(keyOf(u),u));return m};
@@ -993,7 +995,7 @@ const FX=(()=>{
     const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));
     const cu=b.closest(UNIT);
     pre={a:b.dataset.a,tab,lock:locked(),units:m,ck:cu?keyOf(cu):null,v:{cash:S.cash,bank:S.bank,cry:S.cry,lvl:S.lvl},xp:S.xp/need(),
-      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(x=>x.textContent)),reels,nums:cu?[...cu.querySelectorAll('b,.cur,.stat b')].map(x=>x.textContent):[]};until=performance.now()+1400},true);
+      al:new Set([...document.querySelectorAll('#view .alert, #where .pill')].map(alK)),reels,nums:cu?[...cu.querySelectorAll('b,.cur,.stat b')].map(x=>x.textContent):[]};until=performance.now()+1400},true);
   document.addEventListener('click',()=>{if(!pre)return;const p=pre;pre=null;const h=hold;hold=0;if(['bet','exp','imp'].includes(p.a))return;
     const ok=last?last.k!=='bad':true;
     const doCount=()=>{for(const id in NUM)count(id,Math.floor(p.v[id]),Math.floor(NUM[id][0]()))};if(h&&run()){for(const id in NUM){const v=Math.floor(p.v[id]);cnt[id]={from:v,to:v,t0:performance.now(),dur:h+100}}head();hT.push(setTimeout(doCount,h))}else doCount();
@@ -1012,7 +1014,7 @@ const FX=(()=>{
     const cu=ck&&now.get(ck);if(cu&&run()){const N=[...cu.querySelectorAll('b,.cur,.stat b')];if(N.length===p.nums.length)N.forEach((e,k)=>{if(e.textContent!==p.nums[k])tween(e,p.nums[k],e.textContent)})}
     if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu&&p.a!=='slot')react(cu,ok);
     if(p.a==='slot'){const r=$('#view .reels');if(r)spin(r,reels,last&&last.k!=='bad')}
-    document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(x.textContent))drop(x)});
+    document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(alK(x)))drop(x)});
     const xb=$('#view .xpbar i');if(xb&&run()){const to=S.xp/need()*100,fr=p.xp*100;if(S.lvl>p.v.lvl)xb.animate([{width:fr+'%'},{width:'100%',offset:.5},{width:'0%',offset:.51},{width:to+'%'}],{duration:1100});else if(Math.abs(to-fr)>.1)xb.animate([{width:fr+'%'},{width:to+'%'}],{duration:600,easing:'ease-out'})}
     if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>(e.id==='lvl'&&(e.style.transformOrigin='left center'),e).animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
   return {count,react,spin,busy:()=>performance.now()<until}})();
