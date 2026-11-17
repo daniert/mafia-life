@@ -802,7 +802,7 @@ function stake(){const V=[100,1000,10000,100000];if(S.cash<bet)bet=V.filter(v=>v
 function rel(t){const s=(now()-t)/1000;return s<60?'ahora':s<3600?'hace '+Math.floor(s/60)+' min':s<86400?'hace '+Math.floor(s/3600)+' h':'hace '+Math.floor(s/86400)+' d'}
 const EVI={ok:'✓',bad:'✕',info:'!'};
 function evs(L){let g='';return L.map(e=>{const r=rel(e.t),h=r!==g?'<div class="evh">'+(g=r)+'</div>':'';
-  let m=e.m.replace(/</g,'&lt;').replace(/(\$\d[\d.,]*\d|\$\d|[+-]?\d+ (?:XP|de \w+|puntos? de habilidad|gemas?|min))/g,'<em>$1</em>');
+  let m=e.m.replace(/</g,'&lt;').replace(/(\$\d[\d.,]*\d|\$\d|[+-]?\d+ (?:XP|de \p{L}+|puntos? de habilidad|gemas?|min))/gu,'<em>$1</em>');
   m=m.replace(/^([^:.!]{3,40}):\s*/,'<b>$1</b> · ');
   return h+'<div class="ev '+e.k+'"><i>'+(EVI[e.k]||'•')+'</i><p>'+m+'</p></div>'}).join('')}
 
