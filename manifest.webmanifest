@@ -1,16 +1,86 @@
 {
+  "id": "./",
   "name": "Mafia Life",
   "short_name": "Mafia Life",
+  "description": "Juego de rol mafioso por turnos: crímenes, peleas, bandas y negocios. Funciona sin conexión.",
+  "categories": [
+    "games"
+  ],
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#2b0d11",
   "theme_color": "#2b0d11",
   "lang": "es",
   "icons": [
-    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Crímenes",
+      "url": "./index.html#crime",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Gimnasio",
+      "url": "./index.html#gym",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Pelea",
+      "url": "./index.html#fight",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "docs/screenshots/home.jpg",
+      "sizes": "375x812",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "docs/screenshots/crimes.jpg",
+      "sizes": "375x812",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "docs/screenshots/desktop.jpg",
+      "sizes": "1280x800",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
   ]
 }

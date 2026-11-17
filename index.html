@@ -476,6 +476,8 @@ function migrate(d){const old=(d.v||1)<VER,o=def();
   if(o.veh.length>1){const b=o.veh.reduce((m,i)=>VEHICLES[i]&&(m<0||VEHICLES[i].v>VEHICLES[m].v)?i:m,-1);o.veh=b<0?[]:[b]} // only the vehicle you drive is kept, like weapons and armor
   return o}
 // Current section lives in the URL hash so a reload keeps you where you were
+let instEv=null;const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+let badgeN=-1;
 let S=load(), tab=decodeURIComponent(location.hash.slice(1))||'home', bet=100, reels='🎰 🎰 🎰';
 // If a save can't be loaded, keep a copy instead of letting the next save() overwrite it
 function load(){const r=localStorage.getItem(KEY);if(!r)return def();try{return migrate(JSON.parse(r))}catch(e){console.error(e);try{localStorage.setItem(KEY+'_bak_'+Date.now(),r)}catch(_){}return def()}}
@@ -665,7 +667,7 @@ const outCash=ts=>minsLeft(ts)*(80+S.lvl*30);
 const boxCost=()=>500+S.lvl*50, today=()=>new Date().toDateString(), boxesLeft=()=>5-(S.lb.d===today()?S.lb.n:0);
 
 let msgT;
-function msg(t,k,log){const m=$('#msg');m.textContent=t;m.className=(k||'info')+' show';clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),Math.max(3500,t.length*60));
+function msg(t,k,log){if(k==='bad'&&navigator.vibrate)try{navigator.vibrate(80)}catch(_){}const m=$('#msg');m.textContent=t;m.className=(k||'info')+' show';clearTimeout(msgT);msgT=setTimeout(()=>m.classList.remove('show'),Math.max(3500,t.length*60));
   if(log!==0){S.log.unshift({t:now(),k:k||'info',m:t});S.log.length=Math.min(S.log.length,40)}}
 // Rule: any raise of a bar's max also adds the same amount to the current value. Always use raiseMax.
 function raiseMax(k,n=1){S[k+'B']+=n;S[k]+=n}
@@ -750,6 +752,7 @@ const ACT={
  wd(){S.cash+=S.bank;S.bank=0;msg('Retiras todo tu dinero del banco.','info',0)},
  exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mafialife-nivel'+S.lvl+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);msg('Partida exportada.','info',0)},
  imp(){$('#impf').click()},
+ install(){const e=instEv;instEv=null;e.prompt();e.userChoice.then(c=>{if(c.outcome==='accepted')msg('App instalada.','ok',0);view()})},
  reset(){if(confirm('¿Borrar la partida y empezar de cero?')){S=def();genFoes();tab='home';msg('Nueva partida. Bienvenido a la familia.','info',0)}}
 };
 
@@ -788,7 +791,7 @@ function row(t,d,btn,lock){const x=desc(d);
   return '<div class="row'+(lock?' locked':'')+'"><div><div class="t">'+t+'</div>'+(x.txt||lock&&x.chips?'<div class="d">'+x.txt+(lock?x.chips:'')+'</div>':'')+'</div>'+
     (lock?'':'<div class="acts"><div class="btnw">'+btn+'</div>'+x.chips+'</div>')+'</div>'}
 // Actions that need you out on the street: blocked while in jail or hospital
-const AWAKE=new Set(['wake','bet','exp','imp','reset']);
+const AWAKE=new Set(['wake','bet','exp','imp','reset','install']);
 const STREET=new Set(['buy','up','veh','item','biz','temple','sellgem','recruit','heal','dep','wd','term','fund','repay','loan','use']);
 const where=()=>inJail()?'la cárcel':'el hospital';
 const lockAlert=t=>locked()?'<div class="alert">'+(inJail()?'🚔':'🏥')+' <span>'+t+' mientras estás en '+where()+'. Espera a salir.</span></div>':'';
@@ -899,6 +902,7 @@ const VIEWS={
   h+='<h2>Guerras de bandas</h2><p class="hint">Si perdéis, la banda pierde miembros. Una guerra dura 4 h y solo puedes librar una a la vez. Al declararla apartas parte de tu dinero como fondo de guerra: si ganáis, lo recuperas junto a un gran botín, gemas, experiencia y 2 h de miedo en las calles; si perdéis, el fondo se pierde.</p>';
   RIVALS.forEach((r,i)=>{h+=row(rivalName(i),r.s+' miembros de nivel '+r.l+' · ⚡3 · 💪3',(S.war?b('war',i,S.war.i==i?'⏱️'+cd(S.war.end):'Guerra',true):b('war',i,'Guerra',locked()||S.st<3||S.en<3||S.hp<=2)))});return h},
  game(){let h=back()+'<h2>Partida</h2><p class="hint">Se guarda sola en este navegador. Exporta una copia para pasarla a otro dispositivo.</p>';
+if(instEv)h+='<div class="btns">'+b('install',undefined,'Instalar la app')+'</div>';else if(!standalone()&&/iP(hone|ad|od)/.test(navigator.userAgent))h+='<p class="hint">Para instalarla: Compartir → «Añadir a pantalla de inicio». Así la partida no se borra si pasas días sin jugar.</p>';
 h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,'Importar partida',false,'alt')+b('reset',undefined,'Borrar partida',false,'alt')+'</div>';return h},
  explore(){const G=[['Tú',[['me','📈','Habilidades',S.sp?pl(S.sp,'punto')+' sin gastar':'Mejora tus límites'],['inv','🎒','Inventario',pl(Object.values(S.inv).reduce((t,n)=>t+n,0)+(S.w>=0)+(S.a>=0)+(vehBest()>=0)+S.jw.length,'objeto')]]],
    ['Ciudad',[['job','💼','Empleo',S.job>=0?JOBS[S.job].n:'Sin empleo'],['school','🎓','Escuela',S.edu?'En curso':'Sube tu inteligencia'],['hosp','🏥','Hospital',inHosp()?'Ingresado':'Curarte'],['jail','🚔','Cárcel',inJail()?'Encerrado':'Estás libre']]],
@@ -1163,13 +1167,26 @@ const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,!!S.war,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
-  if(s!==sig&&!FX.busy()){sig=s;FX.soft(view)}},1000);
+  if(s!==sig&&!FX.busy()){sig=s;FX.soft(view)}
+  appBadge()},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 // Saves from before locked prices keep what the shop showed at update time (old formula); new prices from then on
 if(S.pxNew){legacyP=true;try{VIEWS.armeria();VIEWS.sastre();VIEWS.motor()}finally{legacyP=false}delete S.pxNew}
 view();save();
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+// PWA: persistent storage, multi-tab sync, icon badge, install prompt and update notice. All client-side.
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(tab==='game')view()});
+addEventListener('appinstalled',()=>{instEv=null;if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})});
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{});
+// Another tab saved: adopt its state so this tab doesn't overwrite it with an older one
+addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{S=migrate(JSON.parse(e.newValue));view()}catch(_){}}});
+// Icon badge: things waiting for you (full energy, unseen unlocks)
+function appBadge(){if(!navigator.setAppBadge)return;const n=(S.en>=maxEn())+(NAV.some(t=>badge(t[0]))?1:0);
+  if(n!==badgeN){badgeN=n;(n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{})}}
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").then(reg=>{
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{})})}).catch(()=>{}));
+  // New version took over: reload right away if the app is in the background, otherwise tell the player
+  let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!had){had=true;return}save();if(document.hidden)location.reload();else msg('Hay una versión nueva del juego. Recarga para actualizar.','info',0)})}
 </script>
 </body>
 </html>
