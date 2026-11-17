@@ -1056,7 +1056,8 @@ const FX=(()=>{
     const x=P(a),y=P(b);if(!x||!y||x.pre!==y.pre||x.post!==y.post||isNaN(x.v)||isNaN(y.v))return;const t0=performance.now(),D=600,up=y.v>x.v;
     e.animate([{color:up?'var(--ok)':'var(--bad)'},{}],{duration:900});
     const st=()=>{const k=Math.min(1,(performance.now()-t0)/D),v=x.v+(y.v-x.v)*(1-Math.pow(1-k,3));e.textContent=x.pre+(y.dec?v.toFixed(y.dec).replace('.',','):String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'))+x.post;if(k<1&&e.isConnected)requestAnimationFrame(st);else e.textContent=b};st()}
-  function enter(u,i,late){if(run())u.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:380,delay:(late?750:120)+i*60,easing:'ease-out',fill:'backwards'})}
+  function enter(u,i,late){if(!run())return;if(late)u.animate([{opacity:0},{opacity:1}],{duration:400,delay:600,easing:'ease-out',fill:'backwards'});else u.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:380,delay:120+i*60,easing:'ease-out',fill:'backwards'})}
+  // late = the row that takes the stamped row's place: it fades in right under the ghost, without sliding, so both stay aligned
   function glide(u,dy){if(run()&&Math.abs(dy)>1)u.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:380,easing:'cubic-bezier(.2,.8,.3,1)'})}
   function drop(e){if(run())e.animate([{transform:'translateY(-14px) scale(.96)',opacity:0},{transform:'translateY(2px)',opacity:1,offset:.7},{transform:'none'}],{duration:420,easing:'ease-out'})}
   function spin(el,final,ok){if(!run())return;const R=['🍒','🍋','🔔','💎','7️⃣'],f=final.split(' ');el.innerHTML=f.map(()=>'<span class="reel"></span>').join(' ');
