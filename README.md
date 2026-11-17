@@ -32,7 +32,7 @@ Es un homenaje a los juegos de mafia para Android de 2010-2012: energía que se 
 Lo demás, lo descubres jugando.
 
 <p align="center">
-  <img src="docs/screenshots/desktop.jpg" width="700" alt="Versión de escritorio">
+  <img src="docs/screenshots/desktop.jpg" width="800" alt="Versión de escritorio">
 </p>
 
 ## 📱 Instalar
