@@ -952,7 +952,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   return h},
  casino(){let h=back()+status()+'<h2>Casino</h2><p class="hint">Elige tu apuesta.</p>'+stake();
   h+='<h2>Tragaperras</h2><div class="reels" aria-hidden="true">'+reels+'</div><p class="hint">Tres iguales: de ×5 (🍒) a ×25 (7️⃣). Dos iguales: recuperas la apuesta.</p><div class="btns">'+b('slot',undefined,'Tirar',locked()||S.cash<bet)+'</div>';
-  h+='<h2>Ruleta</h2><p class="hint">Rojo o negro pagan ×2. El 0 verde paga ×36.</p><div class="btns">'+b('roul','r','Rojo',locked()||S.cash<bet)+b('roul','n','Negro',locked()||S.cash<bet,'alt')+b('roul','z','0 verde',locked()||S.cash<bet,'alt')+'</div>';
+  h+='<h2>Ruleta</h2><p class="hint">Rojo o negro pagan ×2. El 0 verde paga ×36.</p><div class="btns">'+b('roul','r','Rojo',locked()||S.cash<bet,'alt')+b('roul','n','Negro',locked()||S.cash<bet,'alt')+b('roul','z','0 verde',locked()||S.cash<bet,'alt')+'</div>';
   return h+'<h2>Cajas de la suerte</h2>'+row('Abrir una caja',fmt(boxCost())+' · quedan '+boxesLeft()+' hoy · dinero, gemas, objetos o XP',b('box',undefined,'Abrir',locked()||S.cash<boxCost()||boxesLeft()<1))},
  temple(){let h=back()+lockAlert('No puedes ir a la joyería ni al perista')+'<h2>Joyería</h2><p class="hint">Tienes <b>'+pl(S.cry,'gema')+'</b>. Hay quien jura que ciertas joyas traen suerte.</p>';
   JEWELS.forEach((j,i)=>{const own=jw(i);h+=row(j.n,'«'+j.d+'» · '+pl(j.c,'gema'),b('temple',i,own?'Tienes':'Comprar',own||S.cry<j.c))});
