@@ -728,7 +728,7 @@ const ACT={
  bet(v){bet=+v},
  slot(){if(locked()||S.cash<bet)return;const R=['🍒','🍋','🔔','💎','7️⃣'],X=[5,8,10,15,25],spin=()=>[0,0,0].map(()=>rnd(0,4)),lose=x=>x[0]!==x[1]&&x[1]!==x[2]&&x[0]!==x[2];let r=spin();if(lose(r)&&Math.random()<mLuck())r=spin();reels=r.map(x=>R[x]).join(' ');
   let w=0;if(r[0]===r[1]&&r[1]===r[2])w=bet*X[r[0]];else if(r[0]===r[1]||r[1]===r[2]||r[0]===r[2])w=bet;
-  S.cash+=w-bet;msg(reels+' — '+(w>bet?'¡Premio! Ganas '+fmt(w-bet)+'.':w?'Recuperas tu apuesta.':'Pierdes '+fmt(bet)+'.'),w>bet?'ok':w?'info':'bad',w>bet*4?1:0)},
+  S.cash+=w-bet;msg(reels+' — '+(w>bet?'¡Premio! Ganas '+fmt(w-bet)+'.':w?'Recuperas tu apuesta de '+fmt(bet)+'.':'Pierdes '+fmt(bet)+'.'),w>bet?'ok':w?'info':'bad',w>bet*4?1:0)},
  roul(c){if(locked()||S.cash<bet)return;const want={r:'rojo',n:'negro',z:'verde'}[c],colOf=n=>n===0?'verde':REDS.includes(n)?'rojo':'negro';let n=rnd(0,36);if(colOf(n)!==want&&Math.random()<mLuck())n=rnd(0,36);const col=colOf(n);
   const w=col===want?bet*(c==='z'?36:2):0;S.cash+=w-bet;msg('La bola cae en el '+n+' '+col+'. '+(w?'Ganas '+fmt(w-bet)+'.':'Pierdes '+fmt(bet)+'.'),w?'ok':'bad',c==='z'&&w?1:0)},
  box(){const c=boxCost();if(locked()||S.cash<c||boxesLeft()<1)return;S.cash-=c;if(S.lb.d!==today())S.lb={d:today(),n:0};S.lb.n++;let r=Math.random();if(r>=.85&&Math.random()<mLuck())r=Math.random();
