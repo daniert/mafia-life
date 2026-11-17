@@ -362,11 +362,11 @@ const WEAPONS=[{n:'Navaja',p:300,l:1,v:3},{n:'Pistola',p:1500,l:3,v:8,at:[0]},{n
  {n:'Fusil de asalto de contrabando',p:420000,l:25,v:160,at:[7]},{n:'Lupara de plata',p:650000,l:27,v:190,at:[4]},
  {n:'Fusil de precisión grabado',p:1000000,l:30,v:230,at:[8]}];
 // Vehicles: only the best owned one (highest v, the one you drive) adds its agility bonus. Append only.
-const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:2,at:[0,1]},{n:'Sedán robado',p:5000,l:4,v:5,at:[1,5]},{n:'Moto de gran cilindrada',p:15000,l:7,v:10,at:[2,0]},
- {n:'Furgoneta blindada',p:40000,l:10,v:16,at:[1,3]},{n:'Deportivo italiano',p:120000,l:15,v:28,at:[4,8]},{n:'Lancha rápida',p:400000,l:20,v:45,at:[3,6]},
- {n:'Coupé deportivo',p:9000,l:5,v:7,at:[2,0]},{n:'Descapotable',p:26000,l:9,v:13,at:[5,2]},{n:'Limusina blindada',p:70000,l:12,v:22,at:[0,4]},
- {n:'Coche de rally',p:250000,l:18,v:36,at:[6,4]},{n:'Superdeportivo',p:700000,l:23,v:55,at:[7,2]},{n:'Yate de lujo',p:1200000,l:27,v:70,at:[8,7]},
- {n:'Helicóptero privado',p:2000000,l:30,v:90,at:[8,6]}];
+const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:4,at:[0,1]},{n:'Sedán robado',p:5000,l:4,v:10,at:[1,5]},{n:'Moto de gran cilindrada',p:15000,l:7,v:20,at:[2,0]},
+ {n:'Furgoneta blindada',p:40000,l:10,v:32,at:[1,3]},{n:'Deportivo italiano',p:120000,l:15,v:56,at:[4,8]},{n:'Lancha rápida',p:400000,l:20,v:90,at:[3,6]},
+ {n:'Coupé deportivo',p:9000,l:5,v:14,at:[2,0]},{n:'Descapotable',p:26000,l:9,v:26,at:[5,2]},{n:'Limusina blindada',p:70000,l:12,v:44,at:[0,4]},
+ {n:'Coche de rally',p:250000,l:18,v:72,at:[6,4]},{n:'Superdeportivo',p:700000,l:23,v:110,at:[7,2]},{n:'Yate de lujo',p:1200000,l:27,v:140,at:[8,7]},
+ {n:'Helicóptero privado',p:2000000,l:30,v:180,at:[8,6]}];
 const ARMOR=[{n:'Chaleco de cuero',p:800,l:1,v:3},{n:'Abrigo reforzado',p:4000,l:4,v:10,at:[1]},{n:'Blindaje ligero',p:20000,l:8,v:30,at:[2]},
  {n:'Guayabera blindada',p:50000,l:12,v:55,at:[3]},
  {n:'Gabardina forrada',p:1800,l:2,v:6,at:[0]},{n:'Chaleco antibalas policial',p:9000,l:6,v:18,at:[0]},
@@ -599,7 +599,7 @@ const defT=()=>Math.floor(S.def)+eqV(ARMOR,S.a,S.au)+Math.floor(gFree()*.5);
 // Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
 const wlF=()=>.75+.25*S.wl/maxWl();
 // Hidden foe styles: weight of your atk/agi/def in the odds, damage dealt and cash stolen when they win.
-const FOE_S={x:{a:1,g:.5,d:0,hit:1,steal:1},b:{a:1,g:.5,d:.4,hit:1.4,steal:1},t:{a:1.3,g:.25,d:0,hit:1,steal:1},q:{a:.8,g:1,d:0,hit:1,steal:1.6}}, fS=f=>FOE_S[f.s]||FOE_S.x;
+const FOE_S={x:{a:.6,g:.45,d:.45,hit:1,steal:1},b:{a:.6,g:.5,d:.8,hit:1.4,steal:1},t:{a:.85,g:.3,d:.4,hit:1,steal:1},q:{a:.5,g:.95,d:.35,hit:1,steal:1.6}}, fS=f=>FOE_S[f.s]||FOE_S.x;
 const fightP=f=>{const s=fS(f),a=atkT()*s.a+Math.floor(agiT())*s.g+defT()*s.d,r=a*a/(a*a+f.a*f.a),d=Math.max(0,f.l-S.lvl);return Math.min(.95,Math.max(.05,(r*.8**d+(S.fear>now()?.1:0))*wlF()))};
 // Intelligence with diminishing returns: 0 → 0, 200 IQ → .5, tends to 1
 const iqQ=()=>S.iq/(S.iq+200);
