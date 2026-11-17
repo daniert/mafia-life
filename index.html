@@ -187,6 +187,7 @@ nav.bottom button[aria-current="true"] .i{opacity:1}
 .btn:disabled:has([data-cd]){display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--ink);border-color:color-mix(in srgb,var(--ink) 18%,transparent);font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .btn .ic-clock{font-size:15px;opacity:.7}
 .btn.on{background:var(--ink);color:var(--deep);border-color:var(--ink)}
+.btn.on:disabled{background:transparent;color:var(--ink);border-color:var(--ink)}
 button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .card{background:color-mix(in srgb,var(--panel) 55%,transparent);border:1px solid var(--hair);border-radius:6px;padding:16px;margin:14px 0}
@@ -795,7 +796,7 @@ function status(){let h='';
   if(inJail())h+='<div class="alert">🚔 <span>En la cárcel: '+cd(S.jail)+'</span>'+(tab!=='jail'?'<button class="btn sm alt" data-tab="jail">Ver</button>':'')+'</div>';
   if(asleep())h+='<div class="alert info">😴 <span>Durmiendo: '+cd(S.sleep)+'</span>'+b('wake',undefined,'Despertar',false,'sm alt')+'</div>';
   return h}
-function stake(){return '<div class="btns">'+[100,1000,10000,100000].map(v=>b('bet',v,fmt(v),S.cash<v,bet===v?'on sm':'alt sm')).join('')+'</div>'}
+function stake(){const V=[100,1000,10000,100000];if(S.cash<bet)bet=V.filter(v=>v<=S.cash).pop()||V[0];return '<div class="btns">'+V.map(v=>b('bet',v,fmt(v),S.cash<v,bet===v?'on sm':'alt sm')).join('')+'</div>'}
 function rel(t){const s=(now()-t)/1000;return s<60?'ahora':s<3600?'hace '+Math.floor(s/60)+' min':s<86400?'hace '+Math.floor(s/3600)+' h':'hace '+Math.floor(s/86400)+' d'}
 const EVI={ok:'✓',bad:'✕',info:'!'};
 function evs(L){let g='';return L.map(e=>{const r=rel(e.t),h=r!==g?'<div class="evh">'+(g=r)+'</div>':'';
