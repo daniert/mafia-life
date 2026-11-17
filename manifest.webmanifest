@@ -65,19 +65,31 @@
   ],
   "screenshots": [
     {
-      "src": "docs/screenshots/home.jpg",
+      "src": "docs/screenshots/inicio.jpg",
       "sizes": "375x812",
       "type": "image/jpeg",
       "form_factor": "narrow"
     },
     {
-      "src": "docs/screenshots/crimes.jpg",
+      "src": "docs/screenshots/crimenes.jpg",
       "sizes": "375x812",
       "type": "image/jpeg",
       "form_factor": "narrow"
     },
     {
-      "src": "docs/screenshots/desktop.jpg",
+      "src": "docs/screenshots/banda.jpg",
+      "sizes": "375x812",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "docs/screenshots/inventario.jpg",
+      "sizes": "375x812",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "docs/screenshots/escritorio.jpg",
       "sizes": "1280x800",
       "type": "image/jpeg",
       "form_factor": "wide"
