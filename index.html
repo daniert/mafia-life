@@ -943,13 +943,13 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   const slot=(ico,lab,L,i,n,st,shop)=>'<button class="slot'+(i<0?' empty':'')+'" data-tab="'+shop+'"><span class="i">'+ico+'</span><small>'+lab+'</small><b>'+(i<0?'Vacío':L[i].n)+'</b>'+(i<0?'<em>Ver tienda →</em>':'<em>+'+eqV(L,i,n)+' '+st+'</em>'+pips(n))+'</button>';
   const vb=vehBest(),nObj=Object.values(S.inv).reduce((t,n)=>t+n,0);
   let h=back()+lockAlert('No puedes usar objetos')+'<h2>Inventario</h2>'+
-   '<div class="sum"><div><b>+'+eqV(WEAPONS,S.w,S.wu)+'</b><small>Fuerza</small></div><div><b>+'+eqV(ARMOR,S.a,S.au)+'</b><small>Guardia</small></div><div><b>+'+eqV(VEHICLES,vb,S.vu)+'</b><small>Agilidad</small></div><div><b>'+nObj+'</b><small>Objetos</small></div></div>'+
+   
    '<h3>Equipado</h3><div class="slots">'+slot('🗡️','Arma',WEAPONS,S.w,S.wu,'fuerza','armeria')+slot('🧥','Protección',ARMOR,S.a,S.au,'guardia','sastre')+slot('🚗','Vehículo',VEHICLES,vb,S.vu,'agilidad','motor')+'</div>';
-  h+='<h3>Objetos</h3>';const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
+  h+='<h3>Objetos'+(nObj?' · '+nObj:'')+'</h3>';const own=ITEMS.map((it,i)=>[it,i]).filter(x=>S.inv[x[1]]>0);
   if(!own.length)h+='<p class="hint">No tienes objetos. Cómpralos en la <button class="back" data-tab="botica">Botica</button>.</p>';
   else h+=Object.keys(KN).map(k=>{const g=own.filter(([it])=>it.k===k);if(!g.length)return'';const pc=Math.min(100,S[k]/MAX[k]()*100);
    return '<div class="card grp"><div class="gh"><span>'+KN[k][1]+' '+KN[k][0]+'</span><b>'+Math.floor(S[k])+'/'+Math.floor(MAX[k]())+'</b></div><div class="meter"><i class="m-'+k+'" style="width:'+pc+'%"></i></div>'+g.map(([it,i])=>row(it.n+' <span class="qty">×'+S.inv[i]+'</span>',it.d,b('use',i,full(k)?'Lleno':'Usar',inHosp()||full(k)))).join('')+'</div>'}).join('');
-  if(S.veh.length>1)h+='<h3>Garaje</h3><div class="chips">'+S.veh.slice().sort((x,y)=>VEHICLES[y].v-VEHICLES[x].v).map(i=>'<span class="chip'+(i===vb?' on':'')+'">🚗 '+VEHICLES[i].n+' <small>+'+VEHICLES[i].v+'</small></span>').join('')+'</div>';
+  if(S.veh.length>1)h+='<h3>Garaje</h3><p class="hint">Solo suma el vehículo que conduces, el mejor que tienes.</p><div class="chips">'+S.veh.filter(i=>i!==vb).sort((x,y)=>VEHICLES[y].v-VEHICLES[x].v).map(i=>'<span class="chip">🚗 '+VEHICLES[i].n+'</span>').join('')+'</div>';
   h+='<h3>Joyas</h3>'+(S.jw.length?'<div class="chips">'+S.jw.map(i=>'<span class="chip" title="'+JEWELS[i].d+'">💍 '+JEWELS[i].n+'</span>').join('')+'</div>':'<p class="hint">Ninguna todavía. Se compran con gemas en la <button class="back" data-tab="temple">Joyería</button>.</p>');
   return h},
  casino(){let h=back()+status()+'<h2>Casino</h2><p class="hint">Elige tu apuesta.</p>'+stake();
