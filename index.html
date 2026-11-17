@@ -441,7 +441,7 @@ const jw=i=>S.jw.includes(i), GEM_SELL=10;
 // Gym willpower cost grows +1 per session in the last 30 min
 const GYM_WIN=30*60000,gymRecent=()=>(S.gymL||[]).filter(t=>t>now()-GYM_WIN).length;
 const healWl=()=>3,gWl=()=>4+gymRecent();
-const GYM_EN={atk:4,agi:3,def:5},gEn=k=>GYM_EN[k];
+const GYM_EN={atk:4,agi:4,def:4},gEn=k=>GYM_EN[k];
 // Yoga: no willpower cost; restores a bit and every few sessions raises max willpower (each step needs more sessions)
 // Light on energy but pricey: at least 5 min of income, else ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
 const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round(Math.max(100+3*Math.max(...['atk','agi','def'].map(gymFee)),5*income())*(1+.5*(S.ygL||0)));
