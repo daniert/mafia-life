@@ -1053,7 +1053,8 @@ const FX=(()=>{
       Object.assign(p.style,{left:R.left+scrollX+R.width/2+'px',top:R.top+scrollY+R.height/2+'px'});document.body.appendChild(p);
       const dx=(o.dx||0)+(k-(n-1)/2)*(o.sp??14),dy=o.dy??-46;
       p.animate([{transform:'translate(-50%,-50%) scale(.6)',opacity:0},{transform:'translate(calc(-50% + '+dx*.4+'px),calc(-50% + '+dy*.4+'px)) scale(1)',opacity:1,offset:.3},
-        {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(.9)',opacity:0}],{duration:o.d||900,delay:k*(o.st??70),easing:'ease-out',fill:'backwards'}).onfinish=()=>p.remove()}}
+        {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(.9)',opacity:0}],{duration:o.d||900,delay:k*(o.st??70),easing:'ease-out',fill:'backwards'}).onfinish=()=>p.remove()}
+    until=Math.max(until,performance.now()+(o.d||900)+n*(o.st??70))}
   function ring(u,c){const i=u.querySelector('.i');if(!i)return;i.animate([{boxShadow:'0 0 0 0 color-mix(in srgb,'+c+' 70%,transparent)'},{boxShadow:'0 0 0 14px transparent'}],{duration:700,easing:'ease-out'})}
   function actFx(u,a,ok){if(!u||!run()||!u.matches('button.act'))return;const i=u.querySelector('.i');if(!i)return;
     const A=(k,o)=>i.animate(k,o);
@@ -1117,7 +1118,11 @@ const FX=(()=>{
     document.querySelectorAll('#view .alert, #where .pill').forEach(x=>{if(!p.al.has(alK(x)))drop(x)});
     const xb=$('#view .xpbar i');if(xb&&run()){const to=S.xp/need()*100,fr=p.xp*100;if(S.lvl>p.v.lvl)xb.animate([{width:fr+'%'},{width:'100%',offset:.5},{width:'0%',offset:.51},{width:to+'%'}],{duration:1100});else if(Math.abs(to-fr)>.1)xb.animate([{width:fr+'%'},{width:to+'%'}],{duration:600,easing:'ease-out'})}
     if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>(e.id==='lvl'&&(e.style.transformOrigin='left center'),e).animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
-  return {count,react,spin,busy:()=>performance.now()<until}})();
+  // Re-render from the clock (regen, timers): rows that stay glide to their new place, new ones slide in, gone ones fold away
+  function soft(render){if(!run()){render();return}const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));const t0=tab;render();if(tab!==t0)return;
+    const now=units(),gone=[];let ni=0;m.forEach((s,k)=>{const u=now.get(k);if(u)glide(u,s.r.top-u.getBoundingClientRect().top);else{leave(s,true);gone.push(s.r.top)}});
+    if(m.size)now.forEach((u,k)=>{if(!m.has(k)){const t=u.getBoundingClientRect().top;enter(u,ni++,gone.some(g=>Math.abs(g-t)<20)&&300)}})}
+  return {count,react,spin,soft,busy:()=>performance.now()<until}})();
 
 // Import: hidden file input, replaces the current game after confirmation
 const impf=Object.assign(document.createElement('input'),{type:'file',accept:'.json,application/json',id:'impf',hidden:true});
@@ -1158,7 +1163,7 @@ const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,!!S.war,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
-  if(s!==sig&&!FX.busy()){sig=s;view()}},1000);
+  if(s!==sig&&!FX.busy()){sig=s;FX.soft(view)}},1000);
 setInterval(save,5000);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 // Saves from before locked prices keep what the shop showed at update time (old formula); new prices from then on
