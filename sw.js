@@ -1,3 +1,5 @@
+// V and CORE are regenerated on deploy by .github/gen-sw.js (content hash + every site file).
+// The values below are only a fallback for serving the repo as-is.
 const V='mafialife-v22';
 const CORE=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './fonts/barlow-400.woff2','./fonts/barlow-600.woff2','./fonts/barlow-700.woff2','./fonts/playfair-display.woff2'];
