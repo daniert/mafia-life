@@ -420,19 +420,20 @@ const COURSES=[{n:'Clases nocturnas',min:5,c:500,iq:2},{n:'Contabilidad básica'
 const LIC=COURSES.findIndex(c=>c.lic),hasLic=()=>S.done.includes(LIC);
 // School costs: longer courses tire more
 const scEn=c=>Math.min(10,2+Math.floor(c.min/15)),scWl=c=>2+Math.floor(c.min/10);
-const ITEMS=[{n:'Botiquín',p:300,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:500,k:'en',v:.5,d:'Recupera la mitad de la energía'},
- {n:'Petaca de whisky',p:500,k:'st',v:.5,d:'Recupera la mitad del valor'},{n:'Puro cubano',p:700,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2,3]},
- {n:'Perrito de Coney Island',p:150,k:'en',v:.25,d:'Recupera un cuarto de la energía',at:[0]},
+// Same effect, same price; partial restores never cheaper per point than full ones.
+const ITEMS=[{n:'Botiquín',p:400,k:'hp',v:.5,d:'Recupera la mitad de la salud'},{n:'Bebida energética',p:400,k:'en',v:.5,d:'Recupera la mitad de la energía'},
+ {n:'Petaca de whisky',p:500,k:'st',v:.5,d:'Recupera la mitad del valor'},{n:'Puro cubano',p:800,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2,3]},
+ {n:'Perrito de Coney Island',p:240,k:'en',v:.25,d:'Recupera un cuarto de la energía',at:[0]},
  {n:'Botella de bourbon de contrabando',p:900,k:'st',v:1,d:'Recupera todo el valor',at:[1,2]},
- {n:'Ficha de la suerte',p:1200,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2]},
- {n:'Café cubano',p:600,k:'en',v:.75,d:'Recupera tres cuartos de la energía',at:[3]},
- {n:'Ron añejo',p:1500,k:'st',v:1,d:'Recupera todo el valor',at:[3,4]},
- {n:'Cannoli de la nonna',p:1800,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]},
- {n:'Gumbo criollo',p:800,k:'hp',v:.75,d:'Recupera tres cuartos de la salud',at:[5]},
- {n:'Amuleto vudú',p:1400,k:'wl',v:1,d:'Recupera toda la voluntad',at:[5]},
- {n:'Pastís de Marsella',p:1600,k:'st',v:1,d:'Recupera todo el valor',at:[6]},
- {n:'Té de ginseng',p:2000,k:'en',v:1,d:'Recupera toda la energía',at:[7]},
- {n:'Champán de la Riviera',p:5000,k:'hp',v:1,d:'Recupera toda la salud',at:[8,6]}];
+ {n:'Ficha de la suerte',p:800,k:'wl',v:1,d:'Recupera toda la voluntad',at:[2]},
+ {n:'Café cubano',p:550,k:'en',v:.75,d:'Recupera tres cuartos de la energía',at:[3]},
+ {n:'Ron añejo',p:900,k:'st',v:1,d:'Recupera todo el valor',at:[3,4]},
+ {n:'Cannoli de la nonna',p:700,k:'hp',v:1,d:'Recupera toda la salud',at:[4,0]},
+ {n:'Gumbo criollo',p:550,k:'hp',v:.75,d:'Recupera tres cuartos de la salud',at:[5]},
+ {n:'Amuleto vudú',p:800,k:'wl',v:1,d:'Recupera toda la voluntad',at:[5]},
+ {n:'Pastís de Marsella',p:900,k:'st',v:1,d:'Recupera todo el valor',at:[6]},
+ {n:'Té de ginseng',p:700,k:'en',v:1,d:'Recupera toda la energía',at:[7]},
+ {n:'Champán de la Riviera',p:700,k:'hp',v:1,d:'Recupera toda la salud',at:[8,6]}];
 // Jewels: one-time lucky charms bought with gems. Effects are hidden (superstition); see jw() uses.
 const JEWELS=[{n:'Reloj de oro',d:'El tiempo es dinero',c:10},{n:'Gemelos de diamante',d:'Un caballero nunca pisa el calabozo',c:15},
  {n:'Anillo de sello',d:'Todos besan la mano del jefe',c:25},{n:'Medalla de la Virgen',d:'Que te proteja',c:30},{n:'Pitillera de plata',d:'Un hombre de recursos',c:40}];
