@@ -589,13 +589,13 @@ const drawScene=()=>{const sv=$('#cityScene'),b=sv.getBoundingClientRect(),[w,o]
 addEventListener('resize',()=>drawScene());
 const city=()=>CITIES[S.city];
 const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
-const atkT=()=>Math.floor(S.atk)+eqV(WEAPONS,S.w,S.wu)+Math.floor(gFree()*.5);
+const atkT=()=>Math.floor(S.atk)+(inJail()?0:eqV(WEAPONS,S.w,S.wu))+Math.floor(gFree()*.5);
 // Gym fee per energy point grows with the stat level.
 const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
-const vehBest=()=>S.veh.reduce((m,i)=>m<0||VEHICLES[i].v>VEHICLES[m].v?i:m,-1), agiT=()=>S.agi+eqV(VEHICLES,vehBest(),S.vu);
+const vehBest=()=>S.veh.reduce((m,i)=>m<0||VEHICLES[i].v>VEHICLES[m].v?i:m,-1), agiT=()=>S.agi+(inJail()?0:eqV(VEHICLES,vehBest(),S.vu));
 // Effective stat: base plus weapon/armor/vehicles/gang
 const statV=k=>k==='atk'?atkT():k==='def'?defT():k==='agi'?agiT():S[k];
-const defT=()=>Math.floor(S.def)+eqV(ARMOR,S.a,S.au)+Math.floor(gFree()*.5);
+const defT=()=>Math.floor(S.def)+(inJail()?0:eqV(ARMOR,S.a,S.au))+Math.floor(gFree()*.5);
 // Squared ratio punishes weaker side; extra penalty per level above you; capped 5-92%.
 const wlF=()=>.75+.25*S.wl/maxWl();
 // Hidden foe styles: weight of your atk/agi/def in the odds, damage dealt and cash stolen when they win.
