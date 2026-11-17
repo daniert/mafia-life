@@ -784,10 +784,11 @@ function row(t,d,btn,lock){const x=desc(d);
   return '<div class="row'+(lock?' locked':'')+'"><div><div class="t">'+t+'</div>'+(x.txt||lock&&x.chips?'<div class="d">'+x.txt+(lock?x.chips:'')+'</div>':'')+'</div>'+
     (lock?'':'<div class="acts"><div class="btnw">'+btn+'</div>'+x.chips+'</div>')+'</div>'}
 // Actions that need you out on the street: blocked while in jail or hospital
+const AWAKE=new Set(['wake','bet','exp','imp','reset']);
 const STREET=new Set(['buy','up','veh','item','biz','temple','sellgem','recruit','heal','dep','wd','term','fund','repay','loan','use']);
 const where=()=>inJail()?'la cárcel':'el hospital';
 const lockAlert=t=>locked()?'<div class="alert">'+(inJail()?'🚔':'🏥')+' <span>'+t+' mientras estás en '+where()+'. Espera a salir.</span></div>':'';
-function b(act,arg,label,dis,cls){dis=dis||locked()&&STREET.has(act);return '<button class="btn'+(cls?' '+cls:'')+'" data-a="'+act+'"'+(arg!==undefined?' data-i="'+arg+'"':'')+(dis?' disabled':'')+'>'+label+'</button>'}
+function b(act,arg,label,dis,cls){dis=dis||locked()&&STREET.has(act)||asleep()&&!AWAKE.has(act);return '<button class="btn'+(cls?' '+cls:'')+'" data-a="'+act+'"'+(arg!==undefined?' data-i="'+arg+'"':'')+(dis?' disabled':'')+'>'+label+'</button>'}
 const back=()=>'<button class="back" data-tab="explore">← Explorar</button>';
 function status(){let h='';
   if(inHosp())h+='<div class="alert">🏥 <span>En el hospital: '+cd(S.hosp)+'</span>'+(tab!=='hosp'?'<button class="btn sm alt" data-tab="hosp">Ver</button>':'')+'</div>';
@@ -846,7 +847,7 @@ function todo(){const L=[];
   if(S.hp<maxHp()*.5)L.push({a:'heal',i:0,dis:locked()||S.cash<healCost()||S.en<3||S.wl<healWl(),ic:'🏥',t:'Estás herido',d:'Salud '+Math.floor(S.hp)+'/'+maxHp()+' · curarte: ⚡3 · ✊'+healWl()+' · '+fmt(healCost()),go:'Curar'});
   else if(!locked()&&!S.edu&&COURSES.some((c,i)=>avail(c)&&!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
-const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
+const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis||x.a&&asleep()&&!AWAKE.has(x.a)?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
@@ -986,7 +987,7 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');if(t){if(t.dataset.tab!==tab)history.pushState(null,'','#'+t.dataset.tab);tab=t.dataset.tab;view();window.scrollTo(0,0);return}
   const bt=e.target.closest('button[data-a]');if(!bt||bt.disabled)return;
   const a=bt.dataset.a,i=bt.dataset.i;
-  if(asleep()&&!['wake','bet','exp','imp','reset'].includes(a)){msg('Estás durmiendo. Despierta primero.','info',0);return}
+  if(asleep()&&!AWAKE.has(a)){msg('Estás durmiendo. Despierta primero.','info',0);return}
   if(locked()&&STREET.has(a)){msg('No puedes hacer eso mientras estás en '+where()+'.','info',0);return}
   if(a==='buy'){const p=i.split('|');ACT.buy(p[0],+p[1])}
   else if(a==='train'){const p=i.split('|');ACT.train(p[0])}
