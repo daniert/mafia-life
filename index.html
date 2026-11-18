@@ -317,26 +317,26 @@ const CITIES=[
  {n:'Chicago',m:1.4,c:400,l:3,
   fn:['Al','Frank','Jake','Murray','Bugs','Machine Gun','Dean','Hymie'],sn:['Capone','Nitti','Guzik','Moran','O\'Banion','Torrio'],
   r:['Los del South Side','Banda de North Side','Hermanos Genna','Los Chicos de Moran','El Outfit de Chicago']},
- {n:'Las Vegas',m:1.9,c:1800,l:6,
+ {n:'Las Vegas',m:1.9,c:1800,l:8,
   fn:['Bugsy','Lefty','Moe','Tony','Meyer','Nicky','Benny','Lucky'],sn:['Siegel','Rosenthal','Dalitz','Spilotro','Lansky','Dupont'],
   r:['Los Crupieres','Banda del Desierto','La Gente del Strip','Sindicato del Juego','Los Dueños del Flamingo']},
- {n:'La Habana',m:2.6,c:7000,l:10,
+ {n:'La Habana',m:2.6,c:7000,l:15,
   fn:['Pepe','Rafael','Chucho','Ernesto','Lázaro','Orlando','Yunior','Reinaldo'],sn:['Valdés','Hernández','Castañeda','Batista','Rojas','Morales'],
   r:['Los del Malecón','Clan Valdés','Banda del Puerto','Los Guajiros','La Mano de Tropicana']},
- {n:'Palermo',m:3.6,c:25000,l:15,
+ {n:'Palermo',m:3.6,c:25000,l:26,
   fn:['Salvatore','Totò','Bernardo','Gaetano','Calogero','Vito','Matteo','Rosario'],sn:['Riina','Provenzano','Badalamenti','Inzerillo','Messina','Bontade'],
   r:['Clan Bellavista','Hermanos Ferrante','La Cosca Nera','Los Corleonesi','La Cúpula']},
  // Append only: saves store the city index
- {n:'Nueva Orleans',m:2.2,c:4000,l:8,
+ {n:'Nueva Orleans',m:2.2,c:4000,l:11,
   fn:['Silvestro','Carlos','Joe','Antoine','Lucien','Remy','Big Sam','Jules'],sn:['Marcello','Matranga','Provenza','Boudreaux','Thibodeaux','LeBlanc'],
   r:['Los del Barrio Francés','Banda del Bayou','Los Muelles del Misisipi','Hermanos Matranga','La Familia Marcello']},
- {n:'Marsella',m:4.8,c:80000,l:20,
+ {n:'Marsella',m:4.8,c:80000,l:40,
   fn:['Paul','Antoine','Marcel','Jean','Gaëtan','Lucien','François','Mémé'],sn:['Carbone','Spirito','Guérini','Venturi','Zampa','Orsini'],
   r:['Los del Panier','Clan Guérini','Banda del Vieux-Port','Los Corsos','La French Connection']},
- {n:'Hong Kong',m:6.3,c:200000,l:25,
+ {n:'Hong Kong',m:6.3,c:200000,l:56,
   fn:['Wai','Kin','Ming','Chun','Lok','Fai','Hung','Tak'],sn:['Ng','Chan','Lee','Wong','Lau','Cheung'],
   r:['Los de Kowloon','Banda de Wan Chai','Los Dragones del Puerto','Sociedad 14K','La Tríada Sun Yee On']},
- {n:'Montecarlo',m:8,c:500000,l:30,
+ {n:'Montecarlo',m:8,c:500000,l:75,
   fn:['Raoul','Henri','Stavros','Dmitri','Enzo','Philippe','Viktor','Lorenzo'],sn:['Grimaldi','Leclerc','Onassis','Volkov','Albertini','De Ruyter'],
   r:['Los Croupiers del Casino','Banda del Puerto Hércules','Los Navieros Griegos','Sindicato de Mónaco','La Mesa Alta']}];
 // Crimes cost Brave ("valor"). Indices are part of saves (mastery): only append.
@@ -351,36 +351,36 @@ const JCRIMES=[
 const CRIMES=[
  {n:'Robar un bolso',br:1,dm:2,a:20,b:40,xp:1,p:.92,l:1},
  {n:'Cobrar protección a un tendero',br:1,dm:4,a:60,b:110,xp:2,p:.86,l:1},
- {n:'Contrabando de tabaco',br:2,dm:6,a:150,b:260,xp:4,p:.78,l:2,wl:1,car:1},
- {n:'Asalto a un furgón',br:3,dm:10,a:400,b:650,xp:7,p:.68,l:4,wl:2,car:1},
- {n:'Robo a un casino',br:4,dm:16,a:1100,b:1800,xp:12,p:.58,l:7,iq:5,wl:3},
- {n:'Golpe a un banco',br:6,dm:24,a:3500,b:5500,xp:22,p:.48,l:10,iq:15,wl:4,car:1},
- {n:'Atraco a la Reserva',br:8,dm:36,a:11000,b:17000,xp:40,p:.40,l:15,iq:35,wl:6,car:1},
- {n:'Falsificar documentos',br:4,dm:8,a:900,b:1500,xp:10,p:.70,l:5,iq:20,wl:3},
- {n:'Vaciar cajeros con un portátil',br:6,dm:14,a:2800,b:4200,xp:18,p:.60,l:8,iq:45,wl:4},
- {n:'Blanquear dinero en el casino',br:5,dm:10,a:2000,b:3200,xp:14,p:.72,l:6,bz:1,iq:25,wl:3},
- {n:'Colocar billetes falsos',br:7,dm:18,a:6000,b:9500,xp:28,p:.62,l:10,bz:2,iq:30,wl:4}];
+ {n:'Contrabando de tabaco',br:2,dm:6,a:150,b:260,xp:4,p:.78,l:3,wl:1,car:1},
+ {n:'Asalto a un furgón',br:3,dm:10,a:400,b:650,xp:7,p:.68,l:7,wl:2,car:1},
+ {n:'Robo a un casino',br:4,dm:16,a:1100,b:1800,xp:12,p:.58,l:15,iq:5,wl:3},
+ {n:'Golpe a un banco',br:6,dm:24,a:3500,b:5500,xp:22,p:.48,l:27,iq:15,wl:4,car:1},
+ {n:'Atraco a la Reserva',br:8,dm:36,a:11000,b:17000,xp:40,p:.40,l:52,iq:35,wl:6,car:1},
+ {n:'Falsificar documentos',br:4,dm:8,a:900,b:1500,xp:10,p:.70,l:9,iq:20,wl:3},
+ {n:'Vaciar cajeros con un portátil',br:6,dm:14,a:2800,b:4200,xp:18,p:.60,l:19,iq:45,wl:4},
+ {n:'Blanquear dinero en el casino',br:5,dm:10,a:2000,b:3200,xp:14,p:.72,l:12,bz:1,iq:25,wl:3},
+ {n:'Colocar billetes falsos',br:7,dm:18,a:6000,b:9500,xp:28,p:.62,l:27,bz:2,iq:30,wl:4}];
 // at = city indices where it is sold (missing = everywhere). Indices are saved: only append. Power order is by v, not index.
-const WEAPONS=[{n:'Navaja',p:300,l:1,v:3},{n:'Pistola',p:1500,l:3,v:8,at:[0]},{n:'Escopeta recortada',p:6000,l:6,v:18,at:[2]},
- {n:'Ametralladora Thompson',p:25000,l:10,v:40,at:[1]},{n:'Lupara siciliana',p:60000,l:15,v:70,at:[4]},
- {n:'Revólver de cañón corto',p:3000,l:4,v:12,at:[1]},{n:'Rifle de caza del bayou',p:12000,l:8,v:27,at:[5]},
- {n:'Fusil de la revolución',p:40000,l:12,v:54,at:[3]},{n:'Rifle de francotirador',p:90000,l:17,v:86,at:[0]},
- {n:'Subfusil MAT-49',p:160000,l:20,v:110,at:[6]},{n:'Escopeta chapada en oro',p:260000,l:22,v:132,at:[2]},
- {n:'Fusil de asalto de contrabando',p:420000,l:25,v:160,at:[7]},{n:'Lupara de plata',p:650000,l:27,v:190,at:[4]},
- {n:'Fusil de precisión grabado',p:1000000,l:30,v:230,at:[8]}];
+const WEAPONS=[{n:'Navaja',p:300,l:1,v:3},{n:'Pistola',p:1500,l:3,v:8,at:[0]},{n:'Escopeta recortada',p:6000,l:8,v:18,at:[2]},
+ {n:'Ametralladora Thompson',p:25000,l:15,v:40,at:[1]},{n:'Lupara siciliana',p:60000,l:26,v:70,at:[4]},
+ {n:'Revólver de cañón corto',p:3000,l:5,v:12,at:[1]},{n:'Rifle de caza del bayou',p:12000,l:11,v:27,at:[5]},
+ {n:'Fusil de la revolución',p:40000,l:19,v:54,at:[3]},{n:'Rifle de francotirador',p:90000,l:31,v:86,at:[0]},
+ {n:'Subfusil MAT-49',p:160000,l:40,v:110,at:[6]},{n:'Escopeta chapada en oro',p:260000,l:46,v:132,at:[2]},
+ {n:'Fusil de asalto de contrabando',p:420000,l:56,v:160,at:[7]},{n:'Lupara de plata',p:650000,l:63,v:190,at:[4]},
+ {n:'Fusil de precisión grabado',p:1000000,l:75,v:230,at:[8]}];
 // Vehicles: only the best owned one (highest v, the one you drive) adds its agility bonus. Append only.
-const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:4,at:[0,1]},{n:'Sedán robado',p:5000,l:4,v:10,at:[1,5]},{n:'Moto de gran cilindrada',p:15000,l:7,v:20,at:[2,0]},
- {n:'Furgoneta blindada',p:40000,l:10,v:32,at:[1,3]},{n:'Deportivo italiano',p:120000,l:15,v:56,at:[4,8]},{n:'Lancha rápida',p:400000,l:20,v:90,at:[3,6]},
- {n:'Coupé deportivo',p:9000,l:5,v:14,at:[2,0]},{n:'Descapotable',p:26000,l:9,v:26,at:[5,2]},{n:'Limusina blindada',p:70000,l:12,v:44,at:[0,4]},
- {n:'Coche de rally',p:250000,l:18,v:72,at:[6,4]},{n:'Superdeportivo',p:700000,l:23,v:110,at:[7,2]},{n:'Yate de lujo',p:1200000,l:27,v:140,at:[8,7]},
- {n:'Helicóptero privado',p:2000000,l:30,v:180,at:[8,6]}];
-const ARMOR=[{n:'Chaleco de cuero',p:800,l:1,v:3},{n:'Abrigo reforzado',p:4000,l:4,v:10,at:[1]},{n:'Blindaje ligero',p:20000,l:8,v:30,at:[2]},
- {n:'Guayabera blindada',p:50000,l:12,v:55,at:[3]},
- {n:'Gabardina forrada',p:1800,l:2,v:6,at:[0]},{n:'Chaleco antibalas policial',p:9000,l:6,v:18,at:[0]},
- {n:'Levita criolla blindada',p:32000,l:10,v:42,at:[5]},{n:'Traje de lino blindado',p:80000,l:16,v:75,at:[4]},
- {n:'Gabán de cuello alto',p:110000,l:18,v:88,at:[1]},{n:'Chaqueta de kevlar',p:180000,l:20,v:105,at:[6]},
- {n:'Chaqueta de crupier blindada',p:280000,l:23,v:122,at:[2]},{n:'Traje de seda blindado',p:450000,l:25,v:145,at:[7]},
- {n:'Esmoquin blindado',p:1100000,l:30,v:190,at:[8]}];
+const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:4,at:[0,1]},{n:'Sedán robado',p:5000,l:5,v:10,at:[1,5]},{n:'Moto de gran cilindrada',p:15000,l:9,v:20,at:[2,0]},
+ {n:'Furgoneta blindada',p:40000,l:15,v:32,at:[1,3]},{n:'Deportivo italiano',p:120000,l:26,v:56,at:[4,8]},{n:'Lancha rápida',p:400000,l:40,v:90,at:[3,6]},
+ {n:'Coupé deportivo',p:9000,l:6,v:14,at:[2,0]},{n:'Descapotable',p:26000,l:13,v:26,at:[5,2]},{n:'Limusina blindada',p:70000,l:19,v:44,at:[0,4]},
+ {n:'Coche de rally',p:250000,l:34,v:72,at:[6,4]},{n:'Superdeportivo',p:700000,l:49,v:110,at:[7,2]},{n:'Yate de lujo',p:1200000,l:63,v:140,at:[8,7]},
+ {n:'Helicóptero privado',p:2000000,l:75,v:180,at:[8,6]}];
+const ARMOR=[{n:'Chaleco de cuero',p:800,l:1,v:3},{n:'Abrigo reforzado',p:4000,l:5,v:10,at:[1]},{n:'Blindaje ligero',p:20000,l:11,v:30,at:[2]},
+ {n:'Guayabera blindada',p:50000,l:19,v:55,at:[3]},
+ {n:'Gabardina forrada',p:1800,l:2,v:6,at:[0]},{n:'Chaleco antibalas policial',p:9000,l:8,v:18,at:[0]},
+ {n:'Levita criolla blindada',p:32000,l:15,v:42,at:[5]},{n:'Traje de lino blindado',p:80000,l:29,v:75,at:[4]},
+ {n:'Gabán de cuello alto',p:110000,l:34,v:88,at:[1]},{n:'Chaqueta de kevlar',p:180000,l:40,v:105,at:[6]},
+ {n:'Chaqueta de crupier blindada',p:280000,l:49,v:122,at:[2]},{n:'Traje de seda blindado',p:450000,l:56,v:145,at:[7]},
+ {n:'Esmoquin blindado',p:1100000,l:75,v:190,at:[8]}];
 // Upgrades of the equipped weapon/armor/vehicle: +12% of base each (min +1), up to UPM. Reset when replaced.
 const UPM=5, upStep=it=>Math.max(1,Math.ceil(it.v*.12)), upCost=(it,n,k)=>lockP('u'+k+(k==='v'?vehBest():S[k])+'_'+n,it.p*.35*(n+1));
 const eqV=(L,i,n)=>i>=0?L[i].v+n*upStep(L[i]):0;
@@ -454,7 +454,7 @@ const GYM_EN={atk:4,agi:4,def:4},gEn=k=>GYM_EN[k];
 // Light on energy but pricey: at least 5 min of income, else ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
 const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round(Math.max(100+3*Math.max(...['atk','agi','def'].map(gymFee)),5*income())*(1+.5*(S.ygL||0)));
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
-const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']];
+const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Sottocapo'],[40,'Don'],[60,'Padrino'],[80,'Capo di tutti capi']];
 const REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 const NAV=[['home','Inicio','🏠'],['crime','Crímenes','💼'],['gym','Gimnasio','🏋️'],['fight','Pelea','🥊'],['explore','Explorar','🧭']];
 const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fight','Pelea'],['gang','Banda'],['gym','Gimnasio'],['me','Habilidades'],['inv','Inventario'],['events','Eventos']];
