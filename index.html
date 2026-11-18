@@ -323,20 +323,20 @@ const CITIES=[
  {n:'La Habana',m:2.6,c:7000,l:15,
   fn:['Pepe','Rafael','Chucho','Ernesto','Lázaro','Orlando','Yunior','Reinaldo'],sn:['Valdés','Hernández','Castañeda','Batista','Rojas','Morales'],
   r:['Los del Malecón','Clan Valdés','Banda del Puerto','Los Guajiros','La Mano de Tropicana']},
- {n:'Palermo',m:3.6,c:25000,l:26,
+ {n:'Palermo',m:3.6,c:42250,l:26,
   fn:['Salvatore','Totò','Bernardo','Gaetano','Calogero','Vito','Matteo','Rosario'],sn:['Riina','Provenzano','Badalamenti','Inzerillo','Messina','Bontade'],
   r:['Clan Bellavista','Hermanos Ferrante','La Cosca Nera','Los Corleonesi','La Cúpula']},
  // Append only: saves store the city index
  {n:'Nueva Orleans',m:2.2,c:4000,l:11,
   fn:['Silvestro','Carlos','Joe','Antoine','Lucien','Remy','Big Sam','Jules'],sn:['Marcello','Matranga','Provenza','Boudreaux','Thibodeaux','LeBlanc'],
   r:['Los del Barrio Francés','Banda del Bayou','Los Muelles del Misisipi','Hermanos Matranga','La Familia Marcello']},
- {n:'Marsella',m:4.8,c:80000,l:40,
+ {n:'Marsella',m:4.8,c:320000,l:40,
   fn:['Paul','Antoine','Marcel','Jean','Gaëtan','Lucien','François','Mémé'],sn:['Carbone','Spirito','Guérini','Venturi','Zampa','Orsini'],
   r:['Los del Panier','Clan Guérini','Banda del Vieux-Port','Los Corsos','La French Connection']},
- {n:'Hong Kong',m:6.3,c:200000,l:56,
+ {n:'Hong Kong',m:6.3,c:1568000,l:56,
   fn:['Wai','Kin','Ming','Chun','Lok','Fai','Hung','Tak'],sn:['Ng','Chan','Lee','Wong','Lau','Cheung'],
   r:['Los de Kowloon','Banda de Wan Chai','Los Dragones del Puerto','Sociedad 14K','La Tríada Sun Yee On']},
- {n:'Montecarlo',m:8,c:500000,l:75,
+ {n:'Montecarlo',m:8,c:7031250,l:75,
   fn:['Raoul','Henri','Stavros','Dmitri','Enzo','Philippe','Viktor','Lorenzo'],sn:['Grimaldi','Leclerc','Onassis','Volkov','Albertini','De Ruyter'],
   r:['Los Croupiers del Casino','Banda del Puerto Hércules','Los Navieros Griegos','Sindicato de Mónaco','La Mesa Alta']}];
 // Crimes cost Brave ("valor"). Indices are part of saves (mastery): only append.
@@ -362,32 +362,32 @@ const CRIMES=[
  {n:'Colocar billetes falsos',br:7,dm:18,a:6000,b:9500,xp:28,p:.62,l:27,bz:2,iq:30,wl:4}];
 // at = city indices where it is sold (missing = everywhere). Indices are saved: only append. Power order is by v, not index.
 const WEAPONS=[{n:'Navaja',p:300,l:1,v:3},{n:'Pistola',p:1500,l:3,v:8,at:[0]},{n:'Escopeta recortada',p:6000,l:8,v:18,at:[2]},
- {n:'Ametralladora Thompson',p:25000,l:15,v:40,at:[1]},{n:'Lupara siciliana',p:60000,l:26,v:70,at:[4]},
+ {n:'Ametralladora Thompson',p:25000,l:15,v:40,at:[1]},{n:'Lupara siciliana',p:101400,l:26,v:70,at:[4]},
  {n:'Revólver de cañón corto',p:3000,l:5,v:12,at:[1]},{n:'Rifle de caza del bayou',p:12000,l:11,v:27,at:[5]},
- {n:'Fusil de la revolución',p:40000,l:19,v:54,at:[3]},{n:'Rifle de francotirador',p:90000,l:31,v:86,at:[0]},
- {n:'Subfusil MAT-49',p:160000,l:40,v:110,at:[6]},{n:'Escopeta chapada en oro',p:260000,l:46,v:132,at:[2]},
- {n:'Fusil de asalto de contrabando',p:420000,l:56,v:160,at:[7]},{n:'Lupara de plata',p:650000,l:63,v:190,at:[4]},
- {n:'Fusil de precisión grabado',p:1000000,l:75,v:230,at:[8]}];
+ {n:'Fusil de la revolución',p:40000,l:19,v:54,at:[3]},{n:'Rifle de francotirador',p:216225,l:31,v:86,at:[0]},
+ {n:'Subfusil MAT-49',p:640000,l:40,v:110,at:[6]},{n:'Escopeta chapada en oro',p:1375400,l:46,v:132,at:[2]},
+ {n:'Fusil de asalto de contrabando',p:3292800,l:56,v:160,at:[7]},{n:'Lupara de plata',p:6449625,l:63,v:190,at:[4]},
+ {n:'Fusil de precisión grabado',p:14062500,l:75,v:230,at:[8]}];
 // Vehicles: only the best owned one (highest v, the one you drive) adds its agility bonus. Append only.
 const VEHICLES=[{n:'Scooter trucado',p:1200,l:2,v:4,at:[0,1]},{n:'Sedán robado',p:5000,l:5,v:10,at:[1,5]},{n:'Moto de gran cilindrada',p:15000,l:9,v:20,at:[2,0]},
- {n:'Furgoneta blindada',p:40000,l:15,v:32,at:[1,3]},{n:'Deportivo italiano',p:120000,l:26,v:56,at:[4,8]},{n:'Lancha rápida',p:400000,l:40,v:90,at:[3,6]},
+ {n:'Furgoneta blindada',p:40000,l:15,v:32,at:[1,3]},{n:'Deportivo italiano',p:202800,l:26,v:56,at:[4,8]},{n:'Lancha rápida',p:1600000,l:40,v:90,at:[3,6]},
  {n:'Coupé deportivo',p:9000,l:6,v:14,at:[2,0]},{n:'Descapotable',p:26000,l:13,v:26,at:[5,2]},{n:'Limusina blindada',p:70000,l:19,v:44,at:[0,4]},
- {n:'Coche de rally',p:250000,l:34,v:72,at:[6,4]},{n:'Superdeportivo',p:700000,l:49,v:110,at:[7,2]},{n:'Yate de lujo',p:1200000,l:63,v:140,at:[8,7]},
- {n:'Helicóptero privado',p:2000000,l:75,v:180,at:[8,6]}];
+ {n:'Coche de rally',p:722500,l:34,v:72,at:[6,4]},{n:'Superdeportivo',p:4201750,l:49,v:110,at:[7,2]},{n:'Yate de lujo',p:11907000,l:63,v:140,at:[8,7]},
+ {n:'Helicóptero privado',p:28125000,l:75,v:180,at:[8,6]}];
 const ARMOR=[{n:'Chaleco de cuero',p:800,l:1,v:3},{n:'Abrigo reforzado',p:4000,l:5,v:10,at:[1]},{n:'Blindaje ligero',p:20000,l:11,v:30,at:[2]},
  {n:'Guayabera blindada',p:50000,l:19,v:55,at:[3]},
  {n:'Gabardina forrada',p:1800,l:2,v:6,at:[0]},{n:'Chaleco antibalas policial',p:9000,l:8,v:18,at:[0]},
- {n:'Levita criolla blindada',p:32000,l:15,v:42,at:[5]},{n:'Traje de lino blindado',p:80000,l:29,v:75,at:[4]},
- {n:'Gabán de cuello alto',p:110000,l:34,v:88,at:[1]},{n:'Chaqueta de kevlar',p:180000,l:40,v:105,at:[6]},
- {n:'Chaqueta de crupier blindada',p:280000,l:49,v:122,at:[2]},{n:'Traje de seda blindado',p:450000,l:56,v:145,at:[7]},
- {n:'Esmoquin blindado',p:1100000,l:75,v:190,at:[8]}];
+ {n:'Levita criolla blindada',p:32000,l:15,v:42,at:[5]},{n:'Traje de lino blindado',p:168200,l:29,v:75,at:[4]},
+ {n:'Gabán de cuello alto',p:317900,l:34,v:88,at:[1]},{n:'Chaqueta de kevlar',p:720000,l:40,v:105,at:[6]},
+ {n:'Chaqueta de crupier blindada',p:1680700,l:49,v:122,at:[2]},{n:'Traje de seda blindado',p:3528000,l:56,v:145,at:[7]},
+ {n:'Esmoquin blindado',p:15468750,l:75,v:190,at:[8]}];
 // Upgrades of the equipped weapon/armor/vehicle: +12% of base each (min +1), up to UPM. Reset when replaced.
 const UPM=5, upStep=it=>Math.max(1,Math.ceil(it.v*.12)), upCost=(it,n,k)=>lockP('u'+k+(k==='v'?vehBest():S[k])+'_'+n,it.p*.35*(n+1));
 const eqV=(L,i,n)=>i>=0?L[i].v+n*upStep(L[i]):0;
 // Index order is fixed (crimes reference bz:1 and bz:2; saves store counts by index). The view sorts by price.
 const BIZ=[{n:'Bar clandestino',p:3000,v:10,iq:0},{n:'Casino ilegal',p:25000,v:90,iq:20},{n:'Imprenta de billetes',p:100000,v:400,iq:45},
- {n:'Desguace de coches',p:8000,v:28,iq:8},{n:'Club nocturno',p:50000,v:170,iq:30},{n:'Laboratorio clandestino',p:250000,v:900,iq:60},
- {n:'Naviera de contrabando',p:600000,v:2000,iq:80},{n:'Banco en paraíso fiscal',p:1500000,v:4800,iq:110}];
+ {n:'Desguace de coches',p:8000,v:28,iq:8},{n:'Club nocturno',p:50000,v:170,iq:30},{n:'Laboratorio clandestino',p:750000,v:900,iq:60},
+ {n:'Naviera de contrabando',p:3000000,v:2000,iq:80},{n:'Banco en paraíso fiscal',p:12000000,v:4800,iq:110}];
 // Rival strengths; names come from the current city (CITIES[].r).
 // Opening a business unit takes willpower (running it is discipline, not street courage)
 const bizWl=i=>2+[...BIZ].sort((x,y)=>x.p-y.p).indexOf(BIZ[i]);
@@ -504,7 +504,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),p=n=>String(n).padStart(2,'0');return h?h+':'+p(m)+':'+p(s%60):m+':'+p(s%60)};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>30*S.lvl;
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>Math.round(30*S.lvl*(1+S.lvl/25));
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5*(S.jw&&S.jw.includes(3)?.85:1)));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -1163,8 +1163,8 @@ function tick(dt){achCheck();
   S.cash+=income()*dt/60;if(S.job>=0&&!inJail()&&!inHosp())S.lab+=dt/60*(.06+S.job*.02);
   const n=now();
   if(S.hosp&&n>=S.hosp){S.hosp=0;S.hp=Math.max(S.hp,maxHp()*.5);msg('Te dan el alta en el hospital.','info')}
-  if(S.term&&n>=S.term.end){const t=TERMS[S.term.i],g=Math.floor(S.term.a*(1+t.r));S.bank+=g;S.term=null;msg('Vence tu '+t.n.toLowerCase()+': recibes '+fmt(g)+' en el banco y '+S.lvl+' XP.','ok');gain(S.lvl)}
-  if(S.fund&&n>=S.fund.end){const f=FUNDS[S.fund.i],g=Math.floor(S.fund.a*(1+f.lo+Math.random()*(f.hi-f.lo)));S.bank+=g;msg(f.n+': recuperas '+fmt(g)+' en el banco ('+(g>=S.fund.a?'ganas ':'pierdes ')+fmt(Math.abs(g-S.fund.a))+').',g>=S.fund.a?'ok':'bad');S.fund=null;gain(S.lvl)}
+  if(S.term&&n>=S.term.end){const t=TERMS[S.term.i],g=Math.floor(S.term.a*(1+t.r/(1+S.term.a/1e6)));S.bank+=g;S.term=null;msg('Vence tu '+t.n.toLowerCase()+': recibes '+fmt(g)+' en el banco y '+S.lvl+' XP.','ok');gain(S.lvl)}
+  if(S.fund&&n>=S.fund.end){const f=FUNDS[S.fund.i],g=Math.floor(S.fund.a*(1+(f.lo+Math.random()*(f.hi-f.lo))/(1+S.fund.a/1e6)));S.bank+=g;msg(f.n+': recuperas '+fmt(g)+' en el banco ('+(g>=S.fund.a?'ganas ':'pierdes ')+fmt(Math.abs(g-S.fund.a))+').',g>=S.fund.a?'ok':'bad');S.fund=null;gain(S.lvl)}
   if(S.loan&&n>=S.loan.end){const L=S.loan,v=(L.v||0)+1,fromCash=Math.min(Math.floor(S.cash),L.a),fromBank=Math.min(Math.floor(S.bank),L.a-fromCash),left=L.a-fromCash-fromBank,d=hd(20*v);
     S.cash-=fromCash;S.bank-=fromBank;S.hp=Math.max(1,S.hp-d);
     if(left>0){S.loan={a:Math.ceil(left*(1+LOAN_R)),end:L.end+LOAN_MIN*60000,v};msg('Los cobradores te visitan: se llevan '+fmt(fromCash+fromBank)+' y pierdes '+d+' de salud. Aún debes '+fmt(S.loan.a)+'.','bad')}
