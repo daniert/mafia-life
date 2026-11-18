@@ -398,7 +398,7 @@ const RIVALS=[{s:3,l:1},{s:10,l:2},{s:25,l:3},{s:50,l:4},{s:100,l:5}];
 const CREW_N=['Tony','Sal','Vito','Frankie','Nico','Lucky','Paulie','Benny','Carmine','Joey','Rocco','Enzo','Gino','Mickey','Fredo','Louie','Dino','Santo','Tommy','Vinnie'];
 const CREW_A=['«Dos Dedos»','«el Tostadas»','«Pocapena»','«Rodillas»','«el Mudo»','«Sinfreno»','«Calderilla»','«el Notario»','«Mandíbula»','«Siete Vidas»','«el Persianas»','«Gatillo Fácil»','«Bocachancla»','«el Fontanero»','«Lentejas»','«Tres Pisos»','«el Contable»','«Medio Kilo»','«Sordina»','«el Abuelo»','«Pestañas»','«Chatarra»','«el Párroco»','«Ojo de Vidrio»'];
 const crewName=(s=S)=>{const used=new Set(s.crew.map(m=>m.n));for(let k=0;k<50;k++){const n=CREW_N[rnd(0,CREW_N.length-1)]+' '+CREW_A[rnd(0,CREW_A.length-1)];if(!used.has(n))return n}return 'Recluta nº '+(S.crew.length+1)};
-const crewNeed=m=>m.l*3;
+const crewNeed=m=>m.l*3, crewLoss=m=>Math.min(.5,Math.max(.03,.4/((1+S.lvl/20+agiT()/50)*Math.sqrt(m.l))));
 function crewSync(s=S){while(s.crew.length<s.g-1)s.crew.push({n:crewName(s),l:1,x:0});if(s.crew.length>s.g-1)s.crew.length=Math.max(0,s.g-1)}
 const warPct=i=>[.02,.04,.06,.08,.1][i], WAR_CD=4*3600000;
 // Crew caught with you: each gets a random charge near yours and a sentence of similar length
@@ -406,7 +406,7 @@ const crewIn=m=>m.j>now();
 function crewBust(c){const free=S.crew.filter(x=>!crewIn(x));if(!free.length)return '';const k=Math.min(free.length,rnd(0,Math.min(3,1+Math.floor(c.br/2))));const got=[];
   for(let q=0;q<k;q++){const x=free.splice(rnd(0,free.length-1),1)[0],near=CRIMES.filter(y=>Math.abs(y.br-c.br)<=1),ch=near[rnd(0,near.length-1)],mm=Math.max(1,Math.round((ch.br+1)*(.7+Math.random()*.6)));x.j=now()+mm*60000;x.c=ch.n;got.push(x.n+' ('+mm+' min)')}
   return got.length?' También caen '+got.join(', ')+'.':''}
-const gangPow=()=>1+S.crew.reduce((t,m)=>t+(crewIn(m)?0:m.l),0), rivalPow=r=>r.s*r.l;
+const gangPow=()=>1+S.crew.reduce((t,m)=>t+(crewIn(m)?0:m.l),0), rivalPow=r=>[3,8,20,50,120][RIVALS.indexOf(r)];
 const avail=it=>!it.at||it.at.includes(S.city);
 // Level gating: show what's unlocked plus only the next locked tier as a teaser
 // Gear from level 6 up also needs intelligence (2 per level) unless it sets its own iq.
@@ -718,7 +718,7 @@ const ACT={
   if(S.yg>=yogaNeed()){S.yg=0;S.ygL=(S.ygL||0)+1;raiseMax('wl');up=' Tu mente se endurece: +1 voluntad máxima.'}
   gain(1);msg('Clase de yoga: −'+fmt(fee)+'.'+up,'ok',0)},
  fight(i){const f=S.foes[i];if(locked()||!f||S.en<2||S.hp<=2||S.st<fBr(f))return;S.en-=2;S.st-=fBr(f);
-  if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;const rb=f.t==='Veterano'||f.t==='Sicario'?fBr(f):1;S.st=Math.min(maxSt(),S.st+rb);S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}const x=Math.round((f.l+2)*(f.m||1));msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. +'+x+' XP.'+(d?' Recibes '+d+' de daño.':'')+' Recuperas '+rb+' de valor.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(x)}
+  if(Math.random()<fightP(f)){const g=Math.floor(f.l*90*(f.m||1)*city().m),raw=(rnd(2,8)+Math.floor(f.l/2))*fS(f).hit-Math.floor(defT()/6),d=raw>2?hd(raw):0;S.hp-=d;S.cash+=g;S.wins++;const rb=f.t==='Veterano'||f.t==='Sicario'?fBr(f):1;S.st=Math.min(maxSt(),S.st+rb);S.terr=Math.min(30,S.terr+3);const jn=(f.t==='Matón'||f.t==='Sicario')&&S.g<gangCap()&&Math.random()<.08;if(jn){S.g++;crewSync()}const x=Math.round((3+1.5*Math.sqrt(f.l))*(f.m||1));msg('Derrotas a '+f.n+' y le quitas '+fmt(g)+'. +'+x+' XP.'+(d?' Recibes '+d+' de daño.':'')+' Recuperas '+rb+' de valor.'+(jn?' Se une a tu banda.':'')+hospital(),'ok');gain(x)}
   else{const d=hd(Math.max(5,(rnd(10,18)+f.l)*fS(f).hit-Math.floor(defT()/4)));S.hp-=d;const l=Math.floor(S.cash*.05*fS(f).steal);S.cash-=l;S.wl=Math.max(0,S.wl-wlLoss(1));const x=Math.max(1,Math.round(f.l/2));msg(f.n+' te gana. Pierdes '+d+' de salud y '+fmt(l)+'. +'+x+' XP.'+hospital(),'bad');gain(x)}
   genFoes()},
  refoes(){if(locked()||S.st<1||S.en<1)return;S.st-=1;S.en-=1;
@@ -1175,7 +1175,7 @@ function tick(dt){achCheck();
   if(S.edu&&n>=S.edu.end){const c=COURSES[S.edu.i];S.iq+=c.iq;if(c.lab)S.lab+=c.lab;S.done.push(S.edu.i);S.edu=null;S.cry++;const x=Math.ceil(c.min/3);msg('Terminas «'+c.n+'»: ganas 1 gema y '+x+' XP.','ok');gain(x)}}
 function warEnd(){const W=S.war,i=W.i,r={n:W.n,s:RIVALS[i].s};S.war=null;let ups=[];const train=()=>{S.crew.forEach(m=>{m.x+=won?2:1;if(m.x>=crewNeed(m)){m.x-=crewNeed(m);m.l++;ups.push(m.n)}})};const won=Math.random()<Math.min(.95,gangPow()/(gangPow()+rivalPow(RIVALS[i]))*wlF()+(jw(2)?.05:0)+.08*iqQ()),d=hd(Math.max(won?1:2,rnd(won?1:4,won?4:8)+Math.floor(r.s/(won?25:12))-Math.floor(defT()/(won?6:4)))*(1-.3*iqQ()));S.hp-=d;const hs=' Recibes '+d+' de daño.',up=()=>ups.length?' Suben de nivel: '+ups.join(', ')+'.':'';
   if(won){const g=Math.floor(RIVALS[i].s*250*W.m*(1+.3*iqQ())),gem=Math.random()<Math.min(1,.25+r.s/200)?1:0;S.cash+=W.f+g;S.cry+=gem;const vg=Math.max(0,Math.min(i+1,maxSt()-Math.floor(S.st)));S.st+=vg;S.fear=now()+2*3600000;train();msg('Termina la guerra: tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+(W.f?' (y recuperas el fondo de '+fmt(W.f)+')':'')+(gem?' y 1 gema':'')+(vg?', y +'+vg+' de valor':'')+'. Tu nombre infunde miedo durante 2 h.'+up()+hs+hospital(),'ok');gain(Math.ceil((r.s*.5+5)*(1+.25*iqQ())))}
-  else{const l=Math.min(S.g-1,rnd(1,Math.max(1,Math.ceil(S.g*.05))));const gone=[];for(let k=0;k<l;k++)gone.push(S.crew.splice(rnd(0,S.crew.length-1),1)[0].n);S.g-=l;S.wl=Math.max(0,S.wl-wlLoss(2));train();msg('Termina la guerra: '+r.n+' os aplasta.'+(W.f?' Pierdes el fondo de '+fmt(W.f)+'.':'')+(gone.length?' Caen '+gone.join(', ')+'.':'')+up()+hs+hospital(),'bad')}}
+  else{const gone=[];S.crew=S.crew.filter(m=>{if(crewIn(m)||Math.random()>=crewLoss(m))return true;gone.push(m.n);return false});S.g-=gone.length;S.wl=Math.max(0,S.wl-wlLoss(2));train();msg('Termina la guerra: '+r.n+' os aplasta.'+(W.f?' Pierdes el fondo de '+fmt(W.f)+'.':'')+(gone.length?' Caen '+gone.join(', ')+'.':'')+up()+hs+hospital(),'bad')}}
 const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
