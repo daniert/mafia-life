@@ -898,7 +898,7 @@ function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])};
   const bc=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&crOn(i)).sort((x,y)=>y[0].xp-x[0].xp)[0];if(bc&&S.crc[bc[1]]-n>60000)at(S.crc[bc[1]],bc[0].n+' disponible');
   if(S.cool.sleep>n)at(S.cool.sleep,'Puedes volver a dormir');
   if(S.cool.fav>n&&favLeft()>0)at(S.cool.fav,'Nuevos favores políticos');
-  return L.sort((a,b)=>a[0]-b[0]).slice(0,5)}
+  return L.sort((a,b)=>a[0]-b[0]).slice(0,2)}
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
