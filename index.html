@@ -904,7 +904,10 @@ function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])},F=[];
   // Best unlocked crime still cooling down
   const bc=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&crOn(i)).sort((x,y)=>y[0].xp-x[0].xp)[0];if(bc&&S.crc[bc[1]]-n>60000)at(S.crc[bc[1]],bc[0].n+' disponible');
   if(S.cool.sleep>n)at(S.cool.sleep,'Puedes volver a dormir');
-  return F.concat(L.sort((a,b)=>a[0]-b[0])).slice(0,2)}
+  return F.concat(L.sort((a,b)=>a[0]-b[0]))}
+// Rows picked when you arrive at Inicio; anything that starts while you're there shows up on your next visit
+let cbKeys=null;
+const cbRows=()=>{const A=comeBack();if(!cbKeys)cbKeys=A.slice(0,2).map(x=>x[1]);return A.filter(x=>cbKeys.includes(x[1]))};
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
@@ -916,7 +919,7 @@ const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
 const VIEWS={
  home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>'+instBanner();
-  const cb=comeBack();if(cb.length)h+='<div class="card"><h3>Cuenta atrás</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
+  const cb=cbRows();if(cb.length)h+='<div class="card"><h3>Cuenta atrás</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
   if(S.fin)h+='<div class="card"><h3>👑 Fin de la historia</h3><p>'+FIN_T+'</p><p class="hint">Lo conseguiste el '+new Date(S.fin).toLocaleDateString('es-ES')+'. Puedes seguir jugando.</p></div>';
   const st=status(1),td=todo();
   if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
@@ -1036,7 +1039,7 @@ function head(){const de=document.documentElement;if(de.dataset.city!=String(sce
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
 let curTab=null;
 addEventListener('popstate',()=>{tab=decodeURIComponent(location.hash.slice(1))||'home';view();window.scrollTo(0,0)});
-function view(){if(!Object.hasOwn(VIEWS,tab))tab='home';if(!S.seen)S.seen=allUnl();if(tab!==curTab){markSeen(curTab);curTab=tab}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
+function view(){if(!Object.hasOwn(VIEWS,tab))tab='home';if(!S.seen)S.seen=allUnl();if(tab!==curTab){markSeen(curTab);curTab=tab;if(tab==='home')cbKeys=null}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
   $('#nav').innerHTML=NAV.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===topTab(tab)?' aria-current="true"':'')+'><span class="i" aria-hidden="true">'+icons(t[2])+'</span>'+t[1]+(badge(t[0])?NEW:'')+'</button>').join('');
   $('#side').innerHTML=MENU.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'><span>'+t[1]+'</span>'+(t[0]==='hosp'&&inHosp()||t[0]==='jail'&&inJail()?'<span class="pill">●</span>':badge(t[0])?NEW:'')+'</button>').join('');head()}
 
