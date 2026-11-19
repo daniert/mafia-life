@@ -662,7 +662,8 @@ const STAKES=[[.25,'¼'],[.5,'½'],[.75,'¾'],[1,'Todo']];let stk={d:1,t:1,f:1};
 const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));return Math.floor(v/p)*p};
 const stakeMin=()=>nice(Math.max(1000,income()*30)), amtOf=(k,i=stk[k])=>i==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[i][0])), depAmt=()=>amtOf('d'), stakeAmt=k=>{const a=amtOf(k);return a>=stakeMin()?a:0}, stkPick=k=>'<div class="seg">'+STAKES.map((x,i)=>b('stk',k+'|'+i,x[1]+'<br>'+fmt(amtOf(k,i)),false,i==stk[k]?'on sm':'alt sm')).join('')+'</div>', noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 // Political favours: turn spare money into XP. Price follows your wealth, so it stays a real choice at any level.
-const FAV_CD=2*3600000,favCost=()=>round2(Math.max(20000,wealth()*.15)),favXp=()=>Math.ceil(need()*.3);
+// Floor grows with level², so only real fortunes can afford it regularly
+const FAV_CD=4*3600000,favCost=()=>round2(Math.max(2000*S.lvl*S.lvl,wealth()*.15)),favXp=()=>Math.ceil(need()*.25);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 // Crew locked up with you help the escape: cheaper and likelier, and they break out with you
@@ -956,7 +957,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  bank(){let h=back()+lockAlert('No puedes ir al banco')+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p>';
   h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><p class="hint">Cantidad a depositar:</p>'+stkPick('d');
   h+='<div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
-  h+='<h2>Favores políticos</h2><p class="hint">Un concejal, un juez, un comisario… Todo tiene precio, y el precio sube con tu fortuna. Uno cada 2 h.</p>'+row('Comprar favores','+'+favXp()+' XP · '+fmt(favCost())+(S.cool.fav>now()?' · disponible en '+cd(S.cool.fav):''),b('favor',undefined,'Pagar',S.cash<favCost()||S.cool.fav>now()));
+  h+='<h2>Favores políticos</h2><p class="hint">Un concejal, un juez, un comisario… Todo tiene precio, y el precio sube con tu nivel y tu fortuna. Uno cada 4 h.</p>'+row('Comprar favores','+'+favXp()+' XP · '+fmt(favCost())+(S.cool.fav>now()?' · disponible en '+cd(S.cool.fav):''),b('favor',undefined,'Pagar',S.cash<favCost()||S.cool.fav>now()));
   h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza la cantidad elegida y recupérala con intereses en el banco al vencer. Mínimo '+fmt(stakeMin())+'. Uno cada vez y nunca con un préstamo pendiente.</p>'+stkPick('t');
   if(S.term)h+='<div class="alert info">🏦 <span>'+TERMS[S.term.i].n+': '+fmt(S.term.a)+' · vence en '+cd(S.term.end)+'</span></div>';
   TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt('t')<1))});
