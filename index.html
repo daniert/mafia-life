@@ -907,7 +907,8 @@ function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])},F=[];
   return F.concat(L.sort((a,b)=>a[0]-b[0]))}
 // Rows picked when you arrive at Inicio; anything that starts while you're there shows up on your next visit
 let cbKeys=null;
-const cbRows=()=>{const A=comeBack();if(!cbKeys)cbKeys=A.slice(0,2).map(x=>x[1]);return A.filter(x=>cbKeys.includes(x[1]))};
+// A row that ends is dropped for good until the next visit, so it never blinks back (e.g. energy full, then spent)
+const cbRows=()=>{const A=comeBack();if(!cbKeys)cbKeys=A.slice(0,2).map(x=>x[1]);cbKeys=cbKeys.filter(k=>A.some(x=>x[1]===k));return A.filter(x=>cbKeys.includes(x[1]))};
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
@@ -919,7 +920,7 @@ const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
 const VIEWS={
  home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>'+instBanner();
-  const cb=cbRows();if(cb.length)h+='<div class="card"><h3>Cuenta atrás</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
+  const cb=cbRows();if(cb.length)h+='<div class="card cdc" data-k="cd"><h3>Cuenta atrás</h3>'+cb.map(([t,x])=>'<div class="stat cdr" data-k="cd|'+x.replace(/"/g,'&quot;')+'"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
   if(S.fin)h+='<div class="card"><h3>👑 Fin de la historia</h3><p>'+FIN_T+'</p><p class="hint">Lo conseguiste el '+new Date(S.fin).toLocaleDateString('es-ES')+'. Puedes seguir jugando.</p></div>';
   const st=status(1),td=todo();
   if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
@@ -1063,11 +1064,17 @@ document.addEventListener('click',e=>{
 //    new rows slide in, the rest glide to their new place; new alerts and pills drop in; slot reels spin
 const FX=(()=>{
   const RM=matchMedia('(prefers-reduced-motion:reduce)'),run=()=>!RM.matches;
-  const UNIT='.row, button.act, .reels';
+  const UNIT='.row, button.act, .reels, .cdc, .cdr';
   // An alert is the same alert while only its countdown changes
   const alK=x=>x.textContent.replace(/\d+/g,'#');
-  const keyOf=u=>{if(u.classList.contains('reels'))return'reels';const b=u.matches('button')?u:u.querySelector('button[data-a]'),t=(u.querySelector('.t, b')||u).textContent.trim();
+  const keyOf=u=>{if(u.dataset.k)return u.dataset.k;if(u.classList.contains('reels'))return'reels';const b=u.matches('button')?u:u.querySelector('button[data-a]'),t=(u.querySelector('.t, b')||u).textContent.trim();
     return(b?b.dataset.a+'|'+(b.dataset.i??'')+'|':'')+t};
+  // A unit inside another (a countdown row inside its card) moves, enters and leaves with its parent
+  const par=u=>u.parentElement&&u.parentElement.closest(UNIT),isCd=u=>u.matches('.cdc, .cdr');
+  // Countdowns are secondary: they fade in once the rows have settled
+  const cdIn=u=>{if(run())u.animate([{opacity:0},{opacity:1}],{duration:320,delay:260,easing:'ease-out',fill:'backwards'})};
+  // The countdown card eases to its new height when one of its rows ends
+  const fit=(u,s)=>{if(!run()||!u.matches('.cdc'))return;const h=u.getBoundingClientRect().height;if(Math.abs(h-s.r.height)>1)u.animate([{height:s.r.height+'px',overflow:'hidden'},{height:h+'px',overflow:'hidden'}],{duration:320,easing:'cubic-bezier(.2,.8,.3,1)'})};
   const units=()=>{const m=new Map();document.querySelectorAll('#view '+UNIT.split(', ').join(', #view ')).forEach(u=>m.set(keyOf(u),u));return m};
   // Stamp text for a row that disappears, per action and outcome
   const STAMP={fight:['K.O.','Paliza'],buy:['Comprado'],veh:['Comprado'],item:['Comprado'],biz:['Comprado'],temple:['Comprado'],
@@ -1130,6 +1137,7 @@ const FX=(()=>{
     if(stamp){const s=document.createElement('span');s.className='stamp '+(ok?'ok':'bad');s.textContent=stamp;g.appendChild(s);
       }
     document.body.appendChild(g);
+    if(isCd(snap.node)){g.animate([{opacity:1},{opacity:0,transform:'scale(.98)'}],{duration:280,easing:'ease-in'}).onfinish=()=>g.remove();return g}
     const sp=g.querySelector('.stamp');if(sp)sp.animate([{transform:'translate(-50%,-50%) rotate(-12deg) scale(2.4)',opacity:0},{transform:'translate(-50%,-50%) rotate(-12deg) scale(1)',opacity:1}],{duration:260,easing:'cubic-bezier(.3,1.5,.6,1)'});
     g.animate([{opacity:1,clipPath:'inset(0 0 0 0)'},{opacity:1,clipPath:'inset(0 0 0 0)',offset:stamp?.6:.1},{opacity:1,clipPath:'inset(50% 0 50% 0)'}],{duration:stamp?1000:420,easing:'ease-in'}).onfinish=()=>g.remove();return g;
 }
@@ -1166,9 +1174,10 @@ const FX=(()=>{
     const pfx=k=>{const q=k.split('|');return p.tab==='home'&&['train','crime','travel','job'].includes(q[0])?q[0]:q.slice(0,2).join('|')},seen=new Set();let ck=p.ck,late=false,lateD=600;
     p.units.forEach((s,k)=>{let u=now.get(k),k2=k;
       if(!u&&!STAMP[p.a]&&k.includes('|'))for(const[n,v]of now)if(!p.units.has(n)&&!seen.has(n)&&pfx(n)===pfx(k)){u=v;k2=n;if(k===ck)ck=n;break}
-      if(u){seen.add(k2);glide(u,s.r.top-u.getBoundingClientRect().top)}
+      if(u){seen.add(k2);if(!par(u))glide(u,s.r.top-u.getBoundingClientRect().top);fit(u,s)}
+      else if(isCd(s.node)){const q=par(s.node);if(!q||now.has(keyOf(q)))leave(s,true)}
       else if(k===p.ck){const st=(STAMP[p.a]||[])[ok?0:1]||(STAMP[p.a]||[])[0];actFx(leave(s,ok,st),p.a,ok);late=s.r.top;lateD=st?600:300}});
-    if(p.units.size)now.forEach((u,k)=>{if(!p.units.has(k)&&!seen.has(k))enter(u,ni++,late!==false&&Math.abs(u.getBoundingClientRect().top-late)<20&&lateD)});
+    if(p.units.size)now.forEach((u,k)=>{if(p.units.has(k)||seen.has(k))return;const q=par(u);if(q&&!p.units.has(keyOf(q)))return;if(isCd(u))return cdIn(u);enter(u,ni++,late!==false&&Math.abs(u.getBoundingClientRect().top-late)<20&&lateD)});
     const cu=ck&&now.get(ck);if(cu&&run()){const N=[...cu.querySelectorAll('b,.cur,.stat b')];if(N.length===p.nums.length)N.forEach((e,k)=>{if(e.textContent!==p.nums[k])tween(e,p.nums[k],e.textContent)})}
     if(cu&&cu.classList.contains('reels'))spin(cu,reels,last&&last.k!=='bad');else if(cu&&p.a!=='slot'){react(cu,ok);actFx(cu,p.a,ok)}
     if(p.a==='slot'){const r=$('#view .reels');if(r)spin(r,reels,last&&last.k!=='bad')}
@@ -1177,8 +1186,10 @@ const FX=(()=>{
     if(S.lvl>p.v.lvl&&run())document.querySelectorAll('#view .hero .lvl, #lvl').forEach(e=>(e.id==='lvl'&&(e.style.transformOrigin='left center'),e).animate([{transform:'scale(1)'},{transform:'scale(1.6)',color:'#fff',textShadow:'0 0 18px var(--brass)'},{transform:'scale(1)'}],{duration:800,easing:'cubic-bezier(.3,1.6,.5,1)'}))});
   // Re-render from the clock (regen, timers): rows that stay glide to their new place, new ones slide in, gone ones fold away
   function soft(render){if(!run()){render();return}const m=new Map();units().forEach((u,k)=>m.set(k,{el:u.cloneNode(true),r:u.getBoundingClientRect(),node:u}));const t0=tab;render();if(tab!==t0)return;
-    const now=units(),gone=[];let ni=0;m.forEach((s,k)=>{const u=now.get(k);if(u)glide(u,s.r.top-u.getBoundingClientRect().top);else{leave(s,true);gone.push(s.r.top)}});
-    if(m.size)now.forEach((u,k)=>{if(!m.has(k)){const t=u.getBoundingClientRect().top;enter(u,ni++,gone.some(g=>Math.abs(g-t)<20)&&300)}})}
+    const now=units(),gone=[];let ni=0;m.forEach((s,k)=>{const u=now.get(k);if(u){if(!par(u))glide(u,s.r.top-u.getBoundingClientRect().top);fit(u,s)}else{const p=par(s.node);if(p&&!now.has(keyOf(p)))return;leave(s,true);gone.push(s.r.top)}});
+    if(m.size)now.forEach((u,k)=>{if(m.has(k))return;const p=par(u);if(p&&!m.has(keyOf(p)))return;
+      if(isCd(u)){cdIn(u);return}
+      const t=u.getBoundingClientRect().top;enter(u,ni++,gone.some(g=>Math.abs(g-t)<20)&&300)})}
   return {count,react,spin,soft,busy:()=>performance.now()<until}})();
 
 // Import: hidden file input, replaces the current game after confirmation
@@ -1221,7 +1232,7 @@ function warEnd(){const W=S.war,i=W.i,r={n:W.n,s:RIVALS[i].s};S.war=null;let ups
 const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;gain(0); // apply level-ups left pending by a lower XP curve
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
-  const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,!!S.war,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
+  const s=[tab==='home'?cbRows().map(x=>x[1]).join():'',!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,!!S.war,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
   if(s!==sig&&!FX.busy()){sig=s;FX.soft(view)}
   appBadge()},1000);
 setInterval(save,5000);
