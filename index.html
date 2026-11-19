@@ -886,6 +886,15 @@ function todo(){const L=[];
   else if(!locked()&&!S.edu&&COURSES.some((c,i)=>avail(c)&&!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
 const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis||x.a&&asleep()&&!AWAKE.has(x.a)?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
+// «Vuelve en…»: the next few useful moments, so short visits have a clear reason to come back
+function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])};
+  const tl=t=>{const ms=t-n;return ms<3600000?'en '+Math.max(1,Math.ceil(ms/60000))+' min':'a las '+new Date(t).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})};
+  if(S.en<maxEn())at(n+(maxEn()-S.en)*20000,'Energía llena');
+  if(S.st<maxSt())at(n+(maxSt()-S.st)*40000/stR(),'Valor lleno');
+  if(inJail())at(S.jail,'Sales de la cárcel');if(inHosp())at(S.hosp,'Te dan el alta');
+  if(S.edu)at(S.edu.end,'Terminas «'+COURSES[S.edu.i].n+'»');if(S.war)at(S.war.end,'Se decide la guerra contra '+S.war.n);
+  if(S.term)at(S.term.end,'Vence tu depósito');if(S.fund)at(S.fund.end,'Termina tu inversión');
+  return L.sort((a,b)=>a[0]-b[0]).slice(0,3).map(([t,x])=>[x,tl(t)])}
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
@@ -897,6 +906,7 @@ const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
 const VIEWS={
  home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>'+instBanner();
+  const cb=comeBack();if(cb.length)h+='<div class="card"><h3>Vuelve en…</h3>'+cb.map(x=>'<div class="stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
   if(S.fin)h+='<div class="card"><h3>👑 Fin de la historia</h3><p>'+FIN_T+'</p><p class="hint">Lo conseguiste el '+new Date(S.fin).toLocaleDateString('es-ES')+'. Puedes seguir jugando.</p></div>';
   if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
   if(S.war)h+='<div class="alert info">⚔️ <span>Guerra contra '+S.war.n+': '+cd(S.war.end)+'</span></div>';
