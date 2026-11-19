@@ -466,7 +466,7 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,wu:0,au:0,vu:0,veh:[],biz:[0,0,0,0,0,0,0,0],seen:null,mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,war:null,done:[],
- hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],fin:0,fv:{d:'',n:0},term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],l0:0,rk:'',t:Date.now()});
+ hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],fin:0,term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],l0:0,rk:'',t:Date.now()});
 function migrate(d){const o=def();
   // Untrusted input (imports): keep only known keys whose type matches the default
   for(const k of Object.keys(o))if(Object.hasOwn(d,k)&&d[k]!=null&&(o[k]===null||typeof d[k]===typeof o[k]&&Array.isArray(d[k])===Array.isArray(o[k])))o[k]=d[k];
@@ -485,9 +485,9 @@ function migrate(d){const o=def();
   if(o.veh.length>1){const b=o.veh.reduce((m,i)=>VEHICLES[i]&&(m<0||VEHICLES[i].v>VEHICLES[m].v)?i:m,-1);o.veh=b<0?[]:[b]} // only the vehicle you drive is kept, like weapons and armor
   // v3 stretched unlocks, XP curve and prices: started games keep their current pace, unlocks and rank title
   if((d.v||1)<3){o.l0=o.lvl;o.rk=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']].filter(r=>o.lvl>=r[0]).pop()[1]}
-  // v4: foes now scale with you (drop the stored ones, made with the old formula), softer early levels, political favours and an ending at level 80.
+  // v4: foes now scale with you (drop the stored ones, made with the old formula), softer early levels and an ending at level 80.
   // Nothing is taken away: XP needs only go down, penalties only get softer, and players already past level 80 get the ending on load.
-  if((d.v||1)<4){o.foes=[];if((d.v||1)>=2)o.log.unshift({t:Date.now(),k:'info',m:'Novedades: los rivales callejeros se ajustan a tu fuerza, los primeros niveles son más rápidos y suaves, en el banco puedes comprar favores políticos y la historia tiene final en el nivel 80. No pierdes nada de tu partida.'})}
+  if((d.v||1)<4){o.foes=[];if((d.v||1)>=2)o.log.unshift({t:Date.now(),k:'info',m:'Novedades: los rivales callejeros se ajustan a tu fuerza, los primeros niveles son más rápidos y suaves y la historia tiene final en el nivel 80. No pierdes nada de tu partida.'})}
   legacy(o);return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let instEv=null;const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -666,9 +666,6 @@ const FUNDS=[{n:'Bonos del puerto',min:60,lo:-.05,hi:.2},{n:'Acciones de la navi
 const STAKES=[[.25,'¼'],[.5,'½'],[.75,'¾'],[1,'Todo']];let stk={d:1,t:1,f:1};
 const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));return Math.floor(v/p)*p};
 const stakeMin=()=>nice(Math.max(1000,income()*30)), amtOf=(k,i=stk[k])=>i==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[i][0])), depAmt=()=>amtOf('d'), stakeAmt=k=>{const a=amtOf(k);return a>=stakeMin()?a:0}, stkPick=k=>'<div class="seg">'+STAKES.map((x,i)=>b('stk',k+'|'+i,x[1]+'<br>'+fmt(amtOf(k,i)),false,i==stk[k]?'on sm':'alt sm')).join('')+'</div>', noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
-// Political favours: turn spare money into XP. Price follows your wealth, so it stays a real choice at any level.
-// Floor grows with level², so only real fortunes can afford it regularly
-const FAV_CD=4*3600000,favCost=()=>round2(Math.max(2000*S.lvl*S.lvl,wealth()*.15)),favXp=()=>Math.ceil(need()*.25),FAV_DAY=3,favLeft=()=>FAV_DAY-(S.fv.d===today()?S.fv.n:0);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 // Crew locked up with you help the escape: cheaper and likelier, and they break out with you
@@ -775,7 +772,6 @@ const ACT={
   else if(r<.7){const i=rnd(0,ITEMS.length-1);S.inv[i]=(S.inv[i]||0)+1;msg('Caja de la suerte: '+ITEMS[i].n+'.','ok')}
   else if(r<.85){const x=Math.ceil(need()*.1);msg('Caja de la suerte: '+x+' XP.','ok');gain(x)}
   else msg('Caja de la suerte: vacía. Mala suerte.','bad',0)},
- favor(){const c=favCost();if(locked()||S.cash<c||S.cool.fav>now()||favLeft()<1)return;S.cash-=c;if(S.fv.d!==today())S.fv={d:today(),n:0};S.fv.n++;S.cool.fav=now()+FAV_CD;const x=favXp();msg('Compras favores en el ayuntamiento por '+fmt(c)+'. +'+x+' XP.','ok');gain(x)},
  dep(){const a=depAmt();if(a<1)return;const fee=Math.ceil(a*.05);S.cash-=a;S.bank+=a-fee;msg('Depositas '+fmt(a-fee)+' (comisión '+fmt(fee)+').','info',0)},
  stk(a){const[k,i]=a.split('|');stk[k]=+i},
  term(i){const t=TERMS[+i],a=stakeAmt('t');if(S.term||noInvest()||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
@@ -826,14 +822,14 @@ function row(t,d,btn,lock){const x=desc(d);
     (lock?'':'<div class="acts"><div class="btnw">'+btn+'</div>'+x.chips+'</div>')+'</div>'}
 // Actions that need you out on the street: blocked while in jail or hospital
 const AWAKE=new Set(['wake','bet','exp','imp','reset','install','instNo']);
-const STREET=new Set(['buy','up','veh','item','biz','temple','sellgem','recruit','heal','favor','dep','wd','term','fund','repay','loan','use']);
+const STREET=new Set(['buy','up','veh','item','biz','temple','sellgem','recruit','heal','dep','wd','term','fund','repay','loan','use']);
 const where=()=>inJail()?'la cárcel':'el hospital';
 const lockAlert=t=>locked()?'<div class="alert">'+(inJail()?'🚔':'🏥')+' <span>'+t+' mientras estás en '+where()+'. Espera a salir.</span></div>':'';
 function b(act,arg,label,dis,cls){dis=dis||locked()&&STREET.has(act)||asleep()&&!AWAKE.has(act);return '<button class="btn'+(cls?' '+cls:'')+'" data-a="'+act+'"'+(arg!==undefined?' data-i="'+arg+'"':'')+(dis?' disabled':'')+'>'+label+'</button>'}
 const back=()=>'<button class="back" data-tab="explore">← Explorar</button>';
-function status(){let h='';
-  if(inHosp())h+='<div class="alert">🏥 <span>En el hospital: '+cd(S.hosp)+'</span>'+(tab!=='hosp'?'<button class="btn sm alt" data-tab="hosp">Ver</button>':'')+'</div>';
-  if(inJail())h+='<div class="alert">🚔 <span>En la cárcel: '+cd(S.jail)+'</span>'+(tab!=='jail'?'<button class="btn sm alt" data-tab="jail">Ver</button>':'')+'</div>';
+function status(home){let h='';
+  if(inHosp()&&!home)h+='<div class="alert">🏥 <span>En el hospital: '+cd(S.hosp)+'</span>'+(tab!=='hosp'?'<button class="btn sm alt" data-tab="hosp">Ver</button>':'')+'</div>';
+  if(inJail()&&!home)h+='<div class="alert">🚔 <span>En la cárcel: '+cd(S.jail)+'</span>'+(tab!=='jail'?'<button class="btn sm alt" data-tab="jail">Ver</button>':'')+'</div>';
   if(asleep())h+='<div class="alert info">😴 <span>Durmiendo: '+cd(S.sleep)+'</span>'+b('wake',undefined,'Despertar',false,'sm alt')+'</div>';
   return h}
 function stake(){const V=[100,1000,10000,100000];if(S.cash<bet)bet=V.filter(v=>v<=S.cash).pop()||V[0];return '<div class="btns">'+V.map(v=>b('bet',v,fmt(v),S.cash<v,bet===v?'on sm':'alt sm')).join('')+'</div>'}
@@ -872,6 +868,13 @@ function markSeen(s){if(UNL[s])unl(s).forEach(x=>{if(!S.seen.includes(x[0]))S.se
 function todo(){const L=[];
   Object.keys(UNL).forEach(s=>{const f=fresh(s);if(f.length)L.push({hot:1,ic:'✨',t:'Novedad en '+SECN[s],d:f.map(x=>x[1]).slice(0,3).join(', ')+(f.length>3?' y '+(f.length-3)+' más':''),tab:s,go:'Ver'})});
   if(S.sp)L.push({hot:1,ic:'📈',t:'Tienes '+pl(S.sp,'punto')+' de habilidad',d:'Sube tu energía, valor, salud o voluntad máximas',tab:'me',go:'Gastar'});
+  if(inJail()&&!inHosp()){
+    const jc=JCRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crOn('j'+i)&&S.en>=c.en&&S.hp>hd(c.dm)).sort((x,y)=>y[0].xp-x[0].xp||y[0].b-x[0].b)[0];
+    if(jc){const [c,i]=jc;L.push({a:'jcrime',i,ic:'💼',t:c.n,d:'⚡'+c.en+' · '+fmt(c.a*S.lvl)+' a '+fmt(c.b*S.lvl),go:'Hacer'})}
+    else{const nx=JCRIMES.map((c,i)=>i).filter(i=>crOn('j'+i)).sort((a,b)=>S.crc['j'+a]-S.crc['j'+b])[0];if(nx!==undefined)L.push({a:'jcrime',i:nx,dis:1,ic:'💼',t:JCRIMES[nx].n,d:'Crimen de cárcel',go:cd(S.crc['j'+nx])})}
+    L.push({a:'escape',i:0,dis:S.en<escEn()||S.st<escSt(),ic:'🚔',t:'Intentar la fuga',d:'⚡'+escEn()+' · 💪'+escSt()+' · '+Math.round(escP()*100)+'% de éxito',go:'Fugarse'});
+    L.push({a:'out',i:'jail|m',dis:S.cash<outCash(S.jail),ic:'🏦',t:'Pagar la fianza',d:fmt(outCash(S.jail))+' · sales ahora',go:'Pagar'});
+    const cm=S.crew.filter(crewIn);if(cm.length)L.push({tab:'jail',ic:'🔫',t:'Tu banda entre rejas',d:pl(cm.length,'miembro')+' dentro contigo',go:'Ver'})}
   if(locked())return L;
   const cs=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&!crOn(i)).sort((x,y)=>y[0].l-x[0].l),ok=cs.find(([c])=>S.st>=crBr(c)&&S.en>=crEn(c)&&S.wl>=crWl(c)&&S.hp>crHp(c))||cs[0];
   if(ok){const [c,i]=ok,can=S.st>=crBr(c)&&S.en>=crEn(c)&&S.wl>=crWl(c)&&S.hp>crHp(c),m=city().m*(1+S.terr/100);
@@ -890,18 +893,18 @@ function todo(){const L=[];
   return L}
 const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis||x.a&&asleep()&&!AWAKE.has(x.a)?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
 // «Vuelve en…»: the next few useful moments, so short visits have a clear reason to come back
-function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])};
+function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])},F=[];
+  if(inHosp())F.push([S.hosp,'Te dan el alta']);if(inJail())F.push([S.jail,'Sales de la cárcel']);
   if(S.en<maxEn())at(n+(maxEn()-S.en)*20000,'Energía llena');
   if(S.st<maxSt())at(n+(maxSt()-S.st)*40000/stR(),'Valor lleno');
-  if(S.edu)at(S.edu.end,'Terminas «'+COURSES[S.edu.i].n+'»');if(S.war)at(S.war.end,'Guerra contra '+S.war.n);
+  if(S.edu&&!inJail())at(S.edu.end,'Terminas «'+COURSES[S.edu.i].n+'»');if(S.war)at(S.war.end,'Guerra contra '+S.war.n);
   if(S.term)at(S.term.end,'Vence tu depósito');if(S.fund)at(S.fund.end,'Termina tu inversión');
   if(S.loan)at(S.loan.end,S.loan.v?'Vuelven los cobradores':'Vence el préstamo');
   const cj=S.crew.filter(crewIn).sort((a,b)=>a.j-b.j)[0];if(cj)at(cj.j,cj.n+' sale de la cárcel');
   // Best unlocked crime still cooling down
   const bc=CRIMES.map((c,i)=>[c,i]).filter(([c,i])=>!crLk(c)&&crOn(i)).sort((x,y)=>y[0].xp-x[0].xp)[0];if(bc&&S.crc[bc[1]]-n>60000)at(S.crc[bc[1]],bc[0].n+' disponible');
   if(S.cool.sleep>n)at(S.cool.sleep,'Puedes volver a dormir');
-  if(S.cool.fav>n&&favLeft()>0)at(S.cool.fav,'Nuevos favores políticos');
-  return L.sort((a,b)=>a[0]-b[0]).slice(0,2)}
+  return F.concat(L.sort((a,b)=>a[0]-b[0])).slice(0,2)}
 function nextGoal(){const R=RANKS.find(r=>r[0]>S.lvl),L=[...CRIMES,...CITIES].filter(c=>c.l>S.lvl).sort((a,b)=>a.l-b.l)[0];
   return [R?'«'+R[1]+'» en nivel '+R[0]:'',L?L.n+' en nivel '+L.l:''].filter(Boolean).join(' · ')}
 
@@ -915,7 +918,7 @@ const VIEWS={
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>'+instBanner();
   const cb=comeBack();if(cb.length)h+='<div class="card"><h3>Vuelve en…</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
   if(S.fin)h+='<div class="card"><h3>👑 Fin de la historia</h3><p>'+FIN_T+'</p><p class="hint">Lo conseguiste el '+new Date(S.fin).toLocaleDateString('es-ES')+'. Puedes seguir jugando.</p></div>';
-  const st=status(),td=todo();
+  const st=status(1),td=todo();
   if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
   h+='<div class="card"><h3>Estadísticas</h3><div class="sgrid">'+STATS.map(s=>'<div><small>'+s[1]+'</small><b>'+f1(statV(s[0]))+'</b></div>').join('')+
    '<div class="tot"><small>Total</small><b>'+f1(STATS.reduce((t,s)=>t+statV(s[0]),0))+'</b></div></div></div>';
@@ -962,7 +965,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
   JOBS.forEach((j,i)=>{const lk=S.lab<j.lab||S.iq<j.iq,cur=S.job===i,rq=[j.lab?'Trabajo '+j.lab:'',j.iq?'Inteligencia '+j.iq:''].filter(Boolean).join(' e ');h+=row(j.n+(lk?'':newTag('job','j'+i)),fmt(jobPay(i))+'/min'+(rq?' · requiere '+rq:''),b('job',i,cur?'Actual':i<S.job?'Superado':'Aceptar',lk||cur||i<S.job||locked()),lk)});
   return h},
  school(){let h=back()+'<h2>Escuela</h2><p class="hint">Un curso cada vez. Avanza en tiempo real, aunque cierres el juego. Al terminar ganas 1 gema.</p>';
-  if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+cd(S.edu.end)+'</span></div>';
+  if(S.edu)h+='<div class="alert info">🎓 <span>'+COURSES[S.edu.i].n+': '+(inJail()?'en pausa mientras estés en la cárcel':cd(S.edu.end))+'</span></div>';
   if(S.war)h+='<div class="alert info">⚔️ <span>Guerra contra '+S.war.n+': '+cd(S.war.end)+'</span></div>';
   COURSES.forEach((c,i)=>{const d=S.done.includes(i),far=!d&&!avail(c);if(far)return h+=row(c.n,'Solo en '+c.at.map(k=>CITIES[k].n).join(', ')+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,'Matricular',true),true);h+=row(c.n+(avail(c)?excl(c):''),d?'Completado':'⚡'+scEn(c)+' · ✊'+scWl(c)+' · '+fmt(c.c)+' · '+c.min+' min',b('study',i,d?'Hecho':'Matricular',d||!!S.edu||locked()||S.cash<c.c||S.en<scEn(c)||S.wl<scWl(c)),d)});return h},
  hosp(){let h=back()+status()+'<h2>Hospital</h2>';
@@ -974,7 +977,6 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  bank(){let h=back()+lockAlert('No puedes ir al banco')+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p>';
   h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><p class="hint">Cantidad a depositar:</p>'+stkPick('d');
   h+='<div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
-  h+='<h2>Favores políticos</h2><p class="hint">Un concejal, un juez, un comisario… Todo tiene precio, y el precio sube con tu nivel y tu fortuna. Uno cada 4 h y hasta '+FAV_DAY+' al día.</p>'+row('Comprar favores','+'+favXp()+' XP · '+fmt(favCost())+' · quedan '+favLeft()+' hoy'+(S.cool.fav>now()?' · disponible en '+cd(S.cool.fav):''),b('favor',undefined,'Pagar',S.cash<favCost()||S.cool.fav>now()||favLeft()<1));
   h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza la cantidad elegida y recupérala con intereses en el banco al vencer. Mínimo '+fmt(stakeMin())+'. Uno cada vez y nunca con un préstamo pendiente.</p>'+stkPick('t');
   if(S.term)h+='<div class="alert info">🏦 <span>'+TERMS[S.term.i].n+': '+fmt(S.term.a)+' · vence en '+cd(S.term.end)+'</span></div>';
   TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt('t')<1))});
@@ -1191,6 +1193,8 @@ const ACH=[['m1','Tu primer millón',()=>S.cash+S.bank>=1e6],['w10','10 peleas g
  ['w100','100 peleas ganadas',()=>S.wins>=100],['v1','Tu primer vehículo',()=>S.veh.length>0],['g10','Banda de 10 miembros',()=>S.g>=10]];
 function achCheck(){for(const[id,n,ok]of ACH)if(!S.ach.includes(id)&&ok()){S.ach.push(id);const x=Math.ceil(need()*.25);msg('Logro: '+n+'. +'+x+' XP.','ok');gain(x)}}
 function tick(dt){achCheck();
+  // School pauses while you're in jail: push the end back by the jailed part of this tick
+  {const n1=now(),j=Math.max(0,Math.min(n1,S.jail)-(n1-dt*1000));if(S.edu&&j>0)S.edu.end+=j}
   S.en=Math.min(maxEn(),S.en+dt/20);S.st=Math.min(maxSt(),S.st+dt/40*stR());S.hp=Math.min(maxHp(),S.hp+dt/60);S.wl=Math.min(maxWl(),S.wl+dt/45*(1+.15*iqQ()));S.terr=Math.max(0,S.terr-dt/120);
   const n0=now(),sd=S.sleep?Math.max(0,(Math.min(n0,S.sleep)-(n0-dt*1000))/1000):0;
   if(sd){S.en=Math.min(maxEn(),S.en+sd*(SLEEP_X-1)/20);S.hp=Math.min(maxHp(),S.hp+sd*(SLEEP_X-1)/60);S.st=Math.min(maxSt(),S.st+sd*(SLEEP_X-1)/40*stR())}
