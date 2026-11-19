@@ -892,7 +892,7 @@ function todo(){const L=[];
   else if(!locked()&&!S.edu&&COURSES.some((c,i)=>avail(c)&&!S.done.includes(i)&&S.cash>=c.c&&S.en>=scEn(c)&&S.wl>=scWl(c)))L.push({ic:'🎓',t:'Escuela',d:'Sube tu inteligencia y desbloquea crímenes y negocios',tab:'school',go:'Ver'});
   return L}
 const actBtn=x=>'<button class="act'+(x.hot?' hot':'')+'"'+(x.tab?' data-tab="'+x.tab+'"':' data-a="'+x.a+'" data-i="'+x.i+'"')+(x.dis||x.a&&asleep()&&!AWAKE.has(x.a)?' disabled':'')+'><span class="i">'+x.ic+'</span><span><b>'+x.t+'</b><small>'+x.d+'</small></span><span class="go">'+x.go+'</span></button>';
-// «Vuelve en…»: the next few useful moments, so short visits have a clear reason to come back
+// «Cuenta atrás»: the next useful moments, so short visits have a clear reason to come back
 function comeBack(){const n=now(),L=[],at=(t,x)=>{if(t>n)L.push([t,x])},F=[];
   if(inHosp())F.push([S.hosp,'Te dan el alta']);if(inJail())F.push([S.jail,'Sales de la cárcel']);
   if(S.en<maxEn())at(n+(maxEn()-S.en)*20000,'Energía llena');
@@ -916,7 +916,7 @@ const byV=L=>L.map((w,i)=>[w,i]).sort((x,y)=>x[0].v-y[0].v),
 const VIEWS={
  home(){const ng=nextGoal();let h='<div class="hero"><div class="hhd"><div><div class="eyb">'+city().n+'</div><h2>'+rank()+'</h2></div><div class="lvl">'+S.lvl+'<small>Nivel</small></div></div>'+
    '<div class="xpbar"><i style="width:'+Math.min(100,S.xp/need()*100)+'%"></i></div><p>⭐ '+Math.floor(S.xp)+' / '+need()+' XP'+(ng?' · Próximo: '+ng:'')+'</p></div>'+instBanner();
-  const cb=comeBack();if(cb.length)h+='<div class="card"><h3>Vuelve en…</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
+  const cb=comeBack();if(cb.length)h+='<div class="card"><h3>Cuenta atrás</h3>'+cb.map(([t,x])=>'<div class="stat"><span style="min-width:0">'+x+'</span><b style="white-space:nowrap">'+cd(t)+'</b></div>').join('')+'</div>';
   if(S.fin)h+='<div class="card"><h3>👑 Fin de la historia</h3><p>'+FIN_T+'</p><p class="hint">Lo conseguiste el '+new Date(S.fin).toLocaleDateString('es-ES')+'. Puedes seguir jugando.</p></div>';
   const st=status(1),td=todo();
   if(st||td.length)h+='<h3>Ahora mismo</h3>'+st+(td.length?'<div class="todo">'+td.map(actBtn).join('')+'</div>':'');
