@@ -466,7 +466,7 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,wu:0,au:0,vu:0,veh:[],biz:[0,0,0,0,0,0,0,0],seen:null,mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,war:null,done:[],
- hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],fin:0,term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],l0:0,rk:'',t:Date.now()});
+ hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],fin:0,fv:{d:'',n:0},term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],l0:0,rk:'',t:Date.now()});
 function migrate(d){const o=def();
   // Untrusted input (imports): keep only known keys whose type matches the default
   for(const k of Object.keys(o))if(Object.hasOwn(d,k)&&d[k]!=null&&(o[k]===null||typeof d[k]===typeof o[k]&&Array.isArray(d[k])===Array.isArray(o[k])))o[k]=d[k];
@@ -510,7 +510,9 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),p=n=>String(n).padStart(2,'0');return h?h+':'+p(m)+':'+p(s%60):m+':'+p(s%60)};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>Math.round(30*S.lvl*(1+Math.max(0,S.lvl-S.l0)/25));
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>Math.round(30*S.lvl*(1+Math.max(0,S.lvl-S.l0)/25)*easeF());
+// Early levels need less XP (35% at level 1, full from level 13): quick hook, steeper climb later
+const easeF=()=>Math.min(1,.35+S.lvl*.05);
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5*(S.jw&&S.jw.includes(3)?.85:1)));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -663,7 +665,7 @@ const nice=v=>{if(v<1)return 0;const p=Math.pow(10,Math.floor(Math.log10(v)));re
 const stakeMin=()=>nice(Math.max(1000,income()*30)), amtOf=(k,i=stk[k])=>i==3?Math.floor(S.cash):nice(Math.floor(S.cash*STAKES[i][0])), depAmt=()=>amtOf('d'), stakeAmt=k=>{const a=amtOf(k);return a>=stakeMin()?a:0}, stkPick=k=>'<div class="seg">'+STAKES.map((x,i)=>b('stk',k+'|'+i,x[1]+'<br>'+fmt(amtOf(k,i)),false,i==stk[k]?'on sm':'alt sm')).join('')+'</div>', noInvest=()=>!!S.loan, noLoan=()=>!!(S.term||S.fund);
 // Political favours: turn spare money into XP. Price follows your wealth, so it stays a real choice at any level.
 // Floor grows with level², so only real fortunes can afford it regularly
-const FAV_CD=4*3600000,favCost=()=>round2(Math.max(2000*S.lvl*S.lvl,wealth()*.15)),favXp=()=>Math.ceil(need()*.25);
+const FAV_CD=4*3600000,favCost=()=>round2(Math.max(2000*S.lvl*S.lvl,wealth()*.15)),favXp=()=>Math.ceil(need()*.25),FAV_DAY=3,favLeft=()=>FAV_DAY-(S.fv.d===today()?S.fv.n:0);
 const loanMax=()=>S.lvl*5000, LOAN_R=.2, LOAN_MIN=480; // 8 h to repay; unpaid debt gets the same 8 h between collector visits
 // Escape cost scales with time left: about half of what you'd regenerate while waiting (en 1/25s, valor 1/40s), capped at 40% of max
 // Crew locked up with you help the escape: cheaper and likelier, and they break out with you
@@ -770,7 +772,7 @@ const ACT={
   else if(r<.7){const i=rnd(0,ITEMS.length-1);S.inv[i]=(S.inv[i]||0)+1;msg('Caja de la suerte: '+ITEMS[i].n+'.','ok')}
   else if(r<.85){const x=Math.ceil(need()*.1);msg('Caja de la suerte: '+x+' XP.','ok');gain(x)}
   else msg('Caja de la suerte: vacía. Mala suerte.','bad',0)},
- favor(){const c=favCost();if(locked()||S.cash<c||S.cool.fav>now())return;S.cash-=c;S.cool.fav=now()+FAV_CD;const x=favXp();msg('Compras favores en el ayuntamiento por '+fmt(c)+'. +'+x+' XP.','ok');gain(x)},
+ favor(){const c=favCost();if(locked()||S.cash<c||S.cool.fav>now()||favLeft()<1)return;S.cash-=c;if(S.fv.d!==today())S.fv={d:today(),n:0};S.fv.n++;S.cool.fav=now()+FAV_CD;const x=favXp();msg('Compras favores en el ayuntamiento por '+fmt(c)+'. +'+x+' XP.','ok');gain(x)},
  dep(){const a=depAmt();if(a<1)return;const fee=Math.ceil(a*.05);S.cash-=a;S.bank+=a-fee;msg('Depositas '+fmt(a-fee)+' (comisión '+fmt(fee)+').','info',0)},
  stk(a){const[k,i]=a.split('|');stk[k]=+i},
  term(i){const t=TERMS[+i],a=stakeAmt('t');if(S.term||noInvest()||a<1)return;S.cash-=a;S.term={i:+i,a,end:now()+t.min*60000};msg('Inmovilizas '+fmt(a)+' a '+t.n.toLowerCase()+'.','info',0)},
@@ -957,7 +959,7 @@ h+='<div class="btns">'+b('exp',undefined,'Exportar partida')+b('imp',undefined,
  bank(){let h=back()+lockAlert('No puedes ir al banco')+'<h2>Banco</h2><p class="hint">El banco guarda tu dinero a salvo de peleas y del hospital. Depositar cuesta un 5%.</p>';
   h+='<div class="card"><div class="stat"><span>En el banco</span><b>'+fmt(S.bank)+'</b></div></div><p class="hint">Cantidad a depositar:</p>'+stkPick('d');
   h+='<div class="btns">'+b('dep',undefined,'Depositar '+(depAmt()?fmt(depAmt()):''),depAmt()<1)+b('wd',undefined,'Retirar todo',S.bank<1,'alt')+'</div>';
-  h+='<h2>Favores políticos</h2><p class="hint">Un concejal, un juez, un comisario… Todo tiene precio, y el precio sube con tu nivel y tu fortuna. Uno cada 4 h.</p>'+row('Comprar favores','+'+favXp()+' XP · '+fmt(favCost())+(S.cool.fav>now()?' · disponible en '+cd(S.cool.fav):''),b('favor',undefined,'Pagar',S.cash<favCost()||S.cool.fav>now()));
+  h+='<h2>Favores políticos</h2><p class="hint">Un concejal, un juez, un comisario… Todo tiene precio, y el precio sube con tu nivel y tu fortuna. Uno cada 4 h y hasta '+FAV_DAY+' al día.</p>'+row('Comprar favores','+'+favXp()+' XP · '+fmt(favCost())+' · quedan '+favLeft()+' hoy'+(S.cool.fav>now()?' · disponible en '+cd(S.cool.fav):''),b('favor',undefined,'Pagar',S.cash<favCost()||S.cool.fav>now()||favLeft()<1));
   h+='<h2>Depósitos a plazo</h2><p class="hint">Inmoviliza la cantidad elegida y recupérala con intereses en el banco al vencer. Mínimo '+fmt(stakeMin())+'. Uno cada vez y nunca con un préstamo pendiente.</p>'+stkPick('t');
   if(S.term)h+='<div class="alert info">🏦 <span>'+TERMS[S.term.i].n+': '+fmt(S.term.a)+' · vence en '+cd(S.term.end)+'</span></div>';
   TERMS.forEach((t,i)=>{h+=row(t.n,t.min+' min · +'+Math.round(t.r*100)+'%',b('term',i,'Contratar',!!S.term||noInvest()||stakeAmt('t')<1))});
