@@ -309,7 +309,7 @@ nav.bottom button .new{position:absolute;top:5px;left:calc(50% + 8px)}
 <nav class="bottom" aria-label="Secciones"><div class="in" id="nav"></div></nav>
 
 <script>
-const KEY='mafialife_save_v1', VER=3;
+const KEY='mafialife_save_v1', VER=4;
 const CITIES=[
  {n:'Nueva York',m:1,c:0,l:1,
   fn:['Tony','Sal','Vinnie','Paulie','Mickey','Frankie','Joey','Sonny'],sn:['Gambino','Lucchese','Moretti','Russo','Castellano','DeLuca'],
@@ -485,6 +485,9 @@ function migrate(d){const o=def();
   if(o.veh.length>1){const b=o.veh.reduce((m,i)=>VEHICLES[i]&&(m<0||VEHICLES[i].v>VEHICLES[m].v)?i:m,-1);o.veh=b<0?[]:[b]} // only the vehicle you drive is kept, like weapons and armor
   // v3 stretched unlocks, XP curve and prices: started games keep their current pace, unlocks and rank title
   if((d.v||1)<3){o.l0=o.lvl;o.rk=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']].filter(r=>o.lvl>=r[0]).pop()[1]}
+  // v4: foes now scale with you (drop the stored ones, made with the old formula), softer early levels, political favours and an ending at level 80.
+  // Nothing is taken away: XP needs only go down, penalties only get softer, and players already past level 80 get the ending on load.
+  if((d.v||1)<4){o.foes=[];if((d.v||1)>=2)o.log.unshift({t:Date.now(),k:'info',m:'Novedades: los rivales callejeros se ajustan a tu fuerza, los primeros niveles son más rápidos y suaves, en el banco puedes comprar favores políticos y la historia tiene final en el nivel 80. No pierdes nada de tu partida.'})}
   legacy(o);return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let instEv=null;const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -1208,7 +1211,7 @@ function tick(dt){achCheck();
 function warEnd(){const W=S.war,i=W.i,r={n:W.n,s:RIVALS[i].s};S.war=null;let ups=[];const train=()=>{S.crew.forEach(m=>{m.x+=won?2:1;if(m.x>=crewNeed(m)){m.x-=crewNeed(m);m.l++;ups.push(m.n)}})};const won=Math.random()<Math.min(.95,gangPow()/(gangPow()+rivalPow(RIVALS[i]))*wlF()+(jw(2)?.05:0)+.08*iqQ()),d=hd(Math.max(won?1:2,rnd(won?1:4,won?4:8)+Math.floor(r.s/(won?25:12))-Math.floor(defT()/(won?6:4)))*(1-.3*iqQ()));S.hp-=d;const hs=' Recibes '+d+' de daño.',up=()=>ups.length?' Suben de nivel: '+ups.join(', ')+'.':'';
   if(won){const g=Math.floor(RIVALS[i].s*250*W.m*(1+.3*iqQ())),gem=Math.random()<Math.min(1,.25+r.s/200)?1:0;S.cash+=W.f+g;S.cry+=gem;const vg=Math.max(0,Math.min(i+1,maxSt()-Math.floor(S.st)));S.st+=vg;S.fear=now()+2*3600000;train();msg('Termina la guerra: tu banda arrasa a '+r.n+'. Botín: '+fmt(g)+(W.f?' (y recuperas el fondo de '+fmt(W.f)+')':'')+(gem?' y 1 gema':'')+(vg?', y +'+vg+' de valor':'')+'. Tu nombre infunde miedo durante 2 h.'+up()+hs+hospital(),'ok');gain(Math.ceil((r.s*.5+5)*(1+.25*iqQ())))}
   else{const gone=[];S.crew=S.crew.filter(m=>{if(crewIn(m)||Math.random()>=crewLoss(m))return true;gone.push(m.n);return false});S.g-=gone.length;S.wl=Math.max(0,S.wl-wlLoss(2));train();msg('Termina la guerra: '+r.n+' os aplasta.'+(W.f?' Pierdes el fondo de '+fmt(W.f)+'.':'')+(gone.length?' Caen '+gone.join(', ')+'.':'')+up()+hs+hospital(),'bad')}}
-const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;
+const now0=now();tick(Math.min(21600,(now0-S.t)/1000));S.t=now0;gain(0); // apply level-ups left pending by a lower XP curve
 let sig='',beat=0;
 setInterval(()=>{const n=now();tick((n-S.t)/1000);S.t=n;head();beat++;
   const s=[!!S.term,!!S.fund,!!S.loan,Math.floor(S.en),Math.floor(S.st),Math.floor(S.hp),Math.floor(S.wl/2),inHosp(),inJail(),!!S.edu,!!S.war,S.fear>now(),S.cool.gym>now(),asleep(),S.cool.sleep>now(),Object.keys(S.crc).filter(crOn).length,income()&&beat%10===0?beat:0].join('|');
