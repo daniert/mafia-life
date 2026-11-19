@@ -781,8 +781,8 @@ const ACT={
  wd(){S.cash+=S.bank;S.bank=0;msg('Retiras todo tu dinero del banco.','info',0)},
  exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='mafialife-nivel'+S.lvl+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);msg('Partida exportada.','info',0)},
  imp(){$('#impf').click()},
- instNo(){try{localStorage.setItem(INST_NO,Date.now())}catch(_){}view()},
- install(){const e=instEv;instEv=null;e.prompt();e.userChoice.then(c=>{if(c.outcome==='accepted')msg('App instalada.','ok',0);view()})},
+ instNo(){try{localStorage.setItem(INST_NO,Date.now())}catch(_){}FX.soft(view)},
+ install(){const e=instEv;instEv=null;e.prompt();e.userChoice.then(c=>{if(c.outcome==='accepted')msg('App instalada.','ok',0);FX.soft(view)})},
  reset(){if(confirm('¿Borrar la partida y empezar de cero?')){S=def();legacy(S);genFoes();tab='home';msg('Nueva partida. Bienvenido a la familia.','info',0)}}
 };
 
@@ -1040,7 +1040,9 @@ function head(){const de=document.documentElement;if(de.dataset.city!=String(sce
   document.querySelectorAll('[data-cd]').forEach(e=>e.textContent=fmtT(+e.dataset.cd-now()))}
 let curTab=null;
 addEventListener('popstate',()=>{tab=decodeURIComponent(location.hash.slice(1))||'home';view();window.scrollTo(0,0)});
-function view(){if(!Object.hasOwn(VIEWS,tab))tab='home';if(!S.seen)S.seen=allUnl();if(tab!==curTab){markSeen(curTab);curTab=tab;if(tab==='home')cbKeys=null}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
+function view(){if(!Object.hasOwn(VIEWS,tab))tab='home';if(!S.seen)S.seen=allUnl();const arrived=tab!==curTab;if(arrived){markSeen(curTab);curTab=tab;if(tab==='home')cbKeys=null}if(location.hash.slice(1)!==tab)history.replaceState(null,'','#'+tab);if(!S.foes.length)genFoes();$('#view').innerHTML=icons(VIEWS[tab]());
+  // Arriving at Inicio: the countdown card fades in a moment after the page
+  if(arrived&&tab==='home'&&typeof FX!=='undefined'){const c=$('#view .cdc');if(c)FX.cdIn(c)}
   $('#nav').innerHTML=NAV.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===topTab(tab)?' aria-current="true"':'')+'><span class="i" aria-hidden="true">'+icons(t[2])+'</span>'+t[1]+(badge(t[0])?NEW:'')+'</button>').join('');
   $('#side').innerHTML=MENU.map(t=>'<button data-tab="'+t[0]+'"'+(t[0]===tab?' aria-current="true"':'')+'><span>'+t[1]+'</span>'+(t[0]==='hosp'&&inHosp()||t[0]==='jail'&&inJail()?'<span class="pill">●</span>':badge(t[0])?NEW:'')+'</button>').join('');head()}
 
@@ -1190,7 +1192,7 @@ const FX=(()=>{
     if(m.size)now.forEach((u,k)=>{if(m.has(k))return;const p=par(u);if(p&&!m.has(keyOf(p)))return;
       if(isCd(u)){cdIn(u);return}
       const t=u.getBoundingClientRect().top;enter(u,ni++,gone.some(g=>Math.abs(g-t)<20)&&300)})}
-  return {count,react,spin,soft,busy:()=>performance.now()<until}})();
+  return {count,react,spin,soft,cdIn,busy:()=>performance.now()<until}})();
 
 // Import: hidden file input, replaces the current game after confirmation
 const impf=Object.assign(document.createElement('input'),{type:'file',accept:'.json,application/json',id:'impf',hidden:true});
@@ -1198,9 +1200,9 @@ document.body.appendChild(impf);
 impf.addEventListener('change',async()=>{const f=impf.files[0];impf.value='';if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||typeof d!=='object'||typeof d.lvl!=='number')throw 0;
     if(!confirm('¿Sustituir la partida actual por la importada (nivel '+d.lvl+')?'))return;
-    S=migrate(d);S.t=now();msg('Partida importada.','ok',0)}
+    S=migrate(d);S.t=now();cbKeys=null;msg('Partida importada.','ok',0)}
   catch(e){msg('El fichero no es una partida válida.','bad',0)}
-  save();view()});
+  save();FX.soft(view)});
 
 // Achievements: one-off XP (a share of the current level's requirement). Ids are saved: only append.
 const ACH=[['m1','Tu primer millón',()=>S.cash+S.bank>=1e6],['w10','10 peleas ganadas',()=>S.wins>=10],['w50','50 peleas ganadas',()=>S.wins>=50],
@@ -1241,11 +1243,11 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 if(S.pxNew){legacyP=true;try{VIEWS.armeria();VIEWS.sastre();VIEWS.motor()}finally{legacyP=false}delete S.pxNew}
 view();save();
 // PWA: persistent storage, multi-tab sync, icon badge, install prompt and update notice. All client-side.
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(tab==='game'||tab==='home')view()});
-addEventListener('appinstalled',()=>{instEv=null;view();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})});
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;if(tab==='game'||tab==='home')FX.soft(view)});
+addEventListener('appinstalled',()=>{instEv=null;FX.soft(view);if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})});
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{});
 // Another tab saved: adopt its state so this tab doesn't overwrite it with an older one
-addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{S=migrate(JSON.parse(e.newValue));view()}catch(_){}}});
+addEventListener('storage',e=>{if(e.key===KEY&&e.newValue){try{S=migrate(JSON.parse(e.newValue));cbKeys=null;FX.soft(view)}catch(_){}}});
 // Icon badge: things waiting for you (full energy, unseen unlocks)
 function appBadge(){if(!navigator.setAppBadge)return;const n=(S.en>=maxEn())+(NAV.some(t=>badge(t[0]))?1:0);
   if(n!==badgeN){badgeN=n;(n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{})}}
