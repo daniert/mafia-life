@@ -309,7 +309,7 @@ nav.bottom button .new{position:absolute;top:5px;left:calc(50% + 8px)}
 <nav class="bottom" aria-label="Secciones"><div class="in" id="nav"></div></nav>
 
 <script>
-const KEY='mafialife_save_v1', VER=2;
+const KEY='mafialife_save_v1', VER=3;
 const CITIES=[
  {n:'Nueva York',m:1,c:0,l:1,
   fn:['Tony','Sal','Vinnie','Paulie','Mickey','Frankie','Joey','Sonny'],sn:['Gambino','Lucchese','Moretti','Russo','Castellano','DeLuca'],
@@ -454,6 +454,10 @@ const GYM_EN={atk:4,agi:4,def:4},gEn=k=>GYM_EN[k];
 // Light on energy but pricey: at least 5 min of income, else ~3x the dearest gym session, +50% per max-willpower step gained, capped at +10 max willpower
 const YOGA_MAX=10,yogaDone=()=>(S.ygL||0)>=YOGA_MAX,YOGA_EN=2,yogaNeed=()=>5+3*(S.ygL||0),yogaFee=()=>Math.round(Math.max(100+3*Math.max(...['atk','agi','def'].map(gymFee)),5*income())*(1+.5*(S.ygL||0)));
 const STATS=[['atk','Fuerza'],['agi','Agilidad'],['def','Guardia'],['lab','Trabajo'],['iq','Inteligencia']];
+// Saves from before v3 keep what they had: content already unlocked keeps its old level and price (l0 = level at migration)
+const LEG={CITIES:[0,0,{l:6},{l:10},{l:15,c:25000},{l:8},{l:20,c:80000},{l:25,c:200000},{l:30,c:500000}],CRIMES:[0,0,{l:2},{l:4},{l:7},{l:10},{l:15},{l:5},{l:8},{l:6},{l:10}],WEAPONS:[0,0,{l:6},{l:10},{l:15,p:60000},{l:4},{l:8},{l:12},{l:17,p:90000},{l:20,p:160000},{l:22,p:260000},{l:25,p:420000},{l:27,p:650000},{l:30,p:1000000}],VEHICLES:[0,{l:4},{l:7},{l:10},{l:15,p:120000},{l:20,p:400000},{l:5},{l:9},{l:12},{l:18,p:250000},{l:23,p:700000},{l:27,p:1200000},{l:30,p:2000000}],ARMOR:[0,{l:4},{l:8},{l:12},0,{l:6},{l:10},{l:16,p:80000},{l:18,p:110000},{l:20,p:180000},{l:23,p:280000},{l:25,p:450000},{l:30,p:1100000}],BIZ:[0,0,0,0,0,{p:250000},{p:600000},{p:1500000}]};
+const LEG_T={CITIES,CRIMES,WEAPONS,VEHICLES,ARMOR,BIZ},LEG_N=Object.fromEntries(Object.entries(LEG_T).map(([k,A])=>[k,A.map(x=>({l:x.l,p:x.p,c:x.c}))]));
+function legacy(s){for(const k in LEG_T)LEG_T[k].forEach((x,i)=>{const n=LEG_N[k][i],o=LEG[k][i];for(const f of['l','p','c'])if(n[f]!==undefined)x[f]=n[f];if(s.l0&&o&&(o.l===undefined||o.l<=s.l0))for(const f of['l','p','c'])if(o[f]!==undefined)x[f]=o[f]})}
 const RANKS=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Sottocapo'],[40,'Don'],[60,'Padrino'],[80,'Capo di tutti capi']];
 const REDS=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 const NAV=[['home','Inicio','🏠'],['crime','Crímenes','💼'],['gym','Gimnasio','🏋️'],['fight','Pelea','🥊'],['explore','Explorar','🧭']];
@@ -462,13 +466,13 @@ const MENU=[['home','Inicio'],['explore','Explorar'],['crime','Crímenes'],['fig
 // v1 fields are kept as they were: atk = Strength, def = Guard, st = Brave (old "aguante").
 const def=()=>({v:VER,cash:500,bank:0,lvl:1,xp:0,sp:0,en:10,st:5,hp:20,wl:20,atk:5,def:5,agi:5,lab:5,iq:5,
  enB:0,stB:0,hpB:0,wlB:0,city:0,g:1,w:-1,a:-1,wu:0,au:0,vu:0,veh:[],biz:[0,0,0,0,0,0,0,0],seen:null,mast:{},foes:[],wins:0,cry:0,job:-1,edu:null,war:null,done:[],
- hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],t:Date.now()});
-function migrate(d){const old=(d.v||1)<VER,o=def();
+ hosp:0,jail:0,sleep:0,crew:[],inv:{},lb:{d:'',n:0},cool:{},crc:{},jw:[],px:{},vis:[0],ach:[],term:null,fund:null,loan:null,terr:0,fear:0,log:[],gymL:[],l0:0,rk:'',t:Date.now()});
+function migrate(d){const o=def();
   // Untrusted input (imports): keep only known keys whose type matches the default
   for(const k of Object.keys(o))if(Object.hasOwn(d,k)&&d[k]!=null&&(o[k]===null||typeof d[k]===typeof o[k]&&Array.isArray(d[k])===Array.isArray(o[k])))o[k]=d[k];
   o.log=Array.isArray(o.log)?o.log.filter(e=>e&&typeof e.m==='string'&&typeof e.t==='number').map(e=>({t:e.t,k:['ok','bad','info'].includes(e.k)?e.k:'info',m:e.m})):[];o.v=VER;
   if(!Array.isArray(o.biz))o.biz=[];while(o.biz.length<BIZ.length)o.biz.push(0);
-  if(old)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
+  if((d.v||1)<2)o.log=[{t:Date.now(),k:'info',m:'Tu partida se ha actualizado: nuevas estadísticas (Agilidad, Trabajo, Inteligencia), gimnasio, escuela, trabajo, cárcel, gemas, casino e inventario. Tu Ataque pasa a ser Fuerza y tu Defensa, Guardia. El Aguante ahora se llama Valor.'}];
   if(!Array.isArray(o.crew))o.crew=[];crewSync(o);
   if(!o.vis.includes(o.city))o.vis.push(o.city);
   // Driving licence arrived later: players who already own a vehicle get it for free
@@ -479,7 +483,9 @@ function migrate(d){const old=(d.v||1)<VER,o=def();
   // Wars used to last 24 h: shorten ones still running to the 4 h duration
   if(o.war&&o.war.end-Date.now()>WAR_CD)o.war.end=Math.max(Date.now(),o.war.end-(24*3600000-WAR_CD));
   if(o.veh.length>1){const b=o.veh.reduce((m,i)=>VEHICLES[i]&&(m<0||VEHICLES[i].v>VEHICLES[m].v)?i:m,-1);o.veh=b<0?[]:[b]} // only the vehicle you drive is kept, like weapons and armor
-  return o}
+  // v3 stretched unlocks, XP curve and prices: started games keep their current pace, unlocks and rank title
+  if((d.v||1)<3){o.l0=o.lvl;o.rk=[[1,'Ratero'],[3,'Matón'],[6,'Hombre de honor'],[10,'Capo'],[15,'Consigliere'],[25,'Don']].filter(r=>o.lvl>=r[0]).pop()[1]}
+  legacy(o);return o}
 // Current section lives in the URL hash so a reload keeps you where you were
 let instEv=null;const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const iOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
@@ -504,7 +510,7 @@ const pl=(n,s,p)=>n+' '+(n===1?s:p||s+'s');
 const fmtT=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),p=n=>String(n).padStart(2,'0');return h?h+':'+p(m)+':'+p(s%60):m+':'+p(s%60)};
 const cd=ts=>'<span data-cd="'+ts+'">'+fmtT(ts-now())+'</span>';
 const minsLeft=ts=>Math.max(1,Math.ceil((ts-now())/60000));
-const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>Math.round(30*S.lvl*(1+S.lvl/25));
+const maxEn=()=>10+S.enB+S.lvl, maxSt=()=>7+S.stB+Math.floor(S.lvl/2), stR=()=>(1+Math.min(.6,(S.crew?gFree():0)*.03))*(S.shk>now()?.5:1), maxHp=()=>20+S.hpB, maxWl=()=>18+Math.floor(S.lvl/2)+S.wlB, need=()=>Math.round(30*S.lvl*(1+Math.max(0,S.lvl-S.l0)/25));
 // Health damage scale: raw damage values were tuned for 100 HP
 const hd=x=>Math.max(1,Math.round(x/5*(S.jw&&S.jw.includes(3)?.85:1)));
 const MAX={en:maxEn,st:maxSt,hp:maxHp,wl:maxWl};
@@ -606,7 +612,7 @@ const sceneKey=()=>inJail()?'jail':S.city;
 const drawScene=()=>{const sv=$('#cityScene'),b=sv.getBoundingClientRect(),[w,o]=cityScene(sceneKey(),b.height?24*b.width/b.height:96);sv.setAttribute('viewBox','0 0 '+w+' 24');sv.innerHTML=o};
 addEventListener('resize',()=>drawScene());
 const city=()=>CITIES[S.city];
-const rank=()=>RANKS.filter(r=>S.lvl>=r[0]).pop()[1];
+const rank=()=>{const r=RANKS.filter(r=>S.lvl>=r[0]).pop()[1];return RANKS.findIndex(x=>x[1]===S.rk)>RANKS.findIndex(x=>x[1]===r)?S.rk:r};
 const atkT=()=>Math.floor(S.atk)+(inJail()?0:eqV(WEAPONS,S.w,S.wu))+Math.floor(gFree()*.5);
 // Gym fee per energy point grows with the stat level.
 const gymFee=k=>Math.round(10+S[k]*S[k]*.5);
@@ -766,7 +772,7 @@ const ACT={
  imp(){$('#impf').click()},
  instNo(){try{localStorage.setItem(INST_NO,Date.now())}catch(_){}view()},
  install(){const e=instEv;instEv=null;e.prompt();e.userChoice.then(c=>{if(c.outcome==='accepted')msg('App instalada.','ok',0);view()})},
- reset(){if(confirm('¿Borrar la partida y empezar de cero?')){S=def();genFoes();tab='home';msg('Nueva partida. Bienvenido a la familia.','info',0)}}
+ reset(){if(confirm('¿Borrar la partida y empezar de cero?')){S=def();legacy(S);genFoes();tab='home';msg('Nueva partida. Bienvenido a la familia.','info',0)}}
 };
 
 // Split a description into plain text + cost chips; chips turn red when the player can't afford them
